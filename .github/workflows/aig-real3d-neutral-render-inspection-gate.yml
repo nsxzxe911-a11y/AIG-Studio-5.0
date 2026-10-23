@@ -10,6 +10,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-source-review-gate.mjs'
       - 'formal-web/shared-3d/aig-real3d-reference-silhouette*.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-anatomy-*.mjs'
+      - 'formal-web/shared-3d/aig-real3d-local-surface-topology.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-local-surface-topology.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-anatomy-projection.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-reference-silhouette.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-source-review-gate.test.mjs'
@@ -27,6 +29,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-human-brown-render-lab*'
       - 'formal-web/shared-3d/aig-real3d-reference-silhouette*.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-anatomy-*.mjs'
+      - 'formal-web/shared-3d/aig-real3d-local-surface-topology.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-local-surface-topology.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-anatomy-projection.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-reference-silhouette.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-brown-obj-source.real-browser.mjs'
@@ -55,6 +59,8 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-reference-silhouette-browser.mjs
           node --check formal-web/shared-3d/aig-real3d-native-anatomy-projection.mjs
           node --check formal-web/shared-3d/aig-real3d-native-anatomy-annotation.mjs
+          node --check formal-web/shared-3d/aig-real3d-local-surface-topology.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-local-surface-topology.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-native-anatomy-projection.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-reference-silhouette.test.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-brown-obj-source.real-browser.mjs
