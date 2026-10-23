@@ -20,6 +20,8 @@ import {deformAIG39AttachedGarment}
  from './aig-garment-pose-follow-3-9.mjs';
 import {buildAIG310ModularHair}
  from './aig-modular-hair-3-10.mjs';
+import {buildAIG314HeroineSourceHair}
+ from './aig-heroine-hair-silhouette-3-14.mjs';
 import {resolveAIG311PoseContacts}
  from './aig-contact-constraints-3-11.mjs';
 import {createAIG312SecondaryMotion}
@@ -294,7 +296,9 @@ export function installAIG29ContinuousScan({
   return {layer,result};
  }
  function prepare310Hair(shell,style){
-  const hair=buildAIG310ModularHair(shell,{style});
+  const hair=style==='authority-long'?
+   buildAIG314HeroineSourceHair(shell):
+   buildAIG310ModularHair(shell,{style});
   const layer=new THREE.Group();
   layer.name='AIG310_REAL_SEPARATE_HAIR_GEOMETRY';
   layer.userData={style,actualMeshCount:hair.realIndependentHairMeshes,
