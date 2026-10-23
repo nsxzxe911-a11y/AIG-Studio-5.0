@@ -39,6 +39,10 @@ on:
       - 'formal-web/aig-new-home.html'
       - 'formal-web/real3d-stage1-review.html'
       - 'formal-web/package.json'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-true-front-camera.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-true-front-photo.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-true-front-camera.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-true-front-photo.real-browser.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-dual-adult-anatomy.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-dual-adult-runtime.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-unified-19200-ratio-core.mjs'
@@ -251,4 +255,49 @@ jobs:
         with:
           name: AIG-Stage1-Male-Briefs-Female-Onepiece-Real-WebGL-16-Views
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-stage1-adult-male-female-swim-geometry/
+          if-no-files-found: warn
+
+  stage1-true-frontal-photo-only:
+    name: Stage1 true front 0deg ortho male+female native WebGL PNGs (NO 45deg)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Prove actual frontal 0deg orthographic body bounding, both genders
+        run: |
+          node --check aig-stage1-true-front-camera.mjs
+          node --check aig-stage1-true-front-photo.mjs
+          node --check tests/aig-stage1-true-front-photo.real-browser.mjs
+          node --test tests/aig-stage1-true-front-camera.test.mjs
+      - name: Bundle same original single-WebGL Real3D runtime
+        run: |
+          npm run build
+          grep -q 'stage1-photo-front-both' dist/scene-runtime-studio.html
+          grep -q 'AIG_STAGE1_FRONT_ORTHO_ZERO_YAW_NO_DISTORT_V1' dist/scene-runtime-studio.js
+      - name: Install Chromium GPU emulator for authentic frontal snapshot
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Render one MALE and one FEMALE true 1080x1920 frontal photo
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig-front-photo-server.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-stage1-true-front-photo.real-browser.mjs
+          test -s artifacts/aig-stage1-true-front-orthographic/FRONT-ORTHO-male-1080x1920-ACTUAL-WEBGL.png
+          test -s artifacts/aig-stage1-true-front-orthographic/FRONT-ORTHO-female-1080x1920-ACTUAL-WEBGL.png
+          test -s artifacts/aig-stage1-true-front-orthographic/FRONT-ONLY-MANIFEST.json
+      - name: Upload front-only real male/female WebGL PNG even on failure
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Stage1-TRUE-FRONT-ZERO-ANGLE-2-Actual-WebGL-1080x1920-PNG
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-stage1-true-front-orthographic/
           if-no-files-found: warn
