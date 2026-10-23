@@ -33,6 +33,8 @@ import {getAIG314VerifiedAuthorityPalette,
  from './aig-heroine-authority-3-14.mjs';
 import {auditAIG314ActualTriangleIntersections}
  from './aig-triangle-intersection-audit-3-14.mjs';
+import {reviewAIG315HeroineGeometry,planAIG315HeroineCamera}
+ from './aig-heroine-render-review-3-15.mjs';
 const $=id=>document.getElementById(id);
 export function installAIG29ContinuousScan({
  getImage,getSegmentation,getSharedViewer,getBodyPose=()=>null
@@ -49,6 +51,7 @@ export function installAIG29ContinuousScan({
  let contact311Proof=null,motion312Proof=null,contact314Proof=null;
  let poseGrid314=null,poseGrid314Source=null;
  let heroine314Proof=null,triangleIntersect314Proof=null;
+ let heroine315Proof=null,heroview315='front';
  const dynamics312=new Map();
  let simulation312Frame=null,simulation312Id=0;
  const cancelSimulation312=()=>{
@@ -85,6 +88,8 @@ export function installAIG29ContinuousScan({
   motion312Proof=null;contact314Proof=null;
   poseGrid314=null;poseGrid314Source=null;
   heroine314Proof=null;triangleIntersect314Proof=null;
+  heroine315Proof=null;heroview315='front';
+  if($('scan315-proof'))$('scan315-proof').textContent='尚無有效三視角外觀證據';
   if(restore36Lighting){restore36Lighting();restore36Lighting=null}
   const label=$('scan36-visible');
   if(label)label.textContent='尚未建立 3D 曲面；原照片與其他 GLB 保留。';
@@ -109,6 +114,7 @@ export function installAIG29ContinuousScan({
    real311CoarseRealContactConstraints:contact311Proof,
    real314ActualTriangleContact:contact314Proof,
    real314HeroineApprovedVisualReferenceFit:heroine314Proof,
+   real315GeometryFirstHeroineViewReview:heroine315Proof,
    real314ExactBodyGarmentTriangleIntersections:triangleIntersect314Proof,
    real312ContinuousSecondaryMovement:motion312Proof,
    real310OneKernel19200LogicalWorkProfile:core36Proof?{
@@ -393,6 +399,89 @@ export function installAIG29ContinuousScan({
     verdict.sampledSourceDataComplete?'此姿勢離散樣本無交錯，仍需動態全程驗證。':
     '缺少來源人體區域，不能判定 PASS。');
   proof();return verdict;
+ };
+ const review315Heroine=()=>{
+  if(!scan?.manifoldAudit?.closedManifold||!overlay?.parent||
+   !scan.fusedOnePieceMesh?.positions)
+   throw Error('尚無正式來源的真 3D 人體，不能拿工程素模謊稱外觀 PASS');
+  const meshInfo=mesh=>({
+   geometry:{
+    positions:mesh.geometry.attributes.position.array,
+    triangleCount:(mesh.geometry.index?.count??0)/3
+   }
+  });
+  const verdict=reviewAIG315HeroineGeometry({
+   bodyPositions:scan.fusedOnePieceMesh.positions,
+   sourceLabels:scan.fusedOnePieceMesh.vertexSourceLabelIds,
+   sourcePhotoSha256:scan.sourceSha256,
+   approvedReferenceSha256:
+    '1deed212a2adcdc821e4291c6021fd1db490644da9a9c9b497f8243a7da296c1',
+   hairMeshes:(hair310Layer?.children??[]).filter(x=>x.isMesh).map(meshInfo),
+   outfitMeshes:(wardrobe37Layer?.children??[]).filter(x=>x.isMesh).map(meshInfo),
+   explicitFaceMesh:null,realPlaidTexture:false,
+   recordedMultiViewScreenshots:[]
+  });
+  heroine315Proof={...verdict,activeView:heroview315,
+   currentOutfit:$('scan37-outfit').value,
+   currentHair:$('scan310-hair').value,
+   sourceReferenceImageActuallyLoadedInBrowser:false,
+   renderedRightPersonUserApproved:false
+  };
+  $('scan315-proof').textContent=JSON.stringify(heroine315Proof,null,2);
+  $('scan315-status').textContent=
+   '右邊使用真 3D 幾何｜髮型 '+verdict.actualIndependentHairTriangles+
+   ' 三角面、衣物 '+verdict.actualIndependentOutfitMeshes+
+   ' 件；外觀 Gate BLOCKED：'+verdict.releaseBlockReasons.join('、')+
+   '。顏色和高解析度不能替代臉部幾何。';
+  proof();
+  return heroine315Proof;
+ };
+ const view315=(direction)=>{
+  if(!scan?.fusedOnePieceMesh||!overlay?.parent||
+   !rendererSource?.camera||rendererSource.movieMode||
+   rendererSource.reviewBusy)throw Error('請先在正式 WebGL 建立真 3D 模型');
+  const viewer=rendererSource,camera=viewer.camera,
+   plan=planAIG315HeroineCamera({
+    bodyPositions:scan.fusedOnePieceMesh.positions,view:direction,
+    fieldOfViewDegrees:camera.fov,aspect:camera.aspect
+   });
+  camera.position.set(...plan.position);
+  camera.near=plan.near;camera.far=plan.far;
+  camera.updateProjectionMatrix();
+  viewer.controls.target.set(...plan.target);
+  camera.lookAt(...plan.target);
+  viewer.controls.update();
+  heroview315=direction;
+  review315Heroine();
+  return plan;
+ };
+ const preview315=()=>{
+  if(!scan?.manifoldAudit?.closedManifold||!overlay?.parent||
+   !rendererSource||rendererSource.movieMode||rendererSource.reviewBusy)
+   throw Error('尚未產生真 3D 人體來源，不能套用女主角草模');
+  // Exactly ONE visible user-authorized technical change to REAL meshes.
+  // Switching technical outfits/hair is not identity reconstruction.
+  $('scan37-outfit').value='uniform';
+  update37Wardrobe();
+  $('scan310-hair').value='authority-long';
+  update310Hair();
+  let paletteApplied=false;
+  try{apply314HeroineColourFit();paletteApplied=true}
+  catch(e){$('scan314-authority-status').textContent=
+   '3.15 色彩擬合尚未通過：'+String(e.message||e)}
+  const camera=view315('front');
+  heroine315Proof={...heroine315Proof,
+   actualSourceStyleDraftCreated:true,
+   authorityPaletteApplied:paletteApplied,
+   previewOnlyNotPersonIdentityCertified:true,
+   sameWebGLRendererStillActive:true,
+   camera};
+  $('scan315-proof').textContent=JSON.stringify(heroine315Proof,null,2);
+  $('scan315-status').textContent='已換上獨立的制服和來源輪廓 3D 長髮草模；'+
+   '使用同一個 WebGL 真模型。臉型、五官、服裝紋理尚未重建，'+
+   '因此外觀仍為 FAIL，請用三視角繼續比較。';
+  proof();
+  return heroine315Proof;
  };
  const apply314HeroineColourFit=()=>{
   if(!scan?.manifoldAudit?.closedManifold||!overlay?.parent||
@@ -948,6 +1037,30 @@ export function installAIG29ContinuousScan({
  });
  $('scan38-next').addEventListener('click',()=>{
   browse38Offset+=8;refresh38Browser();
+ });
+ for(const [id,dir] of [
+  ['scan315-front','front'],['scan315-profile','profile'],
+  ['scan315-rear','rear']
+ ]){
+  $(id).addEventListener('click',()=>{
+   try{view315(dir)}
+   catch(e){$('scan315-status').textContent=
+    '3.15 '+dir+' 不能檢查：'+String(e.message||e)}
+  });
+ }
+ $('scan315-preview').addEventListener('click',()=>{
+  let token=null;
+  try{
+   token=stability39.begin('wardrobe-switch');
+   preview315();
+   stability39.finish(token);
+  }catch(e){
+   stability39.abandon(token);
+   $('scan315-status').textContent=
+    '3.15 來源風格草模未完成：'+String(e.message||e)+
+    '；主來源模型仍保留。';
+   proof();
+  }
  });
  $('scan314-audit-triangle').addEventListener('click',()=>{
   try{audit314ActualTriangles()}
