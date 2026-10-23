@@ -6,6 +6,7 @@ import {installAIG28BMultiSource} from './aig-multisource-occlusion-2-8b-ui.mjs'
 import {installAIG29ContinuousScan} from './aig-continuous-surface-scan-2-9-ui.mjs';
 import {installAIG31HeadBodyControls} from './aig-articulated-view-3-1-ui.mjs';
 import {installAIG32DigitControls} from './aig-20-digit-articulation-3-2-ui.mjs';
+import {installAIG34PhotoDigitPanel} from './aig-photo-digit-silhouette-3-4-ui.mjs';
 import {buildAIG23PhotoActor} from './aig-photo-rig-world-2-3.mjs';
 import {detectAIG24Image} from './aig-auto-image-detect-2-4.mjs';
 import {AIG25WorldMovieRecorder,validateAIG25TrueWorldMovie,
@@ -1106,8 +1107,15 @@ const aig31Body=installAIG31HeadBodyControls({
  getFusedScan:()=>aig30Scan,
  onPoseApplied:()=>aig32Digits?.refreshFromHeadBodyPose()
 });
+const aig34Photo=installAIG34PhotoDigitPanel({
+ getPhoto:()=>aig26Source,
+ getSegmentation:()=>aig27Source,
+ onApplied:()=>aig32Digits?.refreshFromPhotoContours()
+});
 aig32Digits=installAIG32DigitControls({
  getFusedScan:()=>aig30Scan,
- getBodyPose:()=>aig31Body.pose
+ getBodyPose:()=>aig31Body.pose,
+ getOriginalPhoto:()=>aig26Source,
+ getPhotoDigitConstraints:()=>aig34Photo.active
 });
 init();
