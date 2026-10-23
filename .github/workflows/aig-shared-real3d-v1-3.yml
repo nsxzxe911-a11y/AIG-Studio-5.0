@@ -47,6 +47,7 @@ jobs:
           node --test tests/aig-true-world-movie-2-5.test.mjs
           node --check aig-vision-metric-color-2-6.mjs
           node --check aig-vision-metric-color-2-6-ui.mjs
+          node --check tests/aig-vision-metric-color-2-6.real-browser.mjs
           node --test tests/aig-vision-metric-color-2-6.test.mjs
           node --check aig-map-model-alignment-2-1.mjs
           node --check tests/aig-map-actor-2-1.real-browser.mjs
@@ -134,6 +135,7 @@ jobs:
           python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig-nc13-http.log 2>&1 &
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-vision-metric-color-2-6.real-browser.mjs
           node tests/aig-map-actor-2-1.real-browser.mjs
           node tests/aig-world-scene-2-0.real-browser.mjs
           node tests/aig-scene-lifecycle-1-9.real-browser.mjs
@@ -143,6 +145,12 @@ jobs:
           node tests/aig-glb-gpu-v1-7.real-browser.mjs
           node tests/aig-metric-stereo-7-13.real-browser.mjs
           node tests/aig-heroine-scan-7-14.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-2-6-Source-Measured-mm-Colour-Labels-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-2-6-measure-colour-semantic/
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always()
         with:
