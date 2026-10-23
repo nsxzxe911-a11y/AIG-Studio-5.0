@@ -74,14 +74,18 @@ try{
    await page.locator('#scan29-radial').selectOption('48');
    await page.locator('#scan29-build').click();
    await page.waitForFunction(()=>document.getElementById('scan29-status')
-    .textContent.includes('3D 曲面真正送入'),null,{timeout:25000});
+    .textContent.includes('3.0 單一連通封閉曲面成功'),null,{timeout:25000});
    const proof=JSON.parse(await page.locator('#scan29-proof').textContent());
    assert.equal(proof.actualWebGLSceneObjectActive,true);
    assert.equal(proof.sharedExistingViewerContext,true);
    assert.equal(proof.originalSourcePhotoSHA,
     JSON.parse(await page.locator('#vision26-proof').textContent()).sourceSha256);
-   assert.ok(proof.genuine3DMeshes>=4,JSON.stringify(proof));
-   assert.ok(proof.actualTriangleCount>6000);
+   assert.equal(proof.genuine3DMeshes,1,'must render exactly one single fused manifold, not disconnected body tubes');
+   assert.equal(proof.realFusedSingleManifold,true);
+   assert.equal(proof.actualSourceManifoldAudit.boundaryOrNonManifoldEdgeCount,0);
+   assert.equal(proof.actualSourceManifoldAudit.singleConnectedComponent,true);
+   assert.equal(proof.actualSourceManifoldAudit.positiveOutwardVolume,true);
+   assert.ok(proof.actualTriangleCount>12000);
    assert.equal(proof.actualSmoothNormalsPresent,true);
    assert.equal(proof.oneToOneRealWorldFullBodyCertified,false);
    assert.equal(proof.modelFrontDepthAndBackAreGuessed,true);
@@ -104,6 +108,8 @@ try{
      device:device.name,originalPhotoSha256:proof.originalSourcePhotoSHA,
      actualTriangleCount:proof.actualTriangleCount,
      generatedCurvedMeshCount:proof.genuine3DMeshes,
+     trueOnePieceWatertightSurface:proof.realFusedSingleManifold,
+     manifoldEvidence:proof.actualSourceManifoldAudit,
      actualWebGLTriangleSubmissions:proof.webGLDrawEvidence.actualSubmittedTriangles,
      virtualFiveAxisNormalProbeCount:after.CNC5AXSurfaceNormalPath,
      measuredRGBImageDepth:false,sensorEchoClaimed:false,
