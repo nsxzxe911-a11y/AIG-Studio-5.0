@@ -232,10 +232,25 @@ try{
    assert.notDeepEqual(movedToe.actualTipXYZ,origToe.actualTipXYZ);
    assert.equal(digitProof.actual3DRenderedDigitMeshes,20);
    assert.equal(digitProof.originalSource3DBodyAndGLBUntouched,true);
-   await page.locator('#rig31-focus-body').click();
+   await page.locator('#digits32-focus-body').click();
+   await page.waitForFunction(()=>JSON.parse(document.getElementById('digits32-proof')
+    .textContent).actualSharedCameraFocus?.requestedSourcePart==='body');
    await page.locator('#viewport').screenshot({
     path:out+'/'+device.name+'-20-actual-3d-fingers-toes-independent-posed.png'
    });
+   await page.locator('#digits32-focus-leftHand').click();
+   await page.waitForFunction(()=>JSON.parse(document.getElementById('digits32-proof')
+    .textContent).actualSharedCameraFocus?.requestedSourcePart==='leftHand');
+   await page.locator('#viewport').screenshot({
+    path:out+'/'+device.name+'-five-left-fingers-closeup.png'
+   });
+   await page.locator('#digits32-focus-rightFoot').click();
+   await page.waitForFunction(()=>JSON.parse(document.getElementById('digits32-proof')
+    .textContent).actualSharedCameraFocus?.requestedSourcePart==='rightFoot');
+   await page.locator('#viewport').screenshot({
+    path:out+'/'+device.name+'-five-right-toes-closeup.png'
+   });
+   await page.locator('#digits32-focus-body').click();
    // Fine-grained true phalanx controls for one separately selected finger.
    // Advanced per-phalanx controls intentionally live in collapsed details
    // to keep the phone viewer large; interact as a real user would.
@@ -271,6 +286,7 @@ try{
    digitProof=JSON.parse(await page.locator('#digits32-proof').textContent());
    assert.equal(digitProof.actual3DRenderedDigitMeshes,20);
    assert.equal(digitProof.livingWebGLSceneShared,true);
+   await page.locator('#digits32-focus-leftHand').click();
    await page.locator('#viewport').screenshot({
     path:out+'/'+device.name+'-20-digits-follow-shoulder.png'
    });
