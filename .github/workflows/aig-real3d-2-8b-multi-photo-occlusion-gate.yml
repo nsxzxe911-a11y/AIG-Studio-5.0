@@ -1,0 +1,55 @@
+name: AIG Real3D 2.8-B Multi-Photo Source Disjoint Occlusion Gate
+on:
+  push:
+    branches:
+      - verify/real3d-true-world-movie-2-5-20261023
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-multisource-occlusion-2-8b*'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-multisource-occlusion-2-8b*'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-local-learner-2-8*'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.*'
+      - '.github/workflows/aig-real3d-2-8b-multi-photo-occlusion-gate.yml'
+  workflow_dispatch:
+jobs:
+  independent-hair-neck-photo-source:
+    name: Two reviewed photos train actual ML and third distinct photo IoU phone desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: True pixel source and multisource ML, SHA anti-leakage, visible occlusion
+        run: |
+          node --check aig-multisource-occlusion-2-8b.mjs
+          node --check aig-multisource-occlusion-2-8b-ui.mjs
+          node --check tests/aig-multisource-occlusion-2-8b.real-browser.mjs
+          node --check scene-runtime-studio.mjs
+          node --test tests/aig-multisource-occlusion-2-8b.test.mjs
+          node --test tests/aig-local-learner-2-8.test.mjs
+          node --test tests/aig-seeded-segmentation-2-7.test.mjs
+      - name: Preserve all original real 3D geometry, viewer and movie bundles
+        run: |
+          npm run build
+          test -s dist/scene-runtime-studio.html
+          test -s dist/scene-runtime-studio.js
+          node --check dist/scene-runtime-studio.js
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real phone desktop photo SHA split, train vault, 3rd photo holdout and hair neck occlusion
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig28b-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-multisource-occlusion-2-8b.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-2-8B-Actual-2Photo-Train-3rdSource-Heldout-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-2-8b-multisource-visible-occlusion/
+          if-no-files-found: warn
