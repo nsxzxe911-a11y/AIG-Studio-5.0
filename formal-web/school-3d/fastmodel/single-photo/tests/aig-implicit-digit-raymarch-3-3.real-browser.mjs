@@ -5,6 +5,59 @@
  */
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+import {inflateSync} from 'node:zlib';
+/** Decode actual PNG RGB/RGBA rows and count lit surface pixels.
+ * This prevents shader compilation / working UI / black canvas masquerading
+ * as a GPU rendering PASS. No OCR or screenshot appearance inference.
+ */
+function pngVisibleSurfacePixels(png){
+ const magic='89504e470d0a1a0a';
+ if(png.subarray(0,8).toString('hex')!==magic)
+  throw Error('AIG33_PNG_SIGNATURE_INVALID');
+ let width=0,height=0,channels=0,offset=8;
+ const chunks=[];
+ while(offset<png.length){
+  const len=png.readUInt32BE(offset),
+   type=png.toString('ascii',offset+4,offset+8);
+  const buf=png.subarray(offset+8,offset+8+len);
+  if(type==='IHDR'){
+   width=buf.readUInt32BE(0);height=buf.readUInt32BE(4);
+   if(buf[8]!==8)throw Error('AIG33_SCREENSHOT_BIT_DEPTH_UNKNOWN');
+   channels=buf[9]===2?3:buf[9]===6?4:0;
+  }else if(type==='IDAT')chunks.push(buf);
+  offset+=len+12;
+  if(type==='IEND')break;
+ }
+ if(!width||!height||!channels)throw Error('AIG33_UNKNOWN_PNG_COLOR');
+ const raw=inflateSync(Buffer.concat(chunks));
+ const stride=width*channels;let old=new Uint8Array(stride),visible=0;
+ let pos=0;
+ for(let y=0;y<height;y++){
+  const filter=raw[pos++],row=new Uint8Array(stride);
+  for(let j=0;j<stride;j++){
+   const x=raw[pos++],left=j>=channels?row[j-channels]:0,
+    up=old[j],ul=j>=channels?old[j-channels]:0;
+   let v=x;
+   if(filter===1)v=x+left;
+   if(filter===2)v=x+up;
+   if(filter===3)v=x+Math.floor((left+up)/2);
+   if(filter===4){
+    const p=left+up-ul;
+    const a=Math.abs(p-left),b=Math.abs(p-up),c=Math.abs(p-ul);
+    v=x+(a<=b&&a<=c?left:b<=c?up:ul);
+   }
+   if(filter<0||filter>4)throw Error('AIG33_UNKNOWN_PNG_FILTER');
+   row[j]=v&255;
+  }
+  for(let x=0;x<width;x++){
+   const n=x*channels;
+   if(row[n]+row[n+1]+row[n+2]>160)visible++;
+  }
+  old=row;
+ }
+ return {width,height,visiblePixels:visible};
+}
+
 import {mkdir,writeFile} from 'node:fs/promises';
 const out='artifacts/aig-real3d-3-3-implicit-sdf-skin';
 await mkdir(out,{recursive:true});
@@ -20,6 +73,10 @@ try{
   const context=await browser.newContext({...device});
   const page=await context.newPage();page.setDefaultTimeout(22000);
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  page.on('console',msg=>{
+   if(msg.type()==='error'||/THREE.WebGLProgram|Shader Error/.test(msg.text()))
+    errors.push('GPU_CONSOLE: '+msg.text().slice(0,2500));
+  });
   try{
    await page.goto('http://127.0.0.1:8765/scene-runtime-studio.html');
    await page.waitForFunction(()=>document.getElementById('status')
@@ -255,15 +312,23 @@ try{
    await page.locator('#digits32-focus-leftHand').click();
    await page.waitForFunction(()=>JSON.parse(document.getElementById('digits32-proof')
     .textContent).actualSharedCameraFocus?.requestedSourcePart==='leftHand');
-   await page.locator('#viewport').screenshot({
+   const leftHandScreenshot=await page.locator('#viewport').screenshot({
     path:out+'/'+device.name+'-five-left-fingers-closeup.png'
    });
+   const leftHandPixels=pngVisibleSurfacePixels(leftHandScreenshot);
+   assert.ok(leftHandPixels.visiblePixels>80,
+    'AIG33_NO_VISIBLE_IMPLICIT_HAND_SKIN_PIXELS: '+
+    JSON.stringify(leftHandPixels)+' gpuErrors='+JSON.stringify(errors));
    await page.locator('#digits32-focus-rightFoot').click();
    await page.waitForFunction(()=>JSON.parse(document.getElementById('digits32-proof')
     .textContent).actualSharedCameraFocus?.requestedSourcePart==='rightFoot');
-   await page.locator('#viewport').screenshot({
+   const rightFootScreenshot=await page.locator('#viewport').screenshot({
     path:out+'/'+device.name+'-five-right-toes-closeup.png'
    });
+   const rightFootPixels=pngVisibleSurfacePixels(rightFootScreenshot);
+   assert.ok(rightFootPixels.visiblePixels>80,
+    'AIG33_NO_VISIBLE_IMPLICIT_FOOT_SKIN_PIXELS: '+
+    JSON.stringify(rightFootPixels)+' gpuErrors='+JSON.stringify(errors));
    await page.locator('#digits32-focus-body').click();
    // Fine-grained true phalanx controls for one separately selected finger.
    // Advanced per-phalanx controls intentionally live in collapsed details
