@@ -1,4 +1,4 @@
-name: AIG Real3D 3.5 Unified Source Appearance Gate
+name: AIG Real3D 3.8 12000 Work Slots and Lazy Character Wardrobe Gate
 on:
   push:
     branches:
@@ -6,6 +6,9 @@ on:
     paths:
       - 'formal-web/school-3d/fastmodel/single-photo/aig-unified-appearance-3-5.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-unified-120-core-3-6.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-character-asset-index-3-8.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-modular-outfits-3-7.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-large-wardrobe-3-8.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-120-core-3-6.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-continuous-surface-scan-2-9-ui.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.html'
@@ -34,6 +37,9 @@ jobs:
         run: |
           node --check aig-unified-appearance-3-5.mjs
           node --check aig-unified-120-core-3-6.mjs
+          node --check aig-character-asset-index-3-8.mjs
+          node --check aig-modular-outfits-3-7.mjs
+          node --test tests/aig-large-wardrobe-3-8.test.mjs
           node --test tests/aig-unified-120-core-3-6.test.mjs
           node --check aig-continuous-surface-scan-2-9-ui.mjs
           node --check scene-runtime-studio.mjs
@@ -50,8 +56,12 @@ jobs:
           grep -q 'aig35-colour' dist/scene-runtime-studio.html
           grep -q 'scan36-light' dist/scene-runtime-studio.html
           grep -q 'scan36-source-preview' dist/scene-runtime-studio.html
+          grep -q 'scan37-slot-count' dist/scene-runtime-studio.html
+          grep -q 'value="12000" selected' dist/scene-runtime-studio.html
+          grep -q 'scan38-asset-manager' dist/scene-runtime-studio.html
           grep -q 'AIG_REAL3D_3_5_UNIFIED_SOURCE_APPEARANCE_GATE' dist/scene-runtime-studio.js
-          grep -q 'AIG_REAL3D_3_6_ONE_KERNEL_120_LOGICAL_SLOTS' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_8_LAZY_CHARACTER_ASSET_INDEX' dist/scene-runtime-studio.js
       - name: Install Chromium QA for actual phone/desktop rendered geometry
         run: |
           npm install --no-save playwright@1.55.0
