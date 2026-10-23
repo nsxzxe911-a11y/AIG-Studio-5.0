@@ -10,7 +10,7 @@ import {
 }from './aig-real3d-render-inspection.mjs';
 const $=id=>document.getElementById(id),gallery=$('gallery'),status=$('status');
 const urlPool=new Set();
-let running=false,report=null;
+let running=false,report=null,profiles=[];
 const SETUPS=[
  ['正面黑線輪廓','front','BLACK_CONTOUR'],
  ['正面咖啡色平塗','front','BROWN_FLAT'],
@@ -22,6 +22,51 @@ const SETUPS=[
 ];
 function setStatus(s,ready=false){status.textContent=s;status.dataset.ready=String(ready);}
 function release(){for(const u of urlPool)URL.revokeObjectURL(u);urlPool.clear();}
+function renderProfileAngle(){
+ const chosen=$('profile-angle').value,
+   entry=profiles.find(x=>x.angle===chosen),target=$('profile-table');
+ target.replaceChildren();
+ if(!entry?.verticalScanlineProfile?.bands?.length){
+  const text=document.createElement('p');
+  text.textContent='此方向尚無有效透明輪廓參考圖。';
+  target.append(text);return;
+ }
+ const src=entry.verticalScanlineProfile;
+ const headline=document.createElement('p');
+ headline.textContent='方向 '+chosen+'；差距最大高度段：'+
+  (src.worstBandId||'未取得')+
+  '，這只是影像像素差，不是人體部位辨識。';
+ target.append(headline);
+ const table=document.createElement('table'),thead=document.createElement('thead');
+ const tr=document.createElement('tr');
+ for(const name of ['從頂部高度','參考平均覆蓋 px／列','GPU 平均覆蓋 px／列',
+  '差值 px／列','差值 %','水平中心位移 px']){
+  const th=document.createElement('th');th.textContent=name;tr.append(th);
+ }
+ thead.append(tr);table.append(thead);
+ const tbody=document.createElement('tbody');
+ for(const band of src.bands){
+  const row=document.createElement('tr');
+  row.dataset.worst=String(src.worstBandId===band.id);
+  for(const val of [
+   (band.normalizedFromTop*100).toFixed(1)+'–'+
+    (band.normalizedToTop*100).toFixed(1)+'%',
+   band.referenceMeanCoveragePx.toFixed(1),
+   band.modelMeanCoveragePx.toFixed(1),
+   band.signedCoverageDeltaPx.toFixed(1),
+   band.signedCoverageDeltaPercent===null?'無參考':
+    (band.signedCoverageDeltaPercent>0?'+':'')+
+      band.signedCoverageDeltaPercent.toFixed(1)+'%',
+   band.imageCentroidXDeltaPx===null?'無法計算':
+    band.imageCentroidXDeltaPx.toFixed(1)
+  ]){
+   const td=document.createElement('td');td.textContent=val;row.append(td);
+  }
+  tbody.append(row);
+ }
+ table.append(tbody);target.append(table);
+}
+$('profile-angle').addEventListener('change',renderProfileAngle);
 $('inspect').addEventListener('click',async()=>{
  if(running)return;
  const file=$('model-file').files?.[0];
@@ -35,6 +80,8 @@ $('inspect').addEventListener('click',async()=>{
  }
  running=true;$('inspect').disabled=true;$('report-download').disabled=true;report=null;
  release();gallery.replaceChildren();$('reference-gallery').replaceChildren();
+ profiles=[];$('profile-angle').disabled=true;
+ $('profile-table').replaceChildren();
  $('reference-stats').textContent='尚未比對四方向透明輪廓；自然人體外觀 BLOCK。';
  $('evidence').textContent='讀取 GLB 與實際三角形…';
  let renderer;
@@ -154,6 +201,13 @@ $('inspect').addEventListener('click',async()=>{
    }catch(e){silhouetteProblems.push({angle,error:e.message});}
   }
   const summary=evaluateAIGReal3DFourViewComparisons(silhouetteResults);
+  profiles=silhouetteResults;
+  $('profile-angle').disabled=profiles.length===0;
+  if(profiles.length){
+   $('profile-angle').value=profiles.some(x=>x.angle==='front')?
+    'front':profiles[0].angle;
+  }
+  renderProfileAngle();
   $('reference-stats').textContent=selected.length===0?
    '尚未提供透明輪廓參考圖。GPU 渲染已完成，但沒有來源照片外型比對。':
    '已比對 '+summary.count+'/4 視角；平均重合率：'+
