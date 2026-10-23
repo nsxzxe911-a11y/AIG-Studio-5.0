@@ -1,4 +1,4 @@
-name: AIG Real3D 3.14 Triangle Collision and Heroine Appearance Gate
+name: AIG Real3D 3.15 Geometry-First Heroine Three-View Rendering Gate
 on:
   push:
     branches:
@@ -13,6 +13,8 @@ on:
       - 'formal-web/school-3d/fastmodel/single-photo/aig-secondary-motion-3-12.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-classmate-crowd-3-13.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-triangle-contact-3-14.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-heroine-render-review-3-15.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-heroine-render-review-3-15.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-triangle-intersection-audit-3-14.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-heroine-authority-3-14.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-heroine-hair-silhouette-3-14.mjs'
@@ -65,6 +67,8 @@ jobs:
           node --check aig-secondary-motion-3-12.mjs
           node --check aig-classmate-crowd-3-13.mjs
           node --check aig-triangle-contact-3-14.mjs
+          node --check aig-heroine-render-review-3-15.mjs
+          node --test tests/aig-heroine-render-review-3-15.test.mjs
           node --check aig-triangle-intersection-audit-3-14.mjs
           node --check aig-heroine-authority-3-14.mjs
           node --check aig-heroine-hair-silhouette-3-14.mjs
@@ -114,6 +118,9 @@ jobs:
           grep -q 'scan313-bench' dist/scene-runtime-studio.html
           grep -q 'AIG_REAL3D_3_13_SOURCED_CLASSMATES_AND_CROWD_BENCH' dist/scene-runtime-studio.js
           grep -q 'AIG_REAL3D_3_14_SOURCE_BODY_TRIANGLE_CONTACT' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_15_GEOMETRY_FIRST_MULTI_VIEW_GATES' dist/scene-runtime-studio.js
+          grep -q 'scan315-preview' dist/scene-runtime-studio.html
+          grep -q 'scan315-profile' dist/scene-runtime-studio.html
           grep -q 'AIG_REAL3D_3_14_EXACT_DISCRETE_TRIANGLE_PAIRS' dist/scene-runtime-studio.js
           grep -q 'AIG_REAL3D_3_14_HEROINE_APPROVED_REFERENCE_LEDGER' dist/scene-runtime-studio.js
           grep -q 'AIG_REAL3D_3_14_SOURCE_BACKVIEW_HAIR_SILHOUETTE' dist/scene-runtime-studio.js
