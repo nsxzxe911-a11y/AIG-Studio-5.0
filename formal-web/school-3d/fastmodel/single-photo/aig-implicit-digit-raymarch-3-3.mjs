@@ -12,16 +12,14 @@ import * as THREE from 'three';
 import {AIG33_SCHEMA,AIG33_CAPSULES_PER_GROUP}
  from './aig-implicit-digit-field-3-3.mjs';
 export const AIG33_SHADER_SCHEMA='AIG_REAL3D_3_3_GLSL3_ANALYTIC_SDF_DEPTH_SKIN_V1';
-const vertexShader=`#version 300 es
-precision highp float;
+const vertexShader=`precision highp float;
 out vec3 vWorld;
 void main(){
  vec4 world=modelMatrix*vec4(position,1.0);
  vWorld=world.xyz;
  gl_Position=projectionMatrix*viewMatrix*world;
 }`;
-const fragmentShader=`#version 300 es
-precision highp float;
+const fragmentShader=`precision highp float;
 precision highp int;
 in vec3 vWorld;
 out vec4 outColor;
