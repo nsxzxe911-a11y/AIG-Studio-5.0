@@ -390,7 +390,6 @@ export function installAIG29ContinuousScan({
    const prev=overlay;
    overlay=group;scan=reconstruction;rendererSource=viewer;
    wardrobe37Layer=stagedWardrobe.layer;
-   record38Wear(stagedWardrobe.result.outfitId,true);
    appearanceProof=newAppearanceProof;
    probeLines=null;scanStamp=scan.sourceSha256;
    wardrobe37Proof={...stagedWardrobe.result,
