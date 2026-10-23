@@ -78,9 +78,11 @@ test('invalid pose arrays, timestep and degenerate source fail without overwriti
  assert.throws(()=>solver.step({targetPositions:rest,deltaSeconds:1}),
   /AIG312_INVALID_STEP_TARGET_OR_DELTA/);
  assert.equal(solver.snapshot().framesSimulated,1);
- assert.deepEqual(rest,a.positions.map((_,i)=>i===1||i===4||i===7||
- i===10||i===13||i===16||i===19||i===22 ? a.positions[i] : a.positions[i])
- .map((v,i)=>rest[i])); // source remains rest typed array
+ assert.deepEqual(rest,new Float32Array([
+ -.1,1.5,-.2,.1,1.5,-.2,-.1,1.4,-.2,.1,1.4,-.2,
+ -.1,1.2,-.2,.1,1.2,-.2,-.1,.9,-.2,.1,.9,-.2
+ ])); // no mutation of source rest positions
+ assert.equal(a.sourceAndTargetUnmodified,true);
  assert.throws(()=>createAIG312SecondaryMotion({
   restPositions:new Float32Array(9),bodyHeightUnits:2,kind:'hair'
  }),/AIG312_SECONDARY_LAYER_HAS_NO_VERTICAL_SPAN/);
