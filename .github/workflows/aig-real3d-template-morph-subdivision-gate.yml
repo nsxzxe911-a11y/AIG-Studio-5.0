@@ -1,12 +1,10 @@
+# ARCHIVED: rejected procedural human candidates. No automatic PR QA.
+# Historical branch or explicitly requested workflow_dispatch only.
 name: AIG Real3D True Anatomical Template Morph + Subdivision Front GPU
 on:
   push:
     branches:
       - verify/real3d-anatomical-template-morph-subdivision-20261024
-    paths:
-      - 'formal-web/shared-3d/**'
-      - '.github/workflows/aig-real3d-template-morph-subdivision-gate.yml'
-  pull_request:
     paths:
       - 'formal-web/shared-3d/**'
       - '.github/workflows/aig-real3d-template-morph-subdivision-gate.yml'
