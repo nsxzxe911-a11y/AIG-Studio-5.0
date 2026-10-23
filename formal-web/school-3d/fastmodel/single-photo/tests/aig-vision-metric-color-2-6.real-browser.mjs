@@ -62,13 +62,19 @@ try{
    const m=JSON.parse(await page.locator('#vision26-proof').textContent()).metric;
    assert.equal(m.calibratedSourcePlaneOnly,true);
    assert.equal(m.hiddenPersonDimensionsMeasured,false);
-   assert.equal(m.independentResidualMm,0);
+   // GUI pointer-to-CSS pixel quantisation must be measured, never hidden.
+   // Accept at most 0.5mm (stricter than the source-plane Gate threshold),
+   // while recording the actual nonzero residual as evidence.
+   assert.ok(m.independentResidualMm<=.5&&
+    m.independentResidualMm<=m.independentMaxResidualMm,
+    'true clicked-pixel independent physical residual exceeds tolerance: '+
+    m.independentResidualMm+' mm');
    await page.locator('#vision26-pick').selectOption('query');
    await px(140,90);
    const query=JSON.parse(await page.locator('#vision26-proof').textContent())
     .lastMeasuredSourcePlaneMm;
-   assert.ok(Math.abs(query.planeMm[0]-50)<1e-5);
-   assert.ok(Math.abs(query.planeMm[1]-25)<1e-5);
+   assert.ok(Math.abs(query.planeMm[0]-50)<.5);
+   assert.ok(Math.abs(query.planeMm[1]-25)<.5);
    await page.locator('#vision26-pick').selectOption('neutral');
    await px(110,110);
    await page.locator('#vision26-color-run').click();
@@ -99,7 +105,8 @@ try{
    assert.deepEqual(errors,[]);
    const proof={
     device:device.name,sourceSha256:source.sourceSha256,
-    calibratedPlanarMm:true,notTrueFullBodyDepth:true,
+    calibratedPlanarMm:true,measuredResidualMm:m.independentResidualMm,
+    notTrueFullBodyDepth:true,
     neutralLinearRGBWithoutSourceMutation:true,
     labelsFromExternalSourceOnly:true,
     originalGLBAndMoviePreserved:true,nativeDeviceFPSNotMeasured:true
