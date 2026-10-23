@@ -67,7 +67,7 @@ function primitivesFromRealAnatomy(model){
    c(side+'Thigh',centerHip,centerKnee,
     model.gender==='male'?.056:.059,.034),
    c(side+'Calf',centerKnee,centerAnkle,.033,.020),
-   e(side+'Foot',[centerAnkle[0]/1, .029,-.043],[.032,.030,.068])
+   e(side+'Foot',[centerAnkle[0],.038,-.043],[.032,.036,.068])
   );
  }
  return p0;
@@ -243,6 +243,26 @@ export function extractAIGReal3DIsosurface(field,{
   }
  const nonManifoldEdges=[...boundary.values()].filter(v=>v!==2).length;
  const verts=out.length/3,triangles=indices.length/3;
+ // Euler-style topology is stronger than "a lot of triangles".
+ // Every surface vertex must belong to the ONE connected human shell.
+ const parent=Uint32Array.from({length:verts},(_,i)=>i);
+ const root=v=>{
+  while(parent[v]!==v){parent[v]=parent[parent[v]];v=parent[v];}
+  return v;
+ };
+ const join=(a,b)=>{
+  const x=root(a),y=root(b);if(x!==y)parent[y]=x;
+ };
+ for(let k=0;k<indices.length;k+=3){
+  join(indices[k],indices[k+1]);join(indices[k],indices[k+2]);
+ }
+ const groups=new Set();
+ for(let v=0;v<verts;v++)groups.add(root(v));
+ const surfaceConnectedComponents=groups.size;
+ // SDF/metaball may each have a watertight torso but detached feet.
+ // Such a candidate MUST be blocked rather than incorrectly accepted.
+ if(surfaceConnectedComponents!==1||nonManifoldEdges!==0)
+  fail('DISCONNECTED_OR_OPEN_HUMAN_SURFACE');
  if(verts>166666||triangles>195000)fail('SINGLE_WEBGL_FRAME_BUDGET');
  return {
   schema:AIG_IMPLICIT_SURFACE_SCHEMA,method:field.method,
@@ -254,7 +274,9 @@ export function extractAIGReal3DIsosurface(field,{
    analyticShapesMeasuredFromSource:field.actualAnalyticPrimitives,
    scalarGridPoints:all,cellsTraversed,extractedTriangleCount:triangles,
    uniqueSurfaceVertices:verts,
-   nonManifoldEdges,actualContinuousSurfaceTopologicalPASS:nonManifoldEdges===0,
+   nonManifoldEdges,surfaceConnectedComponents,
+   actualContinuousSurfaceTopologicalPASS:
+    nonManifoldEdges===0&&surfaceConnectedComponents===1,
    facialLikenessVerified:false,
    anatomicalVisualAppearancePASS:false,
    meshPrecisionIsNotVerifiedScan:true,
