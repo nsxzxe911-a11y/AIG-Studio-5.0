@@ -144,6 +144,43 @@ export function installAIG28LocalLearning({getImage,getSegmentation,getLibrary}=
     '，已保存每個類別與未知區域；不等於通用語意模型通過實景驗收。');
   }catch(e){status(String(e.message||e),true)}
  });
+ const refreshSaved=async()=>{
+  const vault=getLibrary();
+  if(!vault?.list)throw Error('本機素材庫尚未就緒');
+  const results=await vault.list({category:'scene',limit:100});
+  const own=results.filter(x=>Array.isArray(x.tags)&&
+   x.tags.includes('Real3D28')&&x.mime==='application/json');
+  const dropdown=$('vision28-saved-model'),previous=dropdown.value;
+  dropdown.replaceChildren(new Option('請選本機已訓練模型', ''));
+  for(const item of own)dropdown.add(
+   new Option(item.title+'｜'+item.sha256.slice(0,22)+'…',item.id));
+  if(own.some(item=>item.id===previous))dropdown.value=previous;
+  return own.length;
+ };
+ $('vision28-refresh').addEventListener('click',async()=>{
+  try{
+   const count=await refreshSaved();
+   status('本機找到 '+count+' 份 2.8 模型；使用前仍須重新驗證來源與權重 SHA。');
+  }catch(e){status(String(e.message||e),true)}
+ });
+ $('vision28-restore').addEventListener('click',async()=>{
+  try{
+   const id=$('vision28-saved-model').value,vault=getLibrary();
+   if(!id||!vault?.get)throw Error('請選已保存模型，並確認本機素材庫可使用');
+   const verified=await vault.get(id,{includePayload:true});
+   if(!verified?.blob||verified.asset?.mime!=='application/json')
+    throw Error('已保存模型來源 JSON 遺失，沒有假替代權重');
+   const json=JSON.parse(await verified.blob.text());
+   assertAIG28Model(json.model);
+   const actual=await fingerprintAIG28Model(json.model);
+   if(json.modelSha256!==actual)throw Error('已保存模型權重 SHA 與來源證據不符');
+   state.model=json.model;state.modelSha256=actual;
+   state.inference=null;state.inferenceSource=null;
+   state.evaluation=null;state.lastSave={id,assetSha256:verified.asset.sha256};
+   proof();status('已從本機素材庫驗證重載真正模型權重：'+
+    actual.slice(0,22)+'…。可使用目前不同來源照片進行自動像素推論。');
+  }catch(e){status(String(e.message||e),true)}
+ });
  $('vision28-save').addEventListener('click',async()=>{
   try{
    if(!state.model||!state.modelSha256)throw Error('沒有可保存的已訓練模型');
@@ -168,6 +205,8 @@ export function installAIG28LocalLearning({getImage,getSegmentation,getLibrary}=
     json.modelSha256!==state.modelSha256)
     throw Error('模型回讀權重 SHA 不一致');
    state.lastSave={id:saved.id,assetSha256:saved.sha256};
+   await refreshSaved();
+   $('vision28-saved-model').value=saved.id;
    proof();status('模型原始權重已另存本機素材庫並通過 SHA 回讀：'+saved.sha256);
   }catch(e){status(String(e.message||e),true)}
  });
@@ -186,5 +225,9 @@ export function installAIG28LocalLearning({getImage,getSegmentation,getLibrary}=
    proof();status('第一方已訓練模型來源與權重 SHA 驗證成功；可推論新照片。');
   }catch(e){status(String(e.message||e),true)}
  });
- proof();return state;
+ proof();
+ // During boot the vault opens asynchronously; refresh after init without
+ // turning a transient closed vault into a permanent page failure.
+ const warmup=()=>getLibrary()?.list?refreshSaved().catch(()=>{}):null;
+ warmup();return state;
 }
