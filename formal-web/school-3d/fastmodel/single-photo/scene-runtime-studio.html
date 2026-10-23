@@ -268,6 +268,50 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <pre id="rig31-proof" style="white-space:pre-wrap;max-height:340px;overflow:auto;font:12px/1.5 ui-monospace,monospace">目前沒有頭頸分離動作證據。</pre>
 </details>
 </section>
+<section id="real3d32-digits" class="panel" style="margin:14px 0;background:#071a28;border:1px solid #4f98a5">
+<h2>Real3D 3.2｜20 根獨立手指與腳趾 · 56 節關節曲面</h2>
+<p>雙手 10 指、雙腳 10 趾，按來源已顯示的手掌／腳掌或手臂／腿末端建立每根可彎曲的<strong>實體 3D 曲面</strong>；有真實個別指／趾掃描資料前，一律顯示「人體比例推估」，不能冒充 1:1。</p>
+<p style="color:#f5cda2;font-size:12px">20 根完整出現的前提，是原場景至少有雙手臂與雙腿的可見來源。缺少某肢體時只停用該組，保留其他可用指趾。所有彎曲是技術預覽，尚未驗證關節皮膚碰撞、細節外觀或 3D 列印品質。</p>
+<button type="button" id="digits32-build">01｜建立 20 根真正 3D 手指／腳趾曲面</button>
+<button type="button" id="digits32-reset">02｜全部指趾回正</button>
+<button type="button" id="digits32-remove">只移除指趾預覽（保留人體／骨架／GLB）</button>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:9px"><fieldset style="border:1px solid #31627a;border-radius:9px;padding:10px;margin:8px 0;min-width:0"><legend>左手五指｜個別彎曲、張開</legend><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:7px"><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">拇指／大趾 <output id="digits32-value-leftHandthumb">0%</output><input type="range" id="digits32-curl-leftHandthumb" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">食指／第二趾 <output id="digits32-value-leftHandindex">0%</output><input type="range" id="digits32-curl-leftHandindex" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">中指／第三趾 <output id="digits32-value-leftHandmiddle">0%</output><input type="range" id="digits32-curl-leftHandmiddle" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">無名指／第四趾 <output id="digits32-value-leftHandring">0%</output><input type="range" id="digits32-curl-leftHandring" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">小指／第五趾 <output id="digits32-value-leftHandlittle">0%</output><input type="range" id="digits32-curl-leftHandlittle" value="0" min="0" max="100" step="5" style="width:100%"></label></div></fieldset>
+<fieldset style="border:1px solid #31627a;border-radius:9px;padding:10px;margin:8px 0;min-width:0"><legend>左腳五趾｜個別彎曲、張開</legend><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:7px"><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">拇指／大趾 <output id="digits32-value-leftFootthumb">0%</output><input type="range" id="digits32-curl-leftFootthumb" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">食指／第二趾 <output id="digits32-value-leftFootindex">0%</output><input type="range" id="digits32-curl-leftFootindex" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">中指／第三趾 <output id="digits32-value-leftFootmiddle">0%</output><input type="range" id="digits32-curl-leftFootmiddle" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">無名指／第四趾 <output id="digits32-value-leftFootring">0%</output><input type="range" id="digits32-curl-leftFootring" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">小指／第五趾 <output id="digits32-value-leftFootlittle">0%</output><input type="range" id="digits32-curl-leftFootlittle" value="0" min="0" max="100" step="5" style="width:100%"></label></div></fieldset>
+<fieldset style="border:1px solid #31627a;border-radius:9px;padding:10px;margin:8px 0;min-width:0"><legend>右手五指｜個別彎曲、張開</legend><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:7px"><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">拇指／大趾 <output id="digits32-value-rightHandthumb">0%</output><input type="range" id="digits32-curl-rightHandthumb" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">食指／第二趾 <output id="digits32-value-rightHandindex">0%</output><input type="range" id="digits32-curl-rightHandindex" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">中指／第三趾 <output id="digits32-value-rightHandmiddle">0%</output><input type="range" id="digits32-curl-rightHandmiddle" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">無名指／第四趾 <output id="digits32-value-rightHandring">0%</output><input type="range" id="digits32-curl-rightHandring" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">小指／第五趾 <output id="digits32-value-rightHandlittle">0%</output><input type="range" id="digits32-curl-rightHandlittle" value="0" min="0" max="100" step="5" style="width:100%"></label></div></fieldset>
+<fieldset style="border:1px solid #31627a;border-radius:9px;padding:10px;margin:8px 0;min-width:0"><legend>右腳五趾｜個別彎曲、張開</legend><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:7px"><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">拇指／大趾 <output id="digits32-value-rightFootthumb">0%</output><input type="range" id="digits32-curl-rightFootthumb" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">食指／第二趾 <output id="digits32-value-rightFootindex">0%</output><input type="range" id="digits32-curl-rightFootindex" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">中指／第三趾 <output id="digits32-value-rightFootmiddle">0%</output><input type="range" id="digits32-curl-rightFootmiddle" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">無名指／第四趾 <output id="digits32-value-rightFootring">0%</output><input type="range" id="digits32-curl-rightFootring" value="0" min="0" max="100" step="5" style="width:100%"></label><label style="font-size:12px;display:flex;flex-direction:column;gap:4px">小指／第五趾 <output id="digits32-value-rightFootlittle">0%</output><input type="range" id="digits32-curl-rightFootlittle" value="0" min="0" max="100" step="5" style="width:100%"></label></div></fieldset></div>
+<details><summary>細調單根手指／腳趾的每節關節（有真回呼）</summary>
+<div class="world-grid">
+<label>選擇哪一根<select id="digits32-choice"><option value="leftHandthumb">左手拇指／大趾</option>
+<option value="leftHandindex">左手食指／第二趾</option>
+<option value="leftHandmiddle">左手中指／第三趾</option>
+<option value="leftHandring">左手無名指／第四趾</option>
+<option value="leftHandlittle">左手小指／第五趾</option>
+<option value="leftFootthumb">左腳拇指／大趾</option>
+<option value="leftFootindex">左腳食指／第二趾</option>
+<option value="leftFootmiddle">左腳中指／第三趾</option>
+<option value="leftFootring">左腳無名指／第四趾</option>
+<option value="leftFootlittle">左腳小指／第五趾</option>
+<option value="rightHandthumb">右手拇指／大趾</option>
+<option value="rightHandindex">右手食指／第二趾</option>
+<option value="rightHandmiddle">右手中指／第三趾</option>
+<option value="rightHandring">右手無名指／第四趾</option>
+<option value="rightHandlittle">右手小指／第五趾</option>
+<option value="rightFootthumb">右腳拇指／大趾</option>
+<option value="rightFootindex">右腳食指／第二趾</option>
+<option value="rightFootmiddle">右腳中指／第三趾</option>
+<option value="rightFootring">右腳無名指／第四趾</option>
+<option value="rightFootlittle">右腳小指／第五趾</option></select></label>
+<label>左右張開角（°）<input id="digits32-spread" type="range" min="-25" max="25" value="0" step="1"></label>
+<label>第一節彎曲角（°）<input id="digits32-joint-0" type="range" min="0" max="85" value="0" step="1"></label>
+<label>第二節彎曲角（°）<input id="digits32-joint-1" type="range" min="0" max="85" value="0" step="1"></label>
+<label>第三節彎曲角（°，拇指／大趾不使用）<input id="digits32-joint-2" type="range" min="0" max="85" value="0" step="1"></label>
+</div>
+</details>
+<output id="digits32-status" role="status" aria-live="polite" style="display:block;padding:7px;color:#b5efe7">待命：先建立 3.0 的單一融合人體，再開始 3.2 手腳細部建模。</output>
+<details><summary>來源 SHA、20 根／56 節、實際 GPU 曲面、個別指節 XYZ 與未測量部分</summary>
+<pre id="digits32-proof" style="white-space:pre-wrap;max-height:330px;overflow:auto;font:12px/1.5 ui-monospace,monospace">尚未產生。</pre>
+</details>
+</section>
 <section id="real3d28-learning" class="panel" style="margin:14px 0;padding:14px;background:#071928;border:1px solid #5992a7">
 <h2>Real3D 2.8｜第一方本機 AI 模型訓練、辨識與未知區域</h2>
 <p>先用上方 2.7 真像素標註產生<strong>本人逐區審核過的訓練資料</strong>，才允許真正訓練權重。之後同一模型能直接對不同來源照片推論，不再逐點指定新照片。但目前是從你審核的資料學到的<b>輕量多類別像素機器學習模型</b>，不是預先知道所有人的頭髮、衣物、動植物的通用語意網路。</p>
