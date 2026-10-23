@@ -81,6 +81,18 @@ try{
     .textContent.includes('3.0 網格連通／封閉驗收 PASS'),null,{timeout:25000});
    const proof=JSON.parse(await page.locator('#scan29-proof').textContent());
    assert.equal(proof.actualWebGLSceneObjectActive,true);
+   assert.equal(proof.real39RuntimeStability?.schema,
+    'AIG_REAL3D_3_9_SINGLE_KERNEL_STABILITY');
+   assert.equal(proof.real39RuntimeStability.activeJob,null,
+    'completed scan must not hold the renderer lock');
+   assert.equal(proof.real39RuntimeStability.completed,1);
+   assert.equal(proof.real39RuntimeStability.blocked,0);
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots
+    .stabilityBudget.rendererContextsAllowed,1);
+   assert.ok(proof.unifiedReal36OneKernel120LogicalSlots
+    .stabilityBudget.cappedCooperativeLanes<=4);
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots
+    .stabilityBudget.originalImageMeshAndGLBMutationPermitted,false);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots?.plan?.schema,
     'AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS');
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.logicalSlotsConfigured,12000);
