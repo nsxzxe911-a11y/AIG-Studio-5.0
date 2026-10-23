@@ -237,6 +237,10 @@ try{
     path:out+'/'+device.name+'-20-actual-3d-fingers-toes-independent-posed.png'
    });
    // Fine-grained true phalanx controls for one separately selected finger.
+   // Advanced per-phalanx controls intentionally live in collapsed details
+   // to keep the phone viewer large; interact as a real user would.
+   await page.locator('#real3d32-digits details').first()
+    .locator('summary').click();
    await page.locator('#digits32-choice').selectOption('rightHandring');
    await page.locator('#digits32-joint-0').evaluate(el=>{
     el.value='20';el.dispatchEvent(new Event('input',{bubbles:true}));
