@@ -8,6 +8,10 @@ import * as THREE from 'three';
 import {aig26SRGBToLinear} from './aig-vision-metric-color-2-6.mjs';
 import {makeAIG32DigitRig,poseAIG32AllDigits,
  AIG32_DIGITS,AIG32_SCHEMA} from './aig-20-digit-articulation-3-2.mjs';
+import {aig33PrepareImplicitGroups,AIG33_SCHEMA}
+ from './aig-implicit-digit-field-3-3.mjs';
+import {makeAIG33ImplicitSkinLayer,AIG33_SHADER_SCHEMA}
+ from './aig-implicit-digit-raymarch-3-3.mjs';
 const $=id=>document.getElementById(id);
 const KNOWN=new Map(AIG32_DIGITS.map(v=>[v.id,v]));
 export function installAIG32DigitControls({
@@ -17,6 +21,7 @@ export function installAIG32DigitControls({
   !$('digits32-build')||!$('digits32-proof'))
   throw Error('AIG32_SHARED_3D_DIGIT_UI_CONTRACT_REQUIRED');
  let rig=null,group=null,sourceSha=null,generated=null,focusProof=null;
+ let implicitField=null,actualSurfaceMode=null;
  const poses={},meshes=new Map();
  const status=(msg,bad=false)=>{
   $('digits32-status').textContent=(bad?'BLOCKED：':'')+msg;
@@ -31,7 +36,8 @@ export function installAIG32DigitControls({
   meshes.clear();group=null;
  };
  const reset=()=>{
-  disposeGeometry();rig=null;sourceSha=null;generated=null;focusProof=null;
+  disposeGeometry();rig=null;sourceSha=null;generated=null;
+  focusProof=null;implicitField=null;actualSurfaceMode=null;
   for(const k of Object.keys(poses))delete poses[k];
   for(const d of AIG32_DIGITS){
    const slider=$('digits32-curl-'+d.id);
@@ -50,6 +56,16 @@ export function installAIG32DigitControls({
    actual3DRenderedPhalanges:generated?.generatedActual3DPhalanges??0,
    actual3DIndexedTriangles:generated?.actualCurved3DTriangleCount??0,
    livingWebGLSceneShared:!!group?.parent,
+   selectedSurfaceEngine:$('digits33-render-mode').value,
+   displayedSurfaceEngine:actualSurfaceMode,
+   analyticImplicitField:implicitField?.schema??null,
+   actualAnalyticalCapsuleCount:implicitField?.actualImplicitCapsuleCount??0,
+   realSDFRasterGroupCount:implicitField?.implicitGroupCount??0,
+   fourBoundedProxyBoxesUsedOnlyForPixelCoverage:actualSurfaceMode==='GLSL3_IMPLICIT_SDF',
+   visibleDigitSurfaceFromTriangleMeshes:actualSurfaceMode==='MESH_COMPAT_3_2',
+   implicitFragmentShaderDepthWrites:actualSurfaceMode==='GLSL3_IMPLICIT_SDF',
+   fullNaturalSkinTextureAndNailsApproved:false,
+   mobileSustainedFPSCertified:false,
    actualSharedCameraFocus:focusProof,
    sourceVisiblePalmsFeet:rig?Object.fromEntries(Object.entries(
     rig.sourceAnchors).map(([k,v])=>[k,v?.observedPartLabel??false])):null,
@@ -126,39 +142,70 @@ export function installAIG32DigitControls({
    radialSegments:16,ringsPerPhalanx:5
   });
   if(!next.meshes.length)throw Error('目前沒有任何可見的手臂或腿部來源，不能虛構 20 根手指腳趾');
-  const newGroup=new THREE.Group();
-  newGroup.name='AIG32_TWENTY_TRUE_3D_SOURCE_ANCHORED_DIGIT_SURFACES';
+  const wantsImplicit=$('digits33-render-mode').value==='IMPLICIT_SDF';
+  let newGroup,newField=null,mode;
   const created=new Map();
-  try{
-   for(const item of next.meshes){
-    const digit=KNOWN.get(item.id);
-    const geometry=geometryFrom(item);
-    const linear=chosenPalette(digit,sourceFused);
-    const material=new THREE.MeshStandardMaterial({
-     color:new THREE.Color(...linear),roughness:.78,metalness:0,
-     side:THREE.DoubleSide
-    });
-    const mesh=new THREE.Mesh(geometry,material);
-    mesh.name='AIG32_DIGIT_'+item.id;
-    mesh.userData={
-     digitId:item.id,phalanges:item.phalanxCount,
-     originalSourceSHA256:sourceSha,
-     userHasNotMeasuredDigitDimensions:true,
-     actual3DVertexCount:item.realCurved3DVertexCount,
-     individuallyPosedRealPhalanges:item.phalanxCount
-    };
-    newGroup.add(mesh);created.set(item.id,mesh);
+  if(wantsImplicit){
+   // Real3D 3.3 REQUIRES actual WebGL2 fragment depth. Never quietly
+   // claim direct implicit skin when only 3.2 triangle fallback runs.
+   const context=s.viewer.renderer.getContext();
+   if(typeof context?.texImage3D!=='function')
+    throw Error('3.3 真 SDF 渲染需要 WebGL2；可手動選 3.2 相容模式');
+   newField=aig33PrepareImplicitGroups(next,rig,{
+    quality:$('digits33-quality').value
+   });
+   const linearColours={};
+   for(const part of newField.parts){
+    const matchingDigit=KNOWN.get(
+     part.side+(part.type==='hand'?'Hand':'Foot')+'index');
+    linearColours[part.group]=chosenPalette(matchingDigit,sourceFused);
    }
-   s.mesh.parent.add(newGroup);
-  }catch(e){
-   newGroup.parent?.remove(newGroup);
+   newGroup=makeAIG33ImplicitSkinLayer(newField,linearColours);
+   mode='GLSL3_IMPLICIT_SDF';
+   for(const m of newGroup.children)created.set(m.name,m);
+  }else{
+   // Nondefault, explicitly marked legacy compatibility mode.
+   newGroup=new THREE.Group();
+   newGroup.name='AIG32_LEGACY_TRIANGULATED_DIGIT_SURFACES';
+   mode='MESH_COMPAT_3_2';
+   try{
+    for(const item of next.meshes){
+     const digit=KNOWN.get(item.id);
+     const geometry=geometryFrom(item);
+     const linear=chosenPalette(digit,sourceFused);
+     const material=new THREE.MeshStandardMaterial({
+      color:new THREE.Color(...linear),roughness:.78,metalness:0,
+      side:THREE.DoubleSide
+     });
+     const mesh=new THREE.Mesh(geometry,material);
+     mesh.name='AIG32_DIGIT_'+item.id;
+     mesh.userData={
+      digitId:item.id,phalanges:item.phalanxCount,
+      originalSourceSHA256:sourceSha,
+      userHasNotMeasuredDigitDimensions:true,
+      actual3DVertexCount:item.realCurved3DVertexCount,
+      individuallyPosedRealPhalanges:item.phalanxCount
+     };
+     newGroup.add(mesh);created.set(item.id,mesh);
+    }
+   }catch(e){
+    for(const mesh of created.values()){
+     mesh.geometry.dispose();mesh.material.dispose();
+    }
+    throw e;
+   }
+  }
+  try{s.mesh.parent.add(newGroup)}
+  catch(e){
    for(const mesh of created.values()){
     mesh.geometry.dispose();mesh.material.dispose();
    }
    throw e;
   }
+  // Atomic swap only after source contract, shader group, and scene attach.
   disposeGeometry();group=newGroup;meshes.clear();
   for(const [id,mesh] of created)meshes.set(id,mesh);
+  implicitField=newField;actualSurfaceMode=mode;
   generated=next;
   for(const d of AIG32_DIGITS){
    const disabled=next.blockedMissingSourceDigits.includes(d.id);
@@ -167,13 +214,18 @@ export function installAIG32DigitControls({
    $('digits32-value-'+d.id).textContent=disabled?'無來源':input.value+'%';
   }
   refreshChoice();reportProof();
-  status('已在同一個 WebGL 工作區產生 '+next.generatedActual3DDigits+
-   '/20 根真正立體指趾、'+next.generatedActual3DPhalanges+
-   '/56 段可動指節；GPU 三角面 '+next.actualCurved3DTriangleCount+
-   '。每根都有獨立彎曲。'+(next.blockedMissingSourceDigits.length?
-    '缺乏肢體來源而停用：'+next.blockedMissingSourceDigits.length+' 根。':
-    '雙手雙腳來源錨點均存在。')+
-    '指趾的長度與外形仍為幾何推估，不是實測。');
+  const descriptor=actualSurfaceMode==='GLSL3_IMPLICIT_SDF'?
+   ('GPU 直接 Ray Marching SDF：'+implicitField.implicitGroupCount+
+    ' 組有機曲面、'+implicitField.actualImplicitCapsuleCount+
+    ' 段解析距離場，指趾外觀不使用三角網線') :
+   ('舊 3.2 相容網格：'+next.actualCurved3DTriangleCount+' 三角面');
+  $('digits33-status').textContent='實際渲染：'+descriptor+
+   '；人體真實皮膚細節、3D 量測與手機持續 FPS 仍未獲核准。';
+  status('成功接入 '+next.generatedActual3DDigits+'/20 根、'+
+   next.generatedActual3DPhalanges+'/56 指節；'+descriptor+'。'+
+   (next.blockedMissingSourceDigits.length?
+    '來源未見的指趾停用 '+next.blockedMissingSourceDigits.length+' 根。':'')+
+   '未量測的手腳尺寸保持推估標示。');
  };
  const update=()=>{
   if(!group?.parent){status('請先按 01 產生真正的指趾曲面');return}
@@ -226,6 +278,10 @@ export function installAIG32DigitControls({
  for(const key of ['leftHand','rightHand','leftFoot','rightFoot','body'])
   $('digits32-focus-'+key).addEventListener('click',()=>{
    try{focusPart(key)}catch(e){status(String(e.message||e),true)}
+  });
+ for(const input of ['digits33-render-mode','digits33-quality'])
+  $(input).addEventListener('change',()=>{
+   if(group?.parent)update();
   });
  $('digits32-build').addEventListener('click',()=>{
   try{commit({reanchor:true})}catch(e){status(String(e.message||e),true)}
