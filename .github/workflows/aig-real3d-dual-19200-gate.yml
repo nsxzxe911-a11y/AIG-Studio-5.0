@@ -1,0 +1,70 @@
+name: AIG Real3D 19200 Draw + Render REAL Dual Pipeline Gate
+on:
+  push:
+    branches:
+      - verify/real3d-dual-kernel-19200-auto-route-20261024
+    paths:
+      - 'formal-web/shared-3d/**'
+      - '.github/workflows/aig-real3d-dual-19200-gate.yml'
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/**'
+      - '.github/workflows/aig-real3d-dual-19200-gate.yml'
+  workflow_dispatch:
+jobs:
+  dual-core-numeric:
+    name: 19200 logical slot scheduler + no-fake CPU/GPU gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JS syntax, source morphology contract and 19200 real scheduling
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-dual-kernel-19200.mjs
+          node --check formal-web/shared-3d/aig-real3d-dual-drawing-worker.mjs
+          node --check formal-web/shared-3d/aig-real3d-dual-worker-bridge.mjs
+          node --check formal-web/shared-3d/aig-real3d-lab.mjs
+          node --check formal-web/shared-3d/aig-real3d-webgl.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-dual-kernel-19200.test.mjs
+      - name: Protect real AIG CNC and V1 human screenshot gate
+        run: |
+          grep -q '3ax-nc-workbench.html' formal-web/aig-new-home.html
+          grep -q '3ax-mobile-workspace.html' formal-web/aig-new-home.html
+          grep -q 'aig-download-center.html' formal-web/aig-new-home.html
+          grep -q '19200' formal-web/shared-3d/aig-real3d-dual-kernel-19200.mjs
+          grep -q 'actualPhysicalNewCores:0' formal-web/shared-3d/aig-real3d-dual-kernel-19200.mjs
+          grep -q 'appearanceApproved:false' formal-web/shared-3d/aig-real3d-dual-kernel-19200.mjs
+          grep -q 'id="dual-verify"' formal-web/shared-3d/aig-real3d-lab.html
+          grep -q "runAIG3DIndexedDrawingWorker" formal-web/shared-3d/aig-real3d-lab.mjs
+  dual-core-real-browser:
+    name: One real browser Worker + one real WebGL human GPU frame
+    needs: dual-core-numeric
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Human morphology source through TRUE worker + original renderer
+        run: |
+          python3 -m http.server 8770 --bind 127.0.0.1 --directory formal-web >/tmp/real3d-dual-workspace.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8770/shared-3d/aig-real3d-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-dual-19200.real-browser.mjs
+          test -s artifacts/aig-real3d-dual-kernel-19200/proof.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-REAL3D-19200-ACTUAL-CPU-WORKER-ONE-GPU-APPEARANCE-BLOCK
+          path: artifacts/aig-real3d-dual-kernel-19200/
+          if-no-files-found: warn
