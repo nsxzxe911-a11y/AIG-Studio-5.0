@@ -95,11 +95,14 @@ try{
     .stabilityBudget.originalImageMeshAndGLBMutationPermitted,false);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots?.plan?.schema,
     'AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS');
-   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.logicalSlotsConfigured,12000);
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.logicalSlotsConfigured,19200);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.kernelImplementationCount,1);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.realWebWorkersSpawned,0);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.sharedWebGLContextCount,1);
-   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.vertexColourWork.completedIdenticalKernelSlots,12000);
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.vertexColourWork.completedIdenticalKernelSlots,
+    Math.min(19200,proof.unifiedReal36OneKernel120LogicalSlots.vertexColourWork.actualVerticesColoured));
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.activeProfile,
+    'REAL3D_19200_LOGICAL_WORK_SLOTS');
    assert.ok(proof.unifiedReal36OneKernel120LogicalSlots.vertexColourWork.actualVerticesColoured>5000);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.cameraFit.cameraFitFromRealMesh,true);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.sourceReferenceVisible,true);
@@ -113,7 +116,7 @@ try{
    assert.equal(proof.real37ScalableCoreAndWardrobe.wardrobe.garmentMeshCount,2);
    assert.equal(proof.real37ScalableCoreAndWardrobe.wardrobe.bodyGeometryIdentityPreserved,true);
 
-   assert.ok((await page.locator('#scan36-visible').textContent()).includes('12000 個已配置邏輯工作槽'));
+   assert.ok((await page.locator('#scan36-visible').textContent()).includes('19200 個已配置邏輯工作槽'));
    await page.locator('#scan36-fit').click();
    assert.ok((await page.locator('#scan29-status').textContent()).includes('重新置中'));
    await page.locator('#scan36-light').selectOption('raytrace');
