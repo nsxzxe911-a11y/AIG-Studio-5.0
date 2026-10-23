@@ -96,7 +96,7 @@ try{
    });
    console.log('AIG31_BEFORE_ACTIVATION',device.name,
     await page.locator('#rig31-status').textContent());
-   await page.locator('#rig31-activate').click();
+   await page.locator('#rig31-stage-activate').click();
    console.log('AIG31_AFTER_ACTIVATION',device.name,
     await page.locator('#rig31-status').textContent(),
     (await page.locator('#rig31-proof').textContent()).slice(0,650));
@@ -111,8 +111,14 @@ try{
     .evaluate((el,v)=>{
      el.value=String(v);el.dispatchEvent(new Event('input',{bubbles:true}));
     },value);
-   await poseSlider('headYaw',25);
-   await poseSlider('neckYaw',15);
+   await page.locator('#rig31-stage-headYaw').evaluate(el=>{
+    el.value='25';el.dispatchEvent(new Event('input',{bubbles:true}));
+   });
+   await page.locator('#rig31-stage-neckYaw').evaluate(el=>{
+    el.value='15';el.dispatchEvent(new Event('input',{bubbles:true}));
+   });
+   assert.equal(await page.locator('#rig31-headYaw').inputValue(),'25');
+   assert.equal(await page.locator('#rig31-neckYaw').inputValue(),'15');
    await page.waitForFunction(()=>{
     try{const p=JSON.parse(document.getElementById('rig31-proof').textContent);
      return p.exactDegrees?.headYaw===25&&p.exactDegrees?.neckYaw===15
@@ -176,6 +182,8 @@ try{
      neckNotPhysicallyTwisted180:true,visualRealismNotCertified:true
     },null,2));
    await page.locator('#rig31-reset').click();
+   assert.equal(await page.locator('#rig31-stage-headYaw').inputValue(),'0');
+   assert.equal(await page.locator('#rig31-stage-neckYaw').inputValue(),'0');
    await page.waitForFunction(()=>{
     try{return JSON.parse(document.getElementById('rig31-proof').textContent)
      .actualSourceVertexMoved===0}catch{return false}
