@@ -16,6 +16,8 @@ import {makeAIGStage1CanonicalMM,auditAIGStage1MMConversion,
  from './aig-stage1-mm-coordinate-contract.mjs';
 import {renderAIGStage1True4KPNG,renderAIGStage1ResolutionPNG}
  from './aig-stage1-true4k-capture.mjs';
+import {captureAIGStage1TrueFrontPhoto}
+ from './aig-stage1-true-front-photo.mjs';
 export const AIG_STAGE1_RUNTIME='AIG_STAGE1_DUAL_ADULT_TRUE_WEBGL_VIEWS';
 const el=id=>document.getElementById(id);
 const views=['front','profile','rear','quarter45'];
@@ -95,6 +97,9 @@ export function installAIGStage1DualAdultRuntime({
  let ratioEvidence=null,snapshotsByGender=new Map(),lastCameraPlan=null;
  let fourKBusy=false,last4KOutput=null,previousPreviewQuality=null;
  const captured4KURLs=[];
+ let frontPhotoBusy=false;
+ let frontPhotoProofByGender=new Map();
+ const frontPhotoURLs=[];
  const singleCore19200=planAIGStage1OneCore19200();
  const status=(text,blocked=false)=>{
   el('stage1-status').textContent=text;
@@ -183,6 +188,7 @@ export function installAIGStage1DualAdultRuntime({
    submittedFrameCount:renderCount,
    automaticGeometryGate:lastAudit?.automaticGeometryContractPASS===true,
    actualBodySurfaceAudit:lastAudit?.actualSurfaceAudit??null,
+   trueFrontPhotoSource:frontPhotoProofByGender.get(selected)||null,
    mandatoryFourViewSnapshotsReviewed:false,
    neutralBodySourceVisuallyAccepted:false,
    fullSkinnedBlendWeightsVerified:false,
@@ -263,6 +269,9 @@ export function installAIGStage1DualAdultRuntime({
   // Keep previous gallery PNGs as evidence, but never silently reuse
   // yesterday's hash to satisfy the current session's Stage 1 Gate.
   snapshotsByGender.delete(gender);
+  // The old frontal photo is still visible in the history gallery but
+  // cannot count as proof for the newly installed body geometry.
+  frontPhotoProofByGender.delete(gender);
   // Historical 4K thumbnails remain visible, but prior gender/render
   // evidence must NEVER be attributed to a newly installed model.
   last4KOutput=null;
@@ -391,6 +400,87 @@ export function installAIGStage1DualAdultRuntime({
    '人體外觀尚待你的目視驗收，Stage 1 仍為 BLOCK。');
   return shots;
  };
+ const frontPhotoStatus=(message,blocked=false)=>{
+  const node=el('stage1-photo-front-status');
+  node.textContent=message;
+  node.dataset.error=blocked?'true':'false';
+ };
+ const captureTrueFrontPhoto=async(gender=selected)=>{
+  if(frontPhotoBusy||fourKBusy)
+   error('FRONT_PHOTO_GPU_CAPTURE_IS_BUSY');
+  frontPhotoBusy=true;
+  const originSession=session;
+  try{
+   await setup(gender);
+   if(!active||viewer.movieMode||viewer.reviewBusy)
+    error('FRONT_PHOTO_REQUIRES_IDLE_REAL_WEBGL');
+   frontPhotoStatus('正面 -Z 正交相機拍攝中，原生 1080×1920，無旋轉。');
+   const result=await captureAIGStage1TrueFrontPhoto({
+    renderer:viewer.renderer,scene:stageScene,
+    source:model.source,width:1080,height:1920
+   });
+   if(!active||model?.source.gender!==gender)
+    error('FRONT_PHOTO_SOURCE_CHANGED_BEFORE_SAVING');
+   // Same program session is required; do not copy stale snapshots.
+   if(session!==originSession&&selected!==gender)
+    error('FRONT_PHOTO_SESSION_WAS_REPLACED');
+   const objectURL=URL.createObjectURL(result.blob);
+   frontPhotoURLs.push(objectURL);
+   const gallery=el('stage1-photo-front-gallery');
+   const figure=document.createElement('figure');
+   figure.dataset.stage1RealFrontGender=gender;
+   figure.style.cssText='margin:0;padding:9px;border:1px solid #487a92;border-radius:8px';
+   const title=document.createElement('figcaption');
+   title.textContent=(gender==='male'?'成人男／貼身泳褲':'成人女／貼身連身泳衣')+
+    '｜真正正面｜1080×1920｜正交（0°）｜待外觀驗收';
+   title.style.cssText='font-size:12px;padding:5px;color:#b1e8fa';
+   const image=document.createElement('img');
+   image.src=objectURL;
+   image.alt='AIG Real3D '+gender+' REAL FRONT WebGL orthographic 0°';
+   image.style.cssText='display:block;width:100%;height:auto';
+   const download=document.createElement('a');
+   download.textContent='儲存真正 WebGL 正面 PNG';
+   download.download='AIG-Stage1-'+gender+
+    '-FRONT-ORTHO-1080x1920-'+result.sha256.slice(0,12)+'.png';
+   download.href=objectURL;
+   download.style.cssText='display:block;color:#8ae0ff;padding:6px';
+   const hash=document.createElement('small');
+   hash.textContent='SHA256: '+result.sha256+
+    '｜人體外觀 BLOCK｜原幾何不變';
+   hash.style.cssText='font-size:10px;overflow-wrap:anywhere';
+   figure.append(title,image,download,hash);
+   gallery.prepend(figure);
+   frontPhotoProofByGender.set(gender,{
+    gender,view:'front',projection:'orthographic',
+    width:result.width,height:result.height,sha256:result.sha256,
+    actualGPUFramebufferAndPixelsRead:result.actualGPUFramebufferAndPixelsRead,
+    cameraYawDeg:result.cameraYawDeg,
+    cameraPitchDeg:result.cameraPitchDeg,
+    headToFeetFraming:result.cameraFraming,
+    sourceXYZClipAudit:result.sourceXYZClipAudit,
+    bodyVisuallyApproved:false,
+    stage1ReleasePASS:false
+   });
+   publish();
+   frontPhotoStatus('已實際渲染 '+(gender==='male'?'男生':'女生')+
+    ' 1080×1920 正面 WebGL PNG：正交鏡頭、無 45°、頭腳完整入鏡；'+
+    '視覺解剖比例仍待驗收，Stage 1 BLOCK。');
+   return result;
+  }catch(e){
+   frontPhotoStatus('正面照 BLOCK：'+String(e?.message||e),true);
+   throw e;
+  }finally{
+   frontPhotoBusy=false;
+  }
+ };
+ const captureBothTrueFrontPhotos=async()=>{
+  // Sequentially reuses the ONE existing WebGL renderer.
+  const male=await captureTrueFrontPhoto('male');
+  const female=await captureTrueFrontPhoto('female');
+  if(male.sha256===female.sha256)
+   error('MALE_FEMALE_REAL_GPU_FRONT_PHOTOS_IDENTICAL');
+  return [male,female];
+ };
  const fourKStatus=(message,failed=false)=>{
   el('stage1-4k-status').textContent=message;
   el('stage1-4k-status').dataset.error=failed?'true':'false';
@@ -505,6 +595,7 @@ export function installAIGStage1DualAdultRuntime({
   }
   stageScene=null;stageCamera=null;viewer=null;
   snapshotsByGender=new Map();ratioEvidence=null;lastCameraPlan=null;
+  frontPhotoProofByGender=new Map();
   previousPreviewQuality=null;
   status('已退出 Stage 1 基礎人體，原始 3D 工作場景仍保留。');
   publish();
@@ -539,13 +630,21 @@ export function installAIGStage1DualAdultRuntime({
  el('stage1-4k-four').addEventListener('click',()=>{
   fourKAllViews().catch(()=>{});
  });
+ el('stage1-photo-front-current').addEventListener('click',()=>{
+  captureTrueFrontPhoto(el('stage1-gender').value).catch(()=>{});
+ });
+ el('stage1-photo-front-both').addEventListener('click',()=>{
+  captureBothTrueFrontPhotos().catch(()=>{});
+ });
  el('stage1-close').addEventListener('click',stop);
  window.addEventListener('pagehide',()=>{
   captured4KURLs.forEach(u=>URL.revokeObjectURL(u));
+  frontPhotoURLs.forEach(u=>URL.revokeObjectURL(u));
   stop();
  },{once:true});
  publish();
  return Object.freeze({setup,selectView,capture,display,
+  captureTrueFrontPhoto,captureBothTrueFrontPhotos,
   captureResolution,captureTrue4K:(v)=>captureResolution(v??currentView,'4k'),
   fourKAllViews,set4KPreview,stop,
   get isActive(){return active},get evidence(){return proofState}});
