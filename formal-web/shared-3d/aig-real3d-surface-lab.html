@@ -1,0 +1,62 @@
+<!doctype html><html lang="zh-Hant"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020407">
+<title>AIG Real3D｜SDF／Metaball 人體連續曲面並測（未驗收）</title>
+<style>
+:root{color-scheme:dark;font:14px system-ui,"Microsoft JhengHei",sans-serif;color:#d9f3fc}
+*{box-sizing:border-box}
+body{margin:0;background:#020407}
+header{background:#07111b;padding:16px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;border-bottom:1px solid #235775}
+a{color:#84dcfa}
+main{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,350px);gap:14px;max-width:1500px;margin:auto;padding:14px}
+section{border:1px solid #2a6379;border-radius:12px;background:#07111b;padding:16px}
+h1{font-size:19px;margin:0}h2{font-size:17px;margin:4px 0 10px}p{line-height:1.65;color:#b3d8e4}
+canvas{display:block;width:100%;aspect-ratio:16/9;border:1px solid #27627e;border-radius:9px;background:#000}
+select,button{min-height:42px;width:100%;border:1px solid #3c7890;border-radius:8px;background:#0a2b3d;color:#def7ff;font:inherit;padding:9px;margin:5px 0}
+button{background:linear-gradient(115deg,#00778a,#294c87);font-weight:700;cursor:pointer}
+button:disabled{opacity:.5;cursor:progress}
+label{display:block;margin-top:13px}
+pre{overflow:auto;max-height:250px;font-size:11px;white-space:pre-wrap;color:#b8daed}
+#gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+figure{margin:0;border:1px solid #386479;border-radius:9px;padding:10px}
+figure img{width:100%;height:auto;max-height:480px;object-fit:contain;background:#000}
+figcaption{font-weight:700;margin-bottom:8px}
+small{color:#a7c2ce;overflow-wrap:anywhere}
+.warning{color:#ffcb82}
+@media(max-width:810px){main{grid-template-columns:1fr}#gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:460px){#gallery{grid-template-columns:1fr}}
+</style></head><body>
+<header><h1>REAL3D｜連續曲面雙引擎 A/B 比較</h1>
+<nav><a href="../aig-new-home.html">AIG 新版首頁</a>　<a href="./aig-real3d-lab.html?profile=HumanMale">原人體工作頁</a></nav></header>
+<main>
+<div>
+<section>
+<h2>同一套人體來源 · 同一正面正交相機</h2>
+<canvas id="surface-view" width="1100" height="680" aria-label="實際共享 WebGL 人體連續曲面預覽"></canvas>
+<p class="warning">這是研發對照：從真實 Stage 1 關節建立不同的隱式曲面，輸出同尺寸原生 WebGL PNG。曲面連通成功不表示比例自然、照片相似或人體外觀合格。</p>
+</section>
+<section><h2>SDF 與 Metaball 真 GPU 正面對照</h2><div id="gallery" aria-label="相同構圖的真實 GPU SDF Metaball 正面照對比"></div></section>
+</div>
+<aside><section>
+<h2>19,200 雙核心自動分配</h2>
+<label for="gender">人體來源</label>
+<select id="gender"><option value="female" selected>成人女性基礎體</option><option value="male">成人男性基礎體</option></select>
+<label for="grid-quality">曲面網格解析度</label>
+<select id="grid-quality">
+<option value="draft">快速測試（低密度）</option>
+<option value="standard" selected>標準曲面</option>
+<option value="fine">精細曲面（桌機試驗）</option>
+</select>
+<label for="candidate">曲面生成方法</label>
+<select id="candidate">
+<option value="sdf">A · SDF Smooth Union 連續曲面</option>
+<option value="metaball">B · Metaball Gaussian 融合曲面</option>
+</select>
+<button type="button" id="single">真產生選定曲面 → WebGL 正面 PNG</button>
+<button type="button" id="compare">男／女與兩種曲面同規格並測（4 張）</button>
+<p id="state" role="status" aria-live="polite">尚未執行。未驗收人體維持 BLOCK。</p>
+<pre id="proof" aria-label="實際曲面幾何與 GPU 驗證紀錄">尚無驗收證據。</pre>
+<p>目前「Template Morph、Subdivision、Voxel」尚未接入新演算法，沒有假按鈕。原有分段人體仍保留做對照，不覆蓋正式 AIG 模型。</p>
+</section></aside></main>
+<script type="module" src="./aig-real3d-surface-lab.mjs"></script>
+</body></html>
