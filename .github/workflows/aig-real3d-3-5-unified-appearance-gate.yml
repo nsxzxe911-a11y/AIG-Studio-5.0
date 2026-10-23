@@ -38,6 +38,8 @@ on:
       - 'formal-web/school-3d/fastmodel/single-photo/aig-continuous-surface-scan-2-9-ui.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-dual-adult-anatomy.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-dual-adult-runtime.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-unified-19200-ratio-core.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-unified-19200-ratio-core.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-dual-adult.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-dual-adult.real-browser.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.html'
@@ -171,9 +173,13 @@ jobs:
         run: |
           node --check aig-stage1-dual-adult-runtime.mjs
           node --check aig-stage1-dual-adult-anatomy.mjs
+          node --check aig-stage1-unified-19200-ratio-core.mjs
+          node --test tests/aig-stage1-unified-19200-ratio-core.test.mjs
           node --test tests/aig-stage1-dual-adult.test.mjs
       - name: Build existing one-context WebGL runtime
-        run: npm run build
+        run: |
+          npm run build
+          grep -q 'AIG_STAGE1_ONE_CORE_19200_PROPORTION_GATE' dist/scene-runtime-studio.js
       - name: Install Chromium for real HTML canvas rendering
         run: |
           npm install --no-save playwright@1.55.0
