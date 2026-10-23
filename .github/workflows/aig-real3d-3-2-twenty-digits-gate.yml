@@ -1,0 +1,55 @@
+name: AIG Real3D 3.2 Twenty True 3D Fingers Toes 56 Phalanx Gate
+on:
+  push:
+    branches:
+      - verify/real3d-true-world-movie-2-5-20261023
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-20-digit-articulation-3-2*'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-20-digit-articulation-3-2*'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-articulated-view-3-1-ui.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.*'
+      - '.github/workflows/aig-real3d-3-2-twenty-digits-gate.yml'
+  workflow_dispatch:
+jobs:
+  actual-twenty-digits-and-56-source-linked-phalanges:
+    name: All 20 individually posed 3D fingers toes and 56 segments in actual shared phone desktop WebGL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Twenty true source-bound joint surfaces and original model SHA
+        run: |
+          node --check aig-20-digit-articulation-3-2.mjs
+          node --check aig-20-digit-articulation-3-2-ui.mjs
+          node --check tests/aig-20-digit-articulation-3-2.real-browser.mjs
+          node --check scene-runtime-studio.mjs
+          node --test tests/aig-20-digit-articulation-3-2.test.mjs
+          node --test tests/aig-articulated-view-3-1.test.mjs
+          node --test tests/aig-fused-manifold-surface-3-0.test.mjs
+      - name: Build original formal Real3D plus CNC safe source
+        run: |
+          npm run build
+          test -s dist/scene-runtime-studio.html
+          test -s dist/scene-runtime-studio.js
+          node --check dist/scene-runtime-studio.js
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: REAL phone and desktop render 20 digits, bend index/toe/thumb independently and follow parent shoulder
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig32-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-20-digit-articulation-3-2.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-3-2-Actual-20-Fingers-Toes-56-Phalanges-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-3-2-20-fingers-toes/
+          if-no-files-found: warn
