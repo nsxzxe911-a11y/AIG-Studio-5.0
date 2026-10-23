@@ -179,6 +179,24 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <button id="vision27-save" type="button">03｜保存來源 SHA＋RLE 像素分割證據</button>
 <details><summary>真像素分割結果／未知遮擋／防假 AI 來源證據</summary><pre id="vision27-proof" style="max-height:330px;overflow:auto;white-space:pre-wrap;font:12px/1.55 ui-monospace,monospace">尚無真實分割結果。</pre></details>
 </section>
+<section class="panel" id="real3d29-surface" style="margin:14px 0;background:#081b2a;border:1px solid #4aaab9">
+<h2>Real3D 2.9｜真實 3D 曲面掃描／仿 CNC 五軸角度檢查</h2>
+<p>用上方原照片的可見輪廓與 2.7 標籤，<strong>從頭到腳建立真正連續的三維 XYZ 曲面和法線</strong>，直接顯示在同一個 WebGL 3D 視窗。可旋轉 360°，檢查斷面及曲面法線，不能再拿色塊或平面圖片充當 3D。</p>
+<p>注意：單張 RGB 照片沒有實測的前後深度。背面橢圓厚度是<strong>明確標示的幾何推估</strong>；仿五軸掃描只是幾何法線的虛擬探頭，不是真實雷射、超聲波回波、量測儀或 Fanuc 真機加工指令。已量測的平面 mm 也不能直接假冒整個立體人體精度。</p>
+<div class="world-grid">
+<label>曲面環向細度 <select id="scan29-radial"><option value="24">24（省記憶體）</option><option value="48" selected>48（平衡）</option><option value="64">64（細緻）</option><option value="96">96（高細度）</option></select></label>
+<label>截面間距 <select id="scan29-step"><option value="8">8 像素（快速）</option><option value="4" selected>4 像素（平衡）</option><option value="2">2 像素（細緻）</option><option value="1">1 像素（細密）</option></select></label>
+<label>未量測前後深度比例 <input id="scan29-depth" type="range" min="0.3" max="1.2" step=".05" value=".60"></label>
+<label>五軸虛擬探頭距離（模型相對單位）<input id="scan29-standoff" type="number" min=".01" max=".3" step=".01" value=".09"></label>
+</div>
+<button type="button" id="scan29-build">01｜以真照片輪廓生成連續 3D 曲面並顯示</button>
+<button type="button" id="scan29-probe">02｜顯示五軸 A/B 法線掃描路徑</button>
+<button type="button" id="scan29-hide">只移除這次曲面預覽（保留原 GLB 與場景）</button>
+<output id="scan29-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#adefe7">目前未建立連續 3D 曲面；先在 2.6 載入真照片、2.7 完成來源像素分割。</output>
+<details><summary>查看真正 3D 曲面三角形、XYZ 法線、A/B 虛擬探頭、深度推估標記與 GPU 繪製證據</summary>
+<pre id="scan29-proof" style="white-space:pre-wrap;max-height:340px;overflow:auto;font:12px/1.5 ui-monospace,monospace">尚未掃描。</pre>
+</details>
+</section>
 <section id="real3d28-learning" class="panel" style="margin:14px 0;padding:14px;background:#071928;border:1px solid #5992a7">
 <h2>Real3D 2.8｜第一方本機 AI 模型訓練、辨識與未知區域</h2>
 <p>先用上方 2.7 真像素標註產生<strong>本人逐區審核過的訓練資料</strong>，才允許真正訓練權重。之後同一模型能直接對不同來源照片推論，不再逐點指定新照片。但目前是從你審核的資料學到的<b>輕量多類別像素機器學習模型</b>，不是預先知道所有人的頭髮、衣物、動植物的通用語意網路。</p>
