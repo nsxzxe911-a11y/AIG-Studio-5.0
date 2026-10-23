@@ -1,0 +1,66 @@
+{
+  "schema": "AIG_FASTMODEL_STARJOURNEY_MOBILE_AUTHORITY_V1",
+  "created_at": "2026-10-24",
+  "approval": {
+    "mobile_visual_authority": true,
+    "desktop_visual_authority_kept": true,
+    "approved_in_conversation": true,
+    "runtime_behavior_not_proven_by_approval": true
+  },
+  "image": {
+    "id": "IMG.FM.CINEMA.STAR_JOURNEY.MOBILE.AUTHORITY.V1",
+    "name": "AIG-FastModel-StarJourney-RGBGlass-Mobile-Authority-V1.png",
+    "pixel_width": 390,
+    "pixel_height": 844,
+    "sha256": "771e25505942b9ae9424ac8a8329f40bd706063c6f1eded81b53e05daff69d35",
+    "library_path": "/AIG-II/FastModel/Approved-Authority/Mobile/AIG-FastModel-StarJourney-RGBGlass-Mobile-Authority-V1.png",
+    "library_file_id": "libfile_43467b85d30881918d83d71b0ae1a9f0",
+    "source": "2026-10-24 screenshot of genuine responsive runtime mobile stage, user approved",
+    "binary_in_repository": false,
+    "no_faked_completed_media_claim": true
+  },
+  "platform": "ANDROID_MOBILE_WEB",
+  "orientation": "PORTRAIT",
+  "resolution_reference": "390x844",
+  "desktop_is_distinct_authority": true,
+  "navigation": {
+    "tabs": [
+      {
+        "tab_id": "FM.MOBILE.TAB.STAGE",
+        "region_id": "REGION.FM.MOBILE.STAGE",
+        "label": "畫面"
+      },
+      {
+        "tab_id": "FM.MOBILE.TAB.CONTROL",
+        "region_id": "REGION.FM.MOBILE.CONTROL",
+        "label": "控制"
+      },
+      {
+        "tab_id": "FM.MOBILE.TAB.TIMELINE",
+        "region_id": "REGION.FM.MOBILE.TIMELINE",
+        "label": "時間軸"
+      }
+    ],
+    "tabs_are_real_controls": true,
+    "mutually_exclusive_workspaces": true
+  },
+  "required_elements": [
+    "FM.MOBILE.HEADER",
+    "FM.MOBILE.VIEWPORT",
+    "FM.MOBILE.TRANSPORT",
+    "FM.MOBILE.PRIMARY_ACTIONS",
+    "FM.MOBILE.MODES",
+    "FM.MOBILE.BOTTOM_TABS"
+  ],
+  "rule": "Image visual authority, all text, controls and state must be live DOM/canvas, never fake raster controls",
+  "warnings": [
+    "Image contains placeholder stage, not a produced Star Journey film",
+    "AI generator disabled until true backend",
+    "Desktop / Mobile authority hashes must not be mixed"
+  ],
+  "safety": {
+    "retain_existing_formal_aig_home": true,
+    "retain_cnc_3ax_6ax_nc": true,
+    "draft_no_deploy": true
+  }
+}
