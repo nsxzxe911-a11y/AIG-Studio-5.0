@@ -45,12 +45,14 @@ function reviewOK(entry,ids){
 export function addAIG28BReviewedSource(dataset,entry,{classIds}={}){
  if(!Array.isArray(dataset)||dataset.length>=MAX_DATASET_IMAGES)
   fail('REVIEWED_IMAGE_DATASET_BUDGET_OR_TYPE_INVALID');
- const checked=reviewOK(entry,classIds);
- if(dataset.some(x=>x.sourceSha256===entry.sourceSha256))
+ if(dataset.some(x=>x.sourceSha256===entry?.sourceSha256))
   fail('DUPLICATE_SOURCE_SHA_NO_TRAINING_LEAKAGE');
+ // Reject incompatible class manifests before reading pixels. Otherwise
+ // an omitted existing neck class yields a confusing generic mask error.
  if(dataset.length&&dataset.some(x=>
   JSON.stringify(x.classIds)!==JSON.stringify(classIds)))
   fail('INCONSISTENT_CLASS_MANIFEST_NO_MISLABELLED_TRAINING');
+ const checked=reviewOK(entry,classIds);
  const total=dataset.reduce((a,r)=>a+r.width*r.height,0)+
   entry.width*entry.height;
  if(total>MAX_TOTAL_PIXELS)fail('DATASET_EXCEEDS_PHONE_MEMORY_BUDGET');
