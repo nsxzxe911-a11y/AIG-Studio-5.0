@@ -136,6 +136,37 @@ try{
     .realUserApprovedHeroineAppearancePASS,false);
    assert.equal(heroineRefit.real314HeroineApprovedVisualReferenceFit
     .actualFaceEyeNoseMouth3DShapeMatched,false);
+   // Source-first 3.15 creates an independently shaded heroine *draft*
+   // with real source-constrained long-hair XYZ geometry, then checks
+   // front/side/back without using photo billboard or new WebGL renderer.
+   await page.locator('#scan315-source-first > summary').click();
+   await page.locator('#scan315-preview').dispatchEvent('click');
+   await page.waitForFunction(()=>{
+    const p=JSON.parse(document.getElementById('scan29-proof').textContent);
+    return p.real315GeometryFirstHeroineViewReview?.actualSourceStyleDraftCreated===true;
+   },null,{timeout:20000});
+   const draft=JSON.parse(await page.locator('#scan29-proof').textContent())
+    .real315GeometryFirstHeroineViewReview;
+   assert.equal(draft.currentOutfit,'uniform');
+   assert.equal(draft.currentHair,'authority-long');
+   assert.ok(draft.actualIndependentHairTriangles>700);
+   assert.ok(draft.actualIndependentOutfitMeshes>=2);
+   assert.equal(draft.sameWebGLRendererStillActive,true);
+   assert.equal(draft.verifiedUserFacialLandmarkMeshTriangles,0);
+   assert.equal(draft.finalAppearanceReleasePASS,false);
+   for(const [view,click] of [['front','scan315-front'],
+    ['profile','scan315-profile'],['rear','scan315-rear']]){
+    await page.locator('#'+click).dispatchEvent('click');
+    await page.waitForFunction(v=>{
+     const p=JSON.parse(document.getElementById('scan29-proof').textContent);
+     return p.real315GeometryFirstHeroineViewReview?.activeView===v;
+    },view,{timeout:12000});
+    await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+    await page.screenshot({animations:'disabled',timeout:15000,
+     path:out+'/'+device.name+'-real3d-3-15-actual-'+view+'-geometry-draft.png'
+    });
+   }
+
 
    // 3.13: the hero remains source-bound. Additional crowd bodies are
    // explicitly SAME-mesh technical test instances, NOT distinct classmates.
@@ -157,7 +188,9 @@ try{
    await page.screenshot({animations:'disabled',timeout:15000,
     path:out+'/'+device.name+'-real3d-3-13-four-technical-crowd-people.png'
    });
-   await page.locator('#scan313-bench').click();
+   // Real WebGL animation can move a mobile viewport while Playwright
+   // waits for click stability. Dispatch the real DOM event directly.
+   await page.locator('#scan313-bench').dispatchEvent('click');
    await page.waitForFunction(()=>{
     const x=JSON.parse(document.getElementById('scan313-proof').textContent);
     return x.latestBenchmark?.visiblePeople===4&&
