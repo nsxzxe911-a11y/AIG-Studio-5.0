@@ -1,6 +1,8 @@
 import {buildAIGReal3DGLBStatic} from './aig-real3d-glb-native-mesh.mjs';
 import {buildAIGReal3DScanNative} from './aig-real3d-scan-native-mesh.mjs';
 import {buildAIGReal3DSourceReview,validateAIGReal3DLandmarkSidecar} from './aig-real3d-source-review-gate.mjs';
+import {compareAIGReal3DReferencePNGs} from './aig-real3d-reference-silhouette-browser.mjs';
+import {evaluateAIGReal3DFourViewComparisons} from './aig-real3d-reference-silhouette.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {
  auditAIG3DSourceSilhouette,validateAIGInspectionCapturePlan,
@@ -32,7 +34,8 @@ $('inspect').addEventListener('click',async()=>{
   setStatus('BLOCK：需輸入 900–2200 mm 的來源實測身高。');return;
  }
  running=true;$('inspect').disabled=true;$('report-download').disabled=true;report=null;
- release();gallery.replaceChildren();
+ release();gallery.replaceChildren();$('reference-gallery').replaceChildren();
+ $('reference-stats').textContent='尚未比對四方向透明輪廓；自然人體外觀 BLOCK。';
  $('evidence').textContent='讀取 GLB 與實際三角形…';
  let renderer;
  try{
@@ -66,7 +69,7 @@ $('inspect').addEventListener('click',async()=>{
   renderer=createAIG3DRenderer(canvas,{quality:'balanced',
    pixelRatio:1,background:[.769,.745,.702,1]});
   if(renderer.status!=='READY')throw Error('WEBGL_DEVICE_UNAVAILABLE');
-  const proofs=[];
+  const proofs=[],sourceFrames=new Map();
   for(let i=0;i<SETUPS.length;i++){
    const [label,angle,mode]=SETUPS[i];
    const spec=validateAIGInspectionCapturePlan({
@@ -77,6 +80,10 @@ $('inspect').addEventListener('click',async()=>{
    const png=await renderer.captureNativePNG(scene,{
     width:1080,height:1920
    });
+   if((angle==='front'&&mode==='BROWN_FLAT')||
+     (angle!=='front'&&mode==='BROWN_VOLUME')){
+    sourceFrames.set(angle,png.blob);
+   }
    const href=URL.createObjectURL(png.blob);urlPool.add(href);
    const fig=document.createElement('figure');
    const image=document.createElement('img');
@@ -120,7 +127,45 @@ $('inspect').addEventListener('click',async()=>{
    userClaimsAuthorized:$('source-rights').checked,
    captureProofs:proofs.filter(p=>p.mode==='BROWN_VOLUME'||p.mode==='BROWN_FINISH')
   });
-  report={...result,sourceReview};
+  const silhouetteResults=[],silhouetteProblems=[];
+  const selected=['front','side','back','threeQuarter'].filter(
+   angle=>Boolean($('reference-'+angle).files?.[0]));
+  for(const angle of selected){
+   try{
+    const referenceFile=$('reference-'+angle).files[0];
+    if(!/\.png$/i.test(referenceFile.name))
+     throw Error('必須選擇透明背景 PNG，不支援 JPG');
+    const data=await compareAIGReal3DReferencePNGs({
+     sourcePNG:sourceFrames.get(angle),referencePNG:referenceFile,
+     angle,sourceSHA:hash
+    });
+    const href=URL.createObjectURL(data.overlayPNG);urlPool.add(href);
+    const fig=document.createElement('figure'),img=document.createElement('img');
+    img.src=href;img.alt=angle+'原始 GPU 人體輪廓與去背參考 PNG 差異';
+    const cap=document.createElement('figcaption');
+    const label=document.createElement('span');
+    label.textContent=angle+' 重合 '+(data.diagnostic.intersectionOverUnion*100).toFixed(2)+'%';
+    const link=document.createElement('a');
+    link.download='AIG-Real3D-Reference-Difference-'+angle+'.png';
+    link.href=href;link.textContent='下載輪廓差異圖';
+    cap.append(label,link);fig.append(img,cap);
+    $('reference-gallery').append(fig);
+    silhouetteResults.push(data.diagnostic);
+   }catch(e){silhouetteProblems.push({angle,error:e.message});}
+  }
+  const summary=evaluateAIGReal3DFourViewComparisons(silhouetteResults);
+  $('reference-stats').textContent=selected.length===0?
+   '尚未提供透明輪廓參考圖。GPU 渲染已完成，但沒有來源照片外型比對。':
+   '已比對 '+summary.count+'/4 視角；平均重合率：'+
+   (summary.averageIoU===null?'無法計算':(summary.averageIoU*100).toFixed(2)+'%')+
+   '；失敗：'+silhouetteProblems.length+'；這不是人體自然度自動驗收。';
+  report={...result,sourceReview,silhouetteComparison:{
+   ...summary,images:silhouetteResults,errors:silhouetteProblems,
+   transparentReferencesUploaded:selected.length,
+   fourViewSilhouetteComparePASS:summary.allFourAnglesCompared&&
+    summary.sourceSHAConsistent&&silhouetteProblems.length===0,
+   anatomicalVisualApproval:false,personLikenessVerified:false
+  }};
   $('evidence').textContent=JSON.stringify(report,null,2);
   $('report-download').disabled=false;
   setStatus('來源 '+file.name+' 完成 7 張真 GPU 圖；'+
