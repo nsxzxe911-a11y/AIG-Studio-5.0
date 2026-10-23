@@ -74,7 +74,7 @@ try{
    await page.locator('#scan29-radial').selectOption('48');
    await page.locator('#scan29-build').click();
    await page.waitForFunction(()=>document.getElementById('scan29-status')
-    .textContent.includes('3.0 單一連通封閉曲面成功'),null,{timeout:25000});
+    .textContent.includes('3.0 網格連通／封閉驗收 PASS'),null,{timeout:25000});
    const proof=JSON.parse(await page.locator('#scan29-proof').textContent());
    assert.equal(proof.actualWebGLSceneObjectActive,true);
    assert.equal(proof.sharedExistingViewerContext,true);
