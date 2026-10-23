@@ -75,6 +75,10 @@ jobs:
           node --check aig-20-digit-articulation-3-2-ui.mjs
           node --check tests/aig-20-digit-articulation-3-2.real-browser.mjs
           node --test tests/aig-20-digit-articulation-3-2.test.mjs
+          node --check aig-implicit-digit-field-3-3.mjs
+          node --check aig-implicit-digit-raymarch-3-3.mjs
+          node --check tests/aig-implicit-digit-raymarch-3-3.real-browser.mjs
+          node --test tests/aig-implicit-digit-field-3-3.test.mjs
           node --check aig-map-model-alignment-2-1.mjs
           node --check tests/aig-map-actor-2-1.real-browser.mjs
           node --test tests/aig-map-model-alignment-2-1.test.mjs
@@ -168,6 +172,7 @@ jobs:
           node tests/aig-continuous-surface-scan-2-9.real-browser.mjs
           node tests/aig-articulated-view-3-1.real-browser.mjs
           node tests/aig-20-digit-articulation-3-2.real-browser.mjs
+          node tests/aig-implicit-digit-raymarch-3-3.real-browser.mjs
           node tests/aig-map-actor-2-1.real-browser.mjs
           node tests/aig-world-scene-2-0.real-browser.mjs
           node tests/aig-scene-lifecycle-1-9.real-browser.mjs
@@ -177,6 +182,12 @@ jobs:
           node tests/aig-glb-gpu-v1-7.real-browser.mjs
           node tests/aig-metric-stereo-7-13.real-browser.mjs
           node tests/aig-heroine-scan-7-14.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-3-3-Actual-Analytical-SDF-Skin-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-3-3-implicit-sdf-skin/
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always()
         with:
