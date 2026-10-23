@@ -54,7 +54,7 @@
     {
       "id": "REAL3D.PASS.OUTLINE",
       "order": 1,
-      "status": "SPEC_APPROVED_NOT_IMPLEMENTED",
+      "status": "WEBGL_GPU_PASS_SYNTHETIC_NONHUMAN_ONLY",
       "enabled_in_v1": true,
       "kind": "SCREEN_SPACE_SILHOUETTE_BORDER",
       "outline_width_px_at_1080p": 2,
@@ -71,7 +71,7 @@
     {
       "id": "REAL3D.PASS.BROWN_BASE",
       "order": 2,
-      "status": "SPEC_APPROVED_NOT_IMPLEMENTED",
+      "status": "WEBGL_GPU_PASS_SYNTHETIC_NONHUMAN_ONLY",
       "enabled_in_v1": true,
       "kind": "OPAQUE_UNLIT_MATERIAL",
       "base_color": "#946B4C",
@@ -85,7 +85,7 @@
     {
       "id": "REAL3D.PASS.VOLUME_SHADOW",
       "order": 3,
-      "status": "SPEC_APPROVED_NOT_IMPLEMENTED",
+      "status": "WEBGL_GPU_PASS_SYNTHETIC_NONHUMAN_ONLY",
       "enabled_in_v1": true,
       "kind": "NORMAL_DRIVEN_DIFFUSE_AND_AMBIENT",
       "single_key_light": true,
@@ -98,7 +98,7 @@
     {
       "id": "REAL3D.PASS.HIGHLIGHT",
       "order": 4,
-      "status": "SPEC_APPROVED_NOT_IMPLEMENTED",
+      "status": "WEBGL_GPU_PASS_SYNTHETIC_NONHUMAN_ONLY",
       "enabled_in_v1": true,
       "kind": "CLAMPED_LOW_SPECULAR",
       "limit_peak_luminance": 0.8,
@@ -177,5 +177,27 @@
     "rgb_glass_ui_only": true,
     "outline_is_not_3d_surface_replacement": true
   },
-  "status": "FORMAL_SPEC_APPROVED_RUNTIME_PENDING"
+  "status": "STANDARD_BROWN_GPU_PIPELINE_PASS__NATURAL_HUMAN_VISUAL_BLOCK",
+  "implementation_evidence": {
+    "feature_branch": "feature/real3d-brown-outline-gpu-v1-20261024",
+    "test_workflow_run": "40027108895",
+    "test_artifact_id": "12533885389",
+    "real_browser_gpu": "PASS",
+    "four_stages_from_same_source": [
+      "BLACK_CONTOUR",
+      "BROWN_FLAT",
+      "BROWN_VOLUME",
+      "BROWN_FINISH"
+    ],
+    "native_resolution": [
+      1080,
+      1920
+    ],
+    "verification": "NONHUMAN_ELLIPSE_GLB_ONLY",
+    "natural_human_quality": "BLOCK",
+    "photo_to_3d_real_anatomy": "BLOCK",
+    "real_glb_source_human_scan_available": false,
+    "movie_effects_added_to_human": false,
+    "render_deployment": false
+  }
 }
