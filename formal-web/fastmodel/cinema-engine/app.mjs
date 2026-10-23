@@ -299,7 +299,7 @@ function update(ts){
    state.time=Math.min(duration(),state.time+dt);
    if(state.time>=duration()){
     state.playing=false;state.activeVideo?.pause();
-    $('audio-preview').pause();$('sfx-preview').pause();$('voice-preview').pause();$('voice-preview').pause();
+    $('audio-preview').pause();$('sfx-preview').pause();$('voice-preview').pause();
    }
   }
   drawFrame();
