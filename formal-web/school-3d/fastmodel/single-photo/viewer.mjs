@@ -55,7 +55,12 @@ export class PhotoViewer{
  constructor(canvas,onError){
   this.canvas=canvas;this.onError=onError;this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
   this.originalPreviewPixelRatio=Math.min(devicePixelRatio||1,1.5);
-  this.renderer.setPixelRatio(this.originalPreviewPixelRatio);this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1;
+  this.renderer.setPixelRatio(this.originalPreviewPixelRatio);
+  // Explicit IEC sRGB output while glTF PBR lighting remains in linear space.
+  // Neither a grey card nor ACES alone proves physical colour accuracy.
+  this.renderer.outputColorSpace=THREE.SRGBColorSpace;
+  this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  this.renderer.toneMappingExposure=1;
   this.scene=new THREE.Scene();this.scene.background=new THREE.Color('#020407');
   this.camera=new THREE.PerspectiveCamera(40,1,.01,1000);this.camera.position.set(0,1,3);
   this.controls=new OrbitControls(this.camera,canvas);this.controls.enableDamping=true;
