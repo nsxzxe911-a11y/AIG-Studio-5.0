@@ -338,6 +338,15 @@ export function buildAIG30FusedSDF(source,{
   measured3DScale:false,measuredDepth:false,
   inferredFrontAndBackDepth:true,
   noSensorEchoCaptured:true,
+  // A printable-looking human requires actual independently validated
+  // face/hands/feet, calibrated depth, real texture and reviewed silhouette.
+  // An outward manifold is ONLY a geometric topology PASS.
+  aestheticHumanReviewPassed:false,
+  scannedFacialSurfaceMeasured:false,
+  physicalScaleAndWallThicknessVerified:false,
+  production3DPrintApproved:false,
+  realisticHumanBodyAppearanceApproved:false,
+  visualReleaseGate:'BLOCKED_SINGLE_VIEW_PRIOR_AND_MISSING_FINE_ANATOMY',
   originalGLBPreserved:true,releaseAllowed:false
  };
 }
