@@ -1,4 +1,4 @@
-name: AIG Real3D 3.11 Real 3D Hair and Cloth Contact Gate
+name: AIG Real3D 3.12 Bounded Secondary Hair and Cloth Dynamics Gate
 on:
   push:
     branches:
@@ -10,6 +10,8 @@ on:
       - 'formal-web/school-3d/fastmodel/single-photo/aig-runtime-stability-3-9.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-modular-hair-3-10.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-contact-constraints-3-11.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-secondary-motion-3-12.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-secondary-motion-3-12.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-contact-constraints-3-11.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-modular-hair-3-10.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-19200-logical-kernel-3-10.test.mjs'
@@ -50,6 +52,8 @@ jobs:
           node --check aig-runtime-stability-3-9.mjs
           node --check aig-modular-hair-3-10.mjs
           node --check aig-contact-constraints-3-11.mjs
+          node --check aig-secondary-motion-3-12.mjs
+          node --test tests/aig-secondary-motion-3-12.test.mjs
           node --test tests/aig-contact-constraints-3-11.test.mjs
           node --test tests/aig-modular-hair-3-10.test.mjs
           node --test tests/aig-19200-logical-kernel-3-10.test.mjs
@@ -85,6 +89,7 @@ jobs:
           grep -q 'AIG_REAL3D_3_9_ATTACHED_GARMENT_VERTEX_MOTION' dist/scene-runtime-studio.js
           grep -q 'AIG_REAL3D_3_10_REMOVABLE_SOURCE_ANCHORED_HAIR' dist/scene-runtime-studio.js
           grep -q 'AIG_REAL3D_3_11_REAL_POSE_CONTACT_PROXY' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_12_FIXED_STEP_SECONDARY_HAIR_SKIRT' dist/scene-runtime-studio.js
           grep -q 'REAL3D_19200_LOGICAL_WORK_SLOTS' dist/scene-runtime-studio.js
       - name: Install Chromium QA for actual phone/desktop rendered geometry
         run: |
