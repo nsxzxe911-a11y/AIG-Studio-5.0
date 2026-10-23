@@ -27,3 +27,8 @@
 
 ## Next
 - Improve detection for rotated/perspective fingers without inventing fifth from overlapping sources; add user-correctable actual-photo landmark edits and multi-angle match / true depth constraints with bounded reprojection residual, nail/knuckle and palmar web anatomy, GPU performance tests on real Adreno Android.
+
+## Verified 3.4 standalone Gate results (confirmed)
+- First full dedicated **GitHub Actions #39925479277**: `completed/success` on source `8a79b35f`. True five source-separated tip pixel detection and actual 3D centerline change Node tests PASS, original photo SHA unchanged, 4-tip false-positive blocked. Real phone and desktop Chromium integrated UI also PASS **fail-closed** because their test source has only arm/leg source labels and no individually visible source hand/foot five tips. Artifact ID **12489456502**, size 973488 bytes. https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39925479277
+- Latest UX/honest apply-status dedicated **GitHub Actions #39925746678**: `completed/success` on source `67974d061747fa5f7eb256b8a2f52d0228e6e103`. Confirms source-photo stage vs real live 3D apply status change with previous running app. https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39925746678
+- **NO positive user-photo screen with five individually distinguishable fingers/toes has been certified.** Positive five-labeled-protrusion-to-3D reconstruction is source-fixture NUMERIC proof; phone/desktop integration real-browser proves absent-five-tip refusal and unchanged safe SDF rendering. Do not invent an aesthetic result or claim global automatic scanning / per-digit anatomical identity.
