@@ -331,5 +331,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  }
  return {status:'READY',contextVersion:webgl2?2:1,render,destroy,
   setCamera,getCamera,setQuality,getQuality,releaseMesh,captureNativePNG,
+  getGpuLimit:()=>lost||dead?0:Math.min(
+   gl.getParameter(gl.MAX_TEXTURE_SIZE),gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)),
   getLastStats:()=>last?{...last}:null};
 }

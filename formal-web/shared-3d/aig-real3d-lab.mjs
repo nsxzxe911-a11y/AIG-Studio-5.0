@@ -5,6 +5,11 @@ import {createAIGReal3DHumanScene}
 import {updateAIG3DNodeTransform,auditAIG3DScene}
  from './aig-real3d-core.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
+import {inspectAIGReal3DSource,planAIGReal3DDual19200,
+ executeAIGReal3DDual19200}
+ from './aig-real3d-dual-kernel-19200.mjs';
+import {runAIG3DIndexedDrawingWorker}
+ from './aig-real3d-dual-worker-bridge.mjs';
 
 const $=id=>document.getElementById(id);
 const canvas=$('view');
@@ -16,6 +21,7 @@ catch(e){
 }
 let dataset=null,baseNode=null,profile=null,lastEvidence=null;
 let lastHumanPhoto=null,photoBusy=false,humanRebuildQueued=false;
+let recentMeasuredFrameMs=null,dualRunning=false,dualLastResult=null;
 const isHuman=()=>profile==='HumanMale'||profile==='HumanFemale';
 const humanGender=()=>profile==='HumanFemale'?'female':'male';
 const displayHeight=()=>{
@@ -57,7 +63,9 @@ function evidence(render){
 function paint(){
  if(!dataset)return;
  try{
+  const t0=performance.now();
   const result=renderer.render(dataset.scene);
+  recentMeasuredFrameMs=performance.now()-t0;
   evidence(result);
   if(result.status==='WEBGL_XYZ_TRIANGLES_RENDERED')
    status(isHuman()?
@@ -119,7 +127,84 @@ function change(){
   $('zoom').value='14';
  }
  displayHeight();paint();
+ dualReport();
 }
+// All 19,200 work slots are bookkeeping partitions, not actual CPU/GPU
+// processors. AUTO routes existing XYZ mesh to the installed verifier only.
+function dualReport(){
+ if(!dataset||renderer.status!=='READY')return;
+ const out=$('dual-evidence');
+ try{
+  const stats=inspectAIGReal3DSource({scene:dataset.scene});
+  const plan=planAIGReal3DDual19200({
+   sourceStats:stats,method:$('dual-method').value,
+   resolution:$('dual-target').value,
+   mobile:matchMedia('(pointer:coarse)').matches||
+    window.innerWidth<720,
+   hardwareConcurrency:Math.max(1,Math.floor(navigator.hardwareConcurrency||2)),
+   deviceMemoryGB:navigator.deviceMemory??null,
+   recentFrameMs:recentMeasuredFrameMs,
+   capabilities:{webgl:true,maxRenderbufferSize:renderer.getGpuLimit?.()}
+  });
+  out.textContent=JSON.stringify({source:stats,plan,
+   lastExecution:dualLastResult},null,2);
+  $('dual-status').textContent=plan.dispatchAllowed?
+   '已辨識 '+stats.sourceType+
+   '；繪圖 '+plan.drawingKernel.reservedSlots+
+   ' 槽／渲染 '+plan.renderingKernel.reservedSlots+
+   ' 槽。實體新增核心 0；人體外觀仍 BLOCK。':
+   'BLOCK：'+plan.limitationReasons.join(' / ')+
+   '。這個曲面方案目前沒有可執行演算法，不能冒充已安裝。';
+  $('dual-status').dataset.ok=plan.dispatchAllowed?'true':'false';
+ }catch(e){
+  out.textContent=String(e.stack||e);
+  $('dual-status').textContent='雙核心分配 BLOCK：'+String(e?.message||e);
+  $('dual-status').dataset.ok='false';
+ }
+}
+$('dual-method').addEventListener('change',dualReport);
+$('dual-target').addEventListener('change',dualReport);
+$('dual-rebalance').addEventListener('click',dualReport);
+$('dual-verify').addEventListener('click',async()=>{
+ if(dualRunning||!dataset||renderer.status!=='READY')return;
+ dualRunning=true;$('dual-verify').disabled=true;
+ const originalScene=dataset.scene;
+ try{
+  const evidence=await executeAIGReal3DDual19200({
+   source:{scene:originalScene},renderer,
+   method:$('dual-method').value,
+   resolution:$('dual-target').value,
+   mobile:window.innerWidth<720,
+   hardwareConcurrency:Math.max(1,Math.floor(navigator.hardwareConcurrency||2)),
+   deviceMemoryGB:navigator.deviceMemory??null,
+   recentFrameMs:recentMeasuredFrameMs,
+   drawingWorkerFactory:typeof Worker==='function'?
+    runAIG3DIndexedDrawingWorker:null,
+   shouldAcceptGeometry:()=>dataset?.scene===originalScene
+  });
+  dualLastResult={
+   schema:evidence.schema,
+   drawing:evidence.metrics,
+   source:evidence.sourceStats,
+   actualGpu:evidence.gpuEvidence,
+   realGeometryAndGpuPipelinePASS:evidence.verifiedPipelineTraversal,
+   appearanceNaturalHumanVisualGatePASS:false
+  };
+  $('dual-status').textContent='雙核心真執行已完成：檢查 '+evidence.metrics.drawingVisitedTriangles+
+   ' 個真 XYZ 三角形，CPU Worker '+
+   evidence.metrics.actualCpuWorkersUsed+' 個／GPU '+evidence.metrics.renderPasses+
+   ' 輪；19,200 為邏輯工作槽，人體外觀仍 BLOCK。';
+  $('dual-status').dataset.ok='true';
+  $('dual-evidence').textContent=JSON.stringify({
+   plan:evidence.plan,execution:dualLastResult},null,2);
+ }catch(e){
+  $('dual-status').textContent='雙核心 BLOCK：'+String(e?.message||e);
+  $('dual-status').dataset.ok='false';
+  $('dual-evidence').textContent=String(e.stack||e);
+ }finally{
+  dualRunning=false;$('dual-verify').disabled=false;
+ }
+});
 $('profile').addEventListener('change',()=>{
  const v=$('profile').value;
  if(v==='HumanMale'||v==='HumanFemale')
