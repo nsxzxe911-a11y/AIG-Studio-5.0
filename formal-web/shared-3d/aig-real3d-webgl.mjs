@@ -323,7 +323,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    temp.toBlob(v=>v?resolve(v):reject(Error('AIG3D_PNG_ENCODE_FAILED')),
     'image/png'));
   const bytes=await blob.arrayBuffer();
-  if(bytes.byteLength<12000)throw Error('AIG3D_PNG_TOO_SMALL');
+  if(bytes.byteLength<(inspectionMode==='LIT'?12000:1400))
+   throw Error('AIG3D_PNG_TOO_SMALL');
   const png=new DataView(bytes);
   if(png.getUint32(0,false)!==0x89504e47||
    png.getUint32(12,false)!==0x49484452||
