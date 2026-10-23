@@ -15,8 +15,8 @@ const THREE_D=$('glb-screen'),INPUT_LIMIT=65_000_000;
 const state={
  clips:[],mode:'2D',active:0,time:0,playing:false,lastTs:0,
  glb:null,renderer:null,glbSourceName:null,glbOrbit:0,glow:15,motion:25,
- subtitle:'',audioObjectURL:null,sfxObjectURL:null,recording:null,busy:false,
- musicBuffer:null,sfxBuffer:null,audioContext:null,musicGain:.65,sfxGain:.75,
+ subtitle:'',audioObjectURL:null,sfxObjectURL:null,voiceObjectURL:null,recording:null,busy:false,
+ musicBuffer:null,sfxBuffer:null,voiceBuffer:null,audioContext:null,musicGain:.65,sfxGain:.75,voiceGain:.95,
  activeVideo:null
 };
 const ownUrls=new Set();
@@ -275,21 +275,20 @@ function play(){
  }
  if(state.time>=duration()&&state.mode!=='3D')state.time=0;
  state.playing=true;state.lastTs=0;drawFrame();
- const audio=$('audio-preview'),sfx=$('sfx-preview');
+ const audio=$('audio-preview'),sfx=$('sfx-preview'),voice=$('voice-preview');
  if(audio.src){
   if(Number.isFinite(audio.duration)&&audio.duration>0)
    audio.currentTime=state.time%audio.duration;
   audio.play()?.catch(()=>{});
  }
- if(sfx.src&&state.time<.10){
-  sfx.currentTime=0;sfx.play()?.catch(()=>{});
- }
+ if(sfx.src&&state.time<.10){sfx.currentTime=0;sfx.play()?.catch(()=>{});}
+ if(voice.src&&state.time<.10){voice.currentTime=0;voice.play()?.catch(()=>{});}
  setStatus(state.mode==='3D'?'GLB 正在真 WebGL 旋轉預覽；這不是骨架動作。':
   '播放匯入素材的實際 Canvas 動畫預覽。',true);
 }
 function pause(){
  state.playing=false;state.lastTs=0;state.activeVideo?.pause();
- $('audio-preview').pause();$('sfx-preview').pause();drawFrame();setStatus('已暫停預覽。',true);
+ $('audio-preview').pause();$('sfx-preview').pause();$('voice-preview').pause();drawFrame();setStatus('已暫停預覽。',true);
 }
 function update(ts){
  if(state.playing){
@@ -300,7 +299,7 @@ function update(ts){
    state.time=Math.min(duration(),state.time+dt);
    if(state.time>=duration()){
     state.playing=false;state.activeVideo?.pause();
-    $('audio-preview').pause();$('sfx-preview').pause();
+    $('audio-preview').pause();$('sfx-preview').pause();$('voice-preview').pause();$('voice-preview').pause();
    }
   }
   drawFrame();
@@ -336,7 +335,7 @@ async function record(){
  if(!stage.captureStream||typeof MediaRecorder==='undefined'){
   setStatus('瀏覽器沒有支援 Canvas captureStream／MediaRecorder，阻擋輸出。');return;
  }
- const hasStems=Boolean(state.musicBuffer||state.sfxBuffer);
+ const hasStems=Boolean(state.musicBuffer||state.sfxBuffer||state.voiceBuffer);
  const mime=(hasStems?['video/webm;codecs=vp9,opus',
   'video/webm;codecs=vp8,opus','video/webm']:
   ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'])
@@ -350,14 +349,14 @@ async function record(){
  stage.width=w;stage.height=h;state.time=0;state.playing=false;drawFrame();
  const visualStream=stage.captureStream(fps);
  let mix=null;
- const hasAudio=Boolean(state.musicBuffer||state.sfxBuffer);
+ const hasAudio=Boolean(state.musicBuffer||state.sfxBuffer||state.voiceBuffer);
  if(hasAudio)try{
   if(!state.audioContext)throw Error('Web AudioContext 缺失');
   await state.audioContext.resume();
   if(state.audioContext.state!=='running')throw Error('音訊引擎未能啟動');
   mix=prepareAIGCinemaAudioMix(state.audioContext,{
-   music:state.musicBuffer,sfx:state.sfxBuffer,
-   musicGain:state.musicGain,sfxGain:state.sfxGain
+   music:state.musicBuffer,sfx:state.sfxBuffer,voice:state.voiceBuffer,
+   musicGain:state.musicGain,sfxGain:state.sfxGain,voiceGain:state.voiceGain
   });
  }catch(e){
   visualStream.getTracks().forEach(t=>t.stop());
@@ -424,6 +423,7 @@ function wireControls(){
  });
  $('audio-button').addEventListener('click',()=>$('audio-file').click());
  $('sfx-button').addEventListener('click',()=>$('sfx-file').click());
+ $('voice-button').addEventListener('click',()=>$('voice-file').click());
  async function loadStem(file,kind){
   if(state.recording){setStatus('正在渲染，不可變更音訊素材。');return;}
   try{
@@ -434,16 +434,18 @@ function wireControls(){
    }
    const buffer=await decodeAIGCinemaStem(state.audioContext,file),
     u=urlFor(file),isMusic=kind==='music';
-   releaseURL(isMusic?state.audioObjectURL:state.sfxObjectURL);
+   releaseURL(isMusic?state.audioObjectURL:kind==='sfx'?state.sfxObjectURL:state.voiceObjectURL);
    if(isMusic){state.audioObjectURL=u;state.musicBuffer=buffer;
     $('audio-preview').src=u;$('audio-short').textContent=file.name;}
-   else{state.sfxObjectURL=u;state.sfxBuffer=buffer;
+   else if(kind==='sfx'){state.sfxObjectURL=u;state.sfxBuffer=buffer;
     $('sfx-preview').src=u;$('sfx-short').textContent=file.name;}
+   else{state.voiceObjectURL=u;state.voiceBuffer=buffer;
+    $('voice-preview').src=u;$('voice-short').textContent=file.name;}
    setStatus('已解碼真實 '+kind+' '+buffer.duration.toFixed(2)+
     ' 秒 PCM，可預聽並在 WebM 匯出時混音。',true);
   }catch(e){setStatus('音訊解碼 BLOCK：'+e.message);}
  }
- for(const [id,kind]of [['audio-file','music'],['sfx-file','sfx']]){
+ for(const [id,kind]of [['audio-file','music'],['sfx-file','sfx'],['voice-file','voice']]){
   $(id).addEventListener('change',async e=>{
    const f=e.target.files?.[0];e.target.value='';
    if(f)await loadStem(f,kind);
@@ -451,7 +453,8 @@ function wireControls(){
  }
  for(const [id,out,audio,key]of [
   ['music-volume','music-volume-value','audio-preview','musicGain'],
-  ['sfx-volume','sfx-volume-value','sfx-preview','sfxGain']
+  ['sfx-volume','sfx-volume-value','sfx-preview','sfxGain'],
+  ['voice-volume','voice-volume-value','voice-preview','voiceGain']
  ]){
   $(id).addEventListener('input',e=>{
    const v=Number(e.target.value)/100;
@@ -461,6 +464,7 @@ function wireControls(){
  }
  $('audio-preview').volume=state.musicGain;
  $('sfx-preview').volume=state.sfxGain;
+ $('voice-preview').volume=state.voiceGain;
  document.querySelectorAll('[data-mode]').forEach(b=>
   b.addEventListener('click',()=>changeMode(b.dataset.mode)));
  $('play-button').addEventListener('click',play);
