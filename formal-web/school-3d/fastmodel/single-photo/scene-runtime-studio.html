@@ -229,8 +229,31 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <p class="hint">按一次完成來源照片 SHA → 像素標籤 → 多區截面 → 融合 SDF → 原輪廓與修正輪廓比較 → 擇優產生一份封閉 3D 候選。下面 3.1–3.4 關節與指尖模組仍接同一個共用模型，不會把原圖、已匯入 GLB 或 CNC 程式覆蓋。正面 XY 輪廓吻合，不代表背面、臉部與材質 100% 一致。</p>
 <button type="button" id="scan29-build">01｜一次掃描並建立／比較外型、比例、顏色的真 3D 模型</button>
 <div id="scan36-one-core" style="margin:10px 0;padding:9px;border:1px solid #437f94;border-radius:9px;background:#071925">
-<strong>Real3D 3.6｜一套實際運算核心 · 120 個邏輯工作槽</strong>
-<p class="hint">120 槽分塊共用一個程式和一個 WebGL 視窗；不是 120 顆實體 CPU 或 120 個同時運作的 GPU 核心。手機／桌面按硬體情況排程，外型驗收前不強行活化關節。</p>
+<strong>Real3D 3.7｜單一人體核心 · 工作槽可擴充至 1200、2400 及以上</strong>
+<p class="hint">同一個運算程式處理 120 → 1,200 → 2,400 → 4,800… 個頂點工作分塊，按裝置限制排程。更多工作槽不等於更多硬體 CPU／GPU 核心，也不保證更快。人體素模與服裝分離，換衣服不用重新掃描。</p>
+<div class="world-grid">
+<label>同核心工作槽數量
+<select id="scan37-slot-count">
+<option value="120">120（輕量）</option>
+<option value="1200">1,200</option>
+<option value="2400" selected>2,400（本輪預設）</option>
+<option value="4800">4,800</option>
+<option value="9600">9,600</option>
+<option value="19200">19,200</option>
+<option value="38400">38,400</option>
+<option value="76800">76,800</option>
+<option value="120000">120,000（邏輯上限；無實體加速保證）</option>
+</select></label>
+<label>每日更換服裝（不重掃人體）
+<select id="scan37-outfit">
+<option value="uniform" selected>校園制服（外套／裙子）</option>
+<option value="casual">休閒上衣／長褲</option>
+<option value="sport">運動上衣／長褲</option>
+<option value="body-proxy">中性人體素模（檢查比例）</option>
+</select></label>
+</div>
+<output id="scan37-status" role="status" aria-live="polite" style="display:block;padding:7px;color:#bfead6">尚未建立人體素模；服裝將作為獨立真 3D 網格附加。</output>
+<p class="hint">人體素模不嵌入制服或衣物顏色；模型來源有衣服遮擋處只能估計人體比例，不假裝量測到衣服底下的真實形狀。程序化服裝是真 3D 幾何，尚非完成的布料縫製、蒙皮與碰撞模擬。</p>
 <div class="world-grid">
 <label>實際渲染品質
 <select id="scan36-light">
