@@ -1,0 +1,43 @@
+name: AIG Real3D 3.5 Unified Source Appearance Gate
+on:
+  push:
+    branches:
+      - verify/real3d-unified-appearance-3-5-20261023
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-unified-appearance-3-5.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-continuous-surface-scan-2-9-ui.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.html'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-appearance-3-5.test.mjs'
+      - '.github/workflows/aig-real3d-3-5-unified-appearance-gate.yml'
+  workflow_dispatch:
+jobs:
+  same-photo-multi-method-one-geometry:
+    name: Source RGB and human-mask to unified watertight 3D + appearance bounds
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Strict source geometry, screenshot-safe and no misleading 100 percent gate
+        run: |
+          node --check aig-unified-appearance-3-5.mjs
+          node --check aig-continuous-surface-scan-2-9-ui.mjs
+          node --check scene-runtime-studio.mjs
+          node --test tests/aig-unified-appearance-3-5.test.mjs
+          node --test tests/aig-fused-manifold-surface-3-0.test.mjs
+          node --test tests/aig-photo-digit-silhouette-3-4.test.mjs
+      - name: Bundle actual formal renderer, no second render context
+        run: |
+          npm run build
+          test -s dist/scene-runtime-studio.js
+          test -s dist/scene-runtime-studio.html
+          node --check dist/scene-runtime-studio.js
+          grep -q 'aig35-width' dist/scene-runtime-studio.html
+          grep -q 'aig35-colour' dist/scene-runtime-studio.html
+          grep -q 'AIG_REAL3D_3_5_UNIFIED_SOURCE_APPEARANCE_GATE' dist/scene-runtime-studio.js
