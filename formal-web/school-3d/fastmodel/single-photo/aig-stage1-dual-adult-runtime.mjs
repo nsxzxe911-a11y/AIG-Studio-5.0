@@ -112,7 +112,7 @@ export function installAIGStage1DualAdultRuntime({
    new THREE.PlaneGeometry(4,4),
    new THREE.MeshStandardMaterial({color:'#101c2a',roughness:.97})
   );
-  floor.rotation.x=-Math.PI/2;floor.position.y=-.012;
+  floor.rotation.x=-Math.PI/2;floor.position.y=-.001;
   floor.name='STAGE1_NEUTRAL_GROUND';
   stageScene.add(floor);
   stageCamera=new THREE.PerspectiveCamera(40,1,.01,20);
@@ -213,6 +213,7 @@ export function installAIGStage1DualAdultRuntime({
    '頭高 '+ratio.headHeightMm.toFixed(3)+' mm',
    '骨盆表面 '+ratio.truePelvicBodyWidthMm.toFixed(3)+' mm',
    '大腿內側間距 '+(lastAudit?.actualSurfaceAudit?.upperThighInnerGapMm??0).toFixed(3)+' mm',
+   '腳底最低點 '+(lastAudit?.actualSurfaceAudit?.footGroundContactMm??0).toFixed(3)+' mm',
    '頭部高寬比 '+(lastAudit?.actualSurfaceAudit?.actualHeadHeightToWidth??0).toFixed(3),
    '肩／軀幹接合 '+(lastAudit?.actualSurfaceAudit?.actualBodySurfaceNumericPASS?'數值有效':'BLOCK'),
    '頭身比 '+ratio.headToBodyRatio.toFixed(3),
