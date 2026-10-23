@@ -36,3 +36,9 @@ Date: 2026-10-23. Language: Traditional Chinese. **Do not overwrite / downgrade*
 - Natural-photo dataset: obtain actually approved multi-scene images with a human-verified truth mask, cross-domain holdout splits by source/SHA, white-balance/day/night/occlusion cases. Do **not** invent image files or metrics. Measure per-class IoU and abstention on real images before any automatic semantic generalisation claim.
 - Real full-body physical 1:1 still requires measured scale + depth/multi-view, original 2.6 plane reference is only a plane. No single unmeasured portrait's hidden rear anatomy is 'known'.
 - Continue 2.5 desktop WebM zero encoded frames root cause, under a separate fail-closed release Gate.
+
+## 2026-10-23 combined Runtime regression follow-up
+- Earlier full combined Gate run **39903523428** (commit `cc95e82f`) did run through Real3D 2.6/2.7/2.8, source characters, GLB GPU, calibrated stereo source and then failed with a genuine **Android-shaped narrow viewport input interception** on `#heroine-joint-save`: nearby `#heroine-candidate-build` and field labels intercepted the pointer. This is not a reason to remove tests or force Playwright clicks.
+- Applied a source CSS layout fix to existing `metric-stereo-studio.html`, commit `faad7417a84722b71d5dd83281bc0d848a605bb0`: CSS isolation, actual stacking for the neck/rig edit button and stacked full-width controls on mobile. Must verify follow-up combined Chromium Gate before declaring mobile editing success.
+- Dedicated 2.8-B run **39903523394** was still in Chromium installation as of this write. Prior numeric test failure `UNDECLARED_CLASS_IN_REVIEWED_MASK` vs expected class manifest fixed via `cc95e82f`, without relaxing mask rejection.
+- The 2.8-B source files are additive and **not on the public website**. Do not report model weights or a native/Render build as delivered while the PR is draft and the combined Release Gate is not green.
