@@ -44,7 +44,7 @@ function closestOnTriangle(p,a,b,c){
  return a.map((t,k)=>t+ab[k]*v+ac[k]*w);
 }
 function verify(body,ix,labels,mode){
- if(!(body instanceof Float32Array)||body.length<36||body.length%3||
+ if(!(body instanceof Float32Array)||body.length<9||body.length%3||
   !(ix instanceof Uint32Array)||ix.length%3||ix.length<3||
   !(labels instanceof Uint8Array)||labels.length*3!==body.length||
   !Object.hasOwn(groups,mode)||!body.every(Number.isFinite)||
