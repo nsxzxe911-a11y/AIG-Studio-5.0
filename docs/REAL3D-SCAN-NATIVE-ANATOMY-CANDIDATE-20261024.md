@@ -18,3 +18,15 @@
 
 ## 真正可過外觀 Gate 的必要條件
 有合法且可靠的完整人體基底或經授權的多視角真人照片/掃描時，保留來源 SHA、尺寸和法線，先多視角渲染比對。外觀通過後才延伸 UV、Morph/骨架、動態與手機/桌面效能。
+
+
+## 2026-10-24 全身渲染施工（使用者：看能不能完整渲染人物）
+
+新增原生 GLB 2.0 匯入及既有 WebGL 接線：
+- aig-real3d-glb-native-mesh.mjs：從用戶本機 GLB 直接解析二進位 glTF 原始網格、索引、節點階層、TRS、PBR baseColorFactor，保留各來源 primitive（不做程序人形生成）。
+- aig-real3d-scan-native-lab.html：同一匯入控制能切換 OBJ / GLB，輸出四視角真 1080×1920 WebGL PNG。來源不傳伺服器。
+- Node 原生 GLB 實測：格式、真 indexed geometry、場景尺度、拒絕外部來源 buffer/壞索引。
+- Chromium synthetic NONHUMAN fixture：只核對 OBJ/GLB 四視角真 GPU 接線，不得標示人物合格。
+- Full body QA：把倉庫既有的**被否決人體技術模型**原始幾何輸出 GLB，再真實回匯，男女各生成前、側、背、斜側共八張原生 GPU PNG。此過程目的是驗證「身體各部分是否可完整繪製」，不是重新核准舊人體外觀。
+
+GLB 限制：只呈現靜態綁定/基礎姿勢；目前不套用原始 UV/貼圖、不執行 Skinning 或 Morph，沒有照片 1:1。即使全身出圖成功，也必須人工複查臉、五指、腳掌、頭頸、男女差異。這些人體外觀/動畫 Gate 繼續 FAIL/BLOCK。不替換 Render LIVE 主頁、不動正式 3AX～6AX、NC，不宣稱 APK/EXE 出版。
