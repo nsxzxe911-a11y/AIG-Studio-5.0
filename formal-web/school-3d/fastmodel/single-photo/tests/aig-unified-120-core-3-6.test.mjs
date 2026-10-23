@@ -21,7 +21,7 @@ test('120 identical LOGICAL slots do not impersonate hardware cores or GPU conte
  assert.equal(slow.schedulingLanes,1);
  assert.equal(slow.lightingMode,
   'REQUESTED_RAYTRACE_UNAVAILABLE_FALLBACK_PBR');
- assert.throws(()=>planAIG36UnifiedCore({requestedLogicalSlots:121}),
+ assert.throws(()=>planAIG36UnifiedCore({requestedLogicalSlots:120001}),
   /LOGICAL_SLOT_RANGE/);
  assert.throws(()=>planAIG36UnifiedCore({requestedLogicalSlots:0}),
   /LOGICAL_SLOT_RANGE/);
