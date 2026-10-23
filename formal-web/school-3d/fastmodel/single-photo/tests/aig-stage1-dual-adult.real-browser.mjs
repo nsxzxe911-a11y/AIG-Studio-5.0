@@ -1,5 +1,5 @@
 import {chromium} from 'playwright';
-import {mkdir,writeFile} from 'node:fs/promises';
+import {mkdir,writeFile,readFile,copyFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 const dest='artifacts/aig-stage1-adult-male-female-swim-geometry';
@@ -58,6 +58,8 @@ try{
     assert.equal(state.noHairOrSchoolClothing,true);
     assert.equal(state.fullSkinnedBlendWeightsVerified,false);
     assert.equal(state.stage1PASS,false);
+    assert.ok((await page.locator('#stage1-4k-quality').count())===1);
+    assert.ok((await page.locator('#stage1-4k-current').count())===1);
     assert.equal(state.canonicalUnit,'mm');
     assert.equal(state.precisionMm,.001);
     assert.equal(state.coordinateMmGate.canonicalMillimeterGatePASS,true);
@@ -100,6 +102,38 @@ try{
       byteLength:png.length});
     }
     assert.equal(seen.size,4);
+    // At least ONE real desktop 4K GPU render, not resizing old 320x560
+    // Stage1 screenshots. Source remains a technical anatomy fixture.
+    if(device.name==='desktop'&&gender==='male'&&
+     process.env.AIG_STAGE1_TRUE_4K_E2E==='1'){
+     await page.locator('#stage1-4k-orientation').selectOption('landscape');
+     await page.locator('#stage1-4k-quality').selectOption('adaptive');
+     await page.locator('#stage1-4k-current').dispatchEvent('click');
+     await page.waitForFunction(()=>{
+      const status=document.getElementById('stage1-4k-status').textContent;
+      if(status.includes('4K BLOCKED'))throw Error(status);
+      const proof=JSON.parse(document.getElementById('stage1-proof').textContent);
+      return proof.actualFourKOutput?.width===3840&&
+       proof.actualFourKOutput?.height===2160&&
+       proof.actualFourKOutput.realGPUFramebufferReadback===true;
+     },null,{timeout:100000});
+     const pngState=await page.locator('#stage1-4k-gallery img').first().evaluate(img=>
+      ({naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight}));
+     assert.deepEqual(pngState,{naturalWidth:3840,naturalHeight:2160});
+     const waitDownload=page.waitForEvent('download',{timeout:25000});
+     await page.locator('#stage1-4k-gallery a').first().click();
+     const download=await waitDownload;
+     const path=await download.path();
+     const bytes=await readFile(path);
+     assert.ok(bytes.length>50000);
+     assert.equal(bytes.readUInt32BE(16),3840);
+     assert.equal(bytes.readUInt32BE(20),2160);
+     const name='desktop-male-front-ACTUAL-GPU-3840x2160-4K.png';
+     await copyFile(path,dest+'/'+name);
+     output.push({gender,view:'front',name,
+      pixelResolution:[3840,2160],genuineGPU4K:true,
+      sha256:hash(bytes),byteLength:bytes.length});
+    }
     await page.locator('#stage1-capture').dispatchEvent('click');
     await page.waitForFunction(g=>
      document.querySelectorAll('[data-stage1-gallery-gender="'+g+'"] img').length===4,
@@ -137,7 +171,8 @@ try{
     userVisualReviewPassed:false,
     stage1FinalPASS:false
    };
-   assert.equal(output.length,8);
+   assert.equal(output.length,
+    device.name==='desktop'&&process.env.AIG_STAGE1_TRUE_4K_E2E==='1'?9:8);
    await writeFile(dest+'/'+device.name+'-STAGE1-MANIFEST.json',
     JSON.stringify(manifest,null,2));
    console.log('AIG_STAGE1_EIGHT_REAL_SNAPSHOTS',device.name,
