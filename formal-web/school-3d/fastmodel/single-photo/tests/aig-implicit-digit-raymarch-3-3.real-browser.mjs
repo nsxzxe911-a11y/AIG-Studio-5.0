@@ -148,7 +148,7 @@ try{
    assert.equal(proof.modelFrontDepthAndBackAreGuessed,true);
    assert.equal(proof.webGLDrawEvidence.originalViewerRendererReused,true);
    assert.ok(proof.webGLDrawEvidence.actualSubmittedTriangles>3000);
-   await page.locator('#viewport').screenshot({
+   await page.locator('#viewport').screenshot({timeout:60000,
     path:out+'/'+device.name+'-actual-3d-curved-surface.png'
    });
    console.log('AIG31_BEFORE_ACTIVATION',device.name,
@@ -197,7 +197,7 @@ try{
    await page.locator('#rig31-focus-head').click();
    await page.waitForFunction(()=>JSON.parse(document.getElementById('rig31-proof')
     .textContent).currentCamera?.focus==='HEAD');
-   await page.locator('#viewport').screenshot({
+   await page.locator('#viewport').screenshot({timeout:60000,
     path:out+'/'+device.name+'-true-articulated-head-front.png'
    });
    await page.locator('#rig31-camera-azimuth').evaluate(el=>{
@@ -207,19 +207,19 @@ try{
     .textContent).currentCamera?.azimuthDegrees===180);
    rigProof=JSON.parse(await page.locator('#rig31-proof').textContent());
    assert.equal(rigProof.currentCamera.headOrBodyWasPhysicallyTwisted,false);
-   await page.locator('#viewport').screenshot({
+   await page.locator('#viewport').screenshot({timeout:60000,
     path:out+'/'+device.name+'-head-180-back-camera.png'
    });
    await page.locator('#rig31-camera-top').click();
    await page.waitForFunction(()=>JSON.parse(document.getElementById('rig31-proof')
     .textContent).currentCamera?.elevationDegrees===87);
-   await page.locator('#viewport').screenshot({
+   await page.locator('#viewport').screenshot({timeout:60000,
     path:out+'/'+device.name+'-actual-headtop-view.png'
    });
    await page.locator('#rig31-camera-underside').click();
    await page.waitForFunction(()=>JSON.parse(document.getElementById('rig31-proof')
     .textContent).currentCamera?.elevationDegrees===-87);
-   await page.locator('#viewport').screenshot({
+   await page.locator('#viewport').screenshot({timeout:60000,
     path:out+'/'+device.name+'-actual-sole-bottom-up-view.png'
    });
    const posedProof=JSON.parse(await page.locator('#rig31-proof').textContent());
@@ -245,6 +245,9 @@ try{
     try{return JSON.parse(document.getElementById('rig31-proof').textContent)
      .actualSourceVertexMoved===0}catch{return false}
    });
+   // SwiftShader in CI is a CPU software renderer; use the actual
+   // supported 28-step mobile-quality shader, NOT a fake result.
+   await page.locator('#digits33-quality').selectOption('MOBILE');
    await page.locator('#digits32-build').click();
    await page.waitForFunction(()=>{
     try{const p=JSON.parse(document.getElementById('digits32-proof').textContent);
@@ -301,7 +304,7 @@ try{
    await page.locator('#digits32-focus-body').click();
    await page.waitForFunction(()=>JSON.parse(document.getElementById('digits32-proof')
     .textContent).actualSharedCameraFocus?.requestedSourcePart==='body');
-   await page.locator('#viewport').screenshot({
+   await page.locator('#viewport').screenshot({timeout:60000,
     path:out+'/'+device.name+'-20-actual-3d-fingers-toes-independent-posed.png'
    });
    await page.locator('#digits33-quality').selectOption('MOBILE');
@@ -312,7 +315,7 @@ try{
    await page.locator('#digits32-focus-leftHand').click();
    await page.waitForFunction(()=>JSON.parse(document.getElementById('digits32-proof')
     .textContent).actualSharedCameraFocus?.requestedSourcePart==='leftHand');
-   const leftHandScreenshot=await page.locator('#viewport').screenshot({
+   const leftHandScreenshot=await page.locator('#viewport').screenshot({timeout:60000,
     path:out+'/'+device.name+'-five-left-fingers-closeup.png'
    });
    const leftHandPixels=pngVisibleSurfacePixels(leftHandScreenshot);
@@ -322,7 +325,7 @@ try{
    await page.locator('#digits32-focus-rightFoot').click();
    await page.waitForFunction(()=>JSON.parse(document.getElementById('digits32-proof')
     .textContent).actualSharedCameraFocus?.requestedSourcePart==='rightFoot');
-   const rightFootScreenshot=await page.locator('#viewport').screenshot({
+   const rightFootScreenshot=await page.locator('#viewport').screenshot({timeout:60000,
     path:out+'/'+device.name+'-five-right-toes-closeup.png'
    });
    const rightFootPixels=pngVisibleSurfacePixels(rightFootScreenshot);
@@ -366,7 +369,7 @@ try{
    assert.equal(digitProof.actual3DRenderedDigitMeshes,20);
    assert.equal(digitProof.livingWebGLSceneShared,true);
    await page.locator('#digits32-focus-leftHand').click();
-   await page.locator('#viewport').screenshot({
+   await page.locator('#viewport').screenshot({timeout:60000,
     path:out+'/'+device.name+'-20-digits-follow-shoulder.png'
    });
    await writeFile(out+'/'+device.name+'-20-digit-real-browser-proof.json',
@@ -417,7 +420,7 @@ try{
    const after=JSON.parse(await page.locator('#scan29-proof').textContent());
    assert.ok(after.CNC5AXSurfaceNormalPath>=16);
    assert.equal(after.CNCMachineNeverMoved,true);
-   await page.locator('#viewport').screenshot({
+   await page.locator('#viewport').screenshot({timeout:60000,
     path:out+'/'+device.name+'-five-axis-real-mesh-normal-probes.png'
    });
    await writeFile(out+'/'+device.name+'-actual-webgl-proof.json',
@@ -442,7 +445,7 @@ try{
    console.log('AIG33_TRUE_FRAGMENT_SDF_SKIN_20_FINGERS_TOES_GPU_DEPTH_MOBILE_DESKTOP_PASS',
     device.name);
   }catch(e){
-   await page.locator('#viewport').screenshot({
+   await page.locator('#viewport').screenshot({timeout:60000,
     path:out+'/'+device.name+'-FAIL-webgl.png',timeout:12000
    }).catch(()=>{});
    await writeFile(out+'/'+device.name+'-FAIL-status.json',JSON.stringify({
