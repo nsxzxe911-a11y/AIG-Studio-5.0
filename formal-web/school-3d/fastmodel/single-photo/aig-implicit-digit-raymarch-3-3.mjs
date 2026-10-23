@@ -31,6 +31,7 @@ uniform vec3 uPalmRadius;
 uniform vec3 uBoxMin;
 uniform vec3 uBoxMax;
 uniform vec3 uLinearRGB;
+uniform mat4 uProjection;
 uniform float uBlend;
 uniform float uEpsilon;
 uniform int uSteps;
@@ -101,7 +102,7 @@ void main(){
  outColor=vec4(linearToSRGB(clamp(light,0.,1.)),1.);
  // SDF surface depth, not proxy cube depth: correct occlusion vs original body.
  vec4 eye=viewMatrix*vec4(p,1.);
- vec4 clip=projectionMatrix*eye;
+ vec4 clip=uProjection*eye;
  gl_FragDepth=clamp((clip.z/max(clip.w,1.e-8))*.5+.5,0.,1.);
 }`;
 export function makeAIG33RayMarchGroup(part,linearRGB){
@@ -125,6 +126,7 @@ export function makeAIG33RayMarchGroup(part,linearRGB){
    uBoxMin:{value:new THREE.Vector3(...part.min)},
    uBoxMax:{value:new THREE.Vector3(...part.max)},
    uLinearRGB:{value:new THREE.Vector3(...linearRGB)},
+   uProjection:{value:new THREE.Matrix4()},
    uBlend:{value:part.blendingWidth},
    uEpsilon:{value:Math.max(.0005,part.estimatedSourceBodyUnits*.00043)},
    uSteps:{value:part.maxMarchSteps}
@@ -133,6 +135,12 @@ export function makeAIG33RayMarchGroup(part,linearRGB){
   transparent:false
  });
  const mesh=new THREE.Mesh(geometry,material);
+ // THREE built-in projectionMatrix is vertex-only in ShaderMaterial's
+ // injection. Fragment world-depth reconstruction needs an explicit camera
+ // uniform updated each draw. Do NOT remove gl_FragDepth just to pass CI.
+ mesh.onBeforeRender=(_r,_s,camera)=>{
+  material.uniforms.uProjection.value.copy(camera.projectionMatrix);
+ };
  mesh.name='AIG33_ANALYTIC_SDF_SKIN_'+part.group;
  mesh.frustumCulled=false;
  mesh.userData={
