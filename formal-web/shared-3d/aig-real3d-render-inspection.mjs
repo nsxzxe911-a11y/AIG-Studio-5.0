@@ -46,7 +46,7 @@ export function auditAIG3DSourceSilhouette(scene){
   sideProjectedDepthHeightRatio:spread[2]/spread[1],
   useOrthographicForProportionReview:true,
   theseAreBoundingBoxRatiosNotAnthropometricMeasurements:true,
-  meshAltered:false,postprocessBloomApplied:false,
+  meshAltered:false,postProcessBloomApplied:false,
   anatomicalVisualApproval:false,
   sourceAuthenticityVerified:false,
   strictReleaseGate:'BLOCK_PENDING_REAL_HUMAN_SOURCE_AND_VISUAL_REVIEW'
