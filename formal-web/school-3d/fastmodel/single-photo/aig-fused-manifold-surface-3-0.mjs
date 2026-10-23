@@ -11,7 +11,8 @@
  * validation. Geometry may NOT be used as CNC or physical print code until
  * actual scale, feature wall thickness and printability Gate pass.
  */
-import {AIG29_SCHEMA} from './aig-continuous-surface-scan-2-9.mjs';
+import {AIG29_SCHEMA,inspectAIG29FiveAxisSurface}
+ from './aig-continuous-surface-scan-2-9.mjs';
 export const AIG30_SCHEMA='AIG_REAL3D_3_0_ONE_INDEXED_WATERTIGHT_SDF_HUMANOID';
 const fail=(s)=>{throw Error('AIG30_'+s)};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
@@ -337,4 +338,20 @@ export function buildAIG30FusedSDF(source,{
   noSensorEchoCaptured:true,
   originalGLBPreserved:true,releaseAllowed:false
  };
+}
+
+/** A/B normal probe reused on the TRUE one-piece surface, not another fake scan. */
+export function inspectAIG30FusedFiveAxisSurface(surface,opts={}){
+ if(surface?.schema!==AIG30_SCHEMA||!surface.manifoldAudit?.closedManifold||
+  surface.surfaces?.length!==1)
+  fail('MANIFOLD_TRUE_ONE_PIECE_SURFACE_REQUIRED_FOR_PROBE');
+ const base=inspectAIG29FiveAxisSurface({
+  schema:AIG29_SCHEMA,sourceSha256:surface.sourceSha256,
+  surfaces:surface.surfaces
+ },opts);
+ return {...base,
+  schema:'AIG_REAL3D_3_0_ONE_PIECE_FUSED_SURFACE_VIRTUAL_FIVE_AXIS',
+  actualOnePieceManifoldInspected:true,
+  rawSensorEchoCount:0,physicalCNC5AxisCommandsEmitted:0,
+  measuredHumanBodyScale:false};
 }
