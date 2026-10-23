@@ -254,6 +254,18 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 </select></label>
 </div>
 <output id="scan37-status" role="status" aria-live="polite" style="display:block;padding:7px;color:#bfead6">尚未建立人體素模；服裝將作為獨立真 3D 網格附加。</output>
+<div class="world-grid" style="margin-top:8px">
+<label>3.10 可換髮型（技術版，非女主角正式髮模）
+<select id="scan310-hair">
+<option value="none" selected>保留來源髮型／不附加新髮模</option>
+<option value="short">短髮 3D 模組</option>
+<option value="long">長髮 3D 模組</option>
+<option value="ponytail">馬尾 3D 模組</option>
+<option value="twintails">雙馬尾 3D 模組</option>
+</select></label>
+</div>
+<output id="scan310-hair-status" role="status" aria-live="polite" style="display:block;color:#b6e8df;padding:7px">髮型模組尚未附加；不會改掉原照片、臉部與人體素模。</output>
+<p class="hint">實作為獨立的真 3D 頭部附掛網格，跟隨 3.1 頭頸關節；未完成髮絲細節、自然碰撞或女主角正式髮型驗收。未附加時不額外載入髮型模型。</p>
 <details id="scan38-asset-manager" style="margin:10px 0">
 <summary>服裝／髮型／配件資產庫（按需載入，不把大量 3D 模型全部放進畫面）</summary>
 <p class="hint">只索引資產 ID、名稱、類別與版本。正式真 3D 模型必須實際存在且載入通過才可穿戴；目前僅有制服、日常服、運動服的技術幾何。髮型資產仍待製作，不能假裝有幾千套衣服。</p>
