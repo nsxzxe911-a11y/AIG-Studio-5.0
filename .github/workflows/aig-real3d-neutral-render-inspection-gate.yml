@@ -22,6 +22,10 @@ on:
     paths:
       - 'formal-web/shared-3d/aig-real3d-webgl.mjs'
       - 'formal-web/shared-3d/aig-real3d-render-inspection*'
+      - 'formal-web/shared-3d/aig-real3d-human-brown-render-lab*'
+      - 'formal-web/shared-3d/aig-real3d-reference-silhouette*.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-reference-silhouette.test.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-brown-obj-source.real-browser.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-render-inspection*'
       - '.github/workflows/aig-real3d-neutral-render-inspection-gate.yml'
   workflow_dispatch:

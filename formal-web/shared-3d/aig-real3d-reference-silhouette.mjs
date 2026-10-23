@@ -33,6 +33,14 @@ export function compareAIGReal3DSilhouetteRGBA({
  const count=width*height;
  let referenceCount=0,modelCount=0,intersection=0,union=0;
  let noAlpha=0;
+ // Fixed-height scanline bands provide truthful positional evidence without
+ // inventing shoulders/waist/limbs when no anatomical annotations exist.
+ const bands=Array.from({length:12},(_,i)=>({
+  yStart:Math.floor(i*height/12),yEnd:Math.floor((i+1)*height/12),
+  referencePixels:0,renderedPixels:0,bothPixels:0,
+  referenceXSum:0,renderedXSum:0,
+  referenceMinX:width,referenceMaxX:-1,renderedMinX:width,renderedMaxX:-1
+ }));
  const image=new Uint8ClampedArray(count*4);
  // Strict raw image-space 1:1 alignment. NO auto-fit, aspect crop,
  // scaling or silhouette inflation to improve the score.
@@ -40,8 +48,20 @@ export function compareAIGReal3DSilhouetteRGBA({
   const ref=alphaMask(referencePixels,p);
   const gpu=renderedMask(sourcePixels,p,backgroundRGB);
   if(referencePixels[p*4+3]===255)noAlpha++;
-  if(ref)referenceCount++;
-  if(gpu)modelCount++;
+  const y=Math.floor(p/width),x=p%width,band=bands[Math.min(11,Math.floor(y*12/height))];
+  if(ref){
+   band.referencePixels++;band.referenceXSum+=x;
+   band.referenceMinX=Math.min(band.referenceMinX,x);
+   band.referenceMaxX=Math.max(band.referenceMaxX,x);
+   referenceCount++;
+  }
+  if(gpu){
+   band.renderedPixels++;band.renderedXSum+=x;
+   band.renderedMinX=Math.min(band.renderedMinX,x);
+   band.renderedMaxX=Math.max(band.renderedMaxX,x);
+   modelCount++;
+  }
+  if(ref&&gpu)band.bothPixels++;
   if(ref&&gpu)intersection++;
   if(ref||gpu)union++;
   const i=p*4;
@@ -55,11 +75,50 @@ export function compareAIGReal3DSilhouetteRGBA({
   throw Error('SILHOUETTE_TRANSPARENT_REFERENCE_REQUIRED');
  if(modelCount/count<.004||modelCount/count>.92)
   throw Error('SILHOUETTE_GPU_SUBJECT_EMPTY_OR_OVERSIZED');
+ // Height sections are NOT anatomical names. A rectangle can report
+ // extra 'width' pixels but does not identify a real waist or shoulder.
+ const profile=bands.map((v,i)=>{
+  const rows=v.yEnd-v.yStart;
+  const rp=v.referencePixels/rows,mp=v.renderedPixels/rows;
+  const referenceExtent=v.referenceMaxX<0?null:
+   {left:v.referenceMinX,right:v.referenceMaxX,width:v.referenceMaxX-v.referenceMinX+1};
+  const modelExtent=v.renderedMaxX<0?null:
+   {left:v.renderedMinX,right:v.renderedMaxX,width:v.renderedMaxX-v.renderedMinX+1};
+  return {
+   id:'Y_BAND_'+String(i+1).padStart(2,'0'),
+   startY:v.yStart,endYExclusive:v.yEnd,
+   normalizedFromTop:+(v.yStart/height).toFixed(4),
+   normalizedToTop:+(v.yEnd/height).toFixed(4),
+   referencePixelArea:v.referencePixels,modelPixelArea:v.renderedPixels,
+   referenceMeanCoveragePx:+rp.toFixed(3),modelMeanCoveragePx:+mp.toFixed(3),
+   signedCoverageDeltaPx:+(mp-rp).toFixed(3),
+   signedCoverageDeltaPercent:rp>0?+((mp-rp)/rp*100).toFixed(3):null,
+   imageCentroidXDeltaPx:v.referencePixels&&v.renderedPixels?
+    +(v.renderedXSum/v.renderedPixels-v.referenceXSum/v.referencePixels).toFixed(3):null,
+   modelExtent,referenceExtent,
+   differenceLabel:rp===0?(mp>0?'GPU_ONLY':'EMPTY'):
+    mp>rp?'GPU_WIDER_COVERAGE':mp<rp?'GPU_NARROWER_COVERAGE':'COVERAGE_EQUAL',
+   explicitlyNotAnatomicalBodyPart:true
+  };
+ });
+ const meaningful=profile.filter(b=>b.referenceMeanCoveragePx>=3&&
+ b.modelMeanCoveragePx>=0);
+ const worst=[...meaningful].sort((a,b)=>
+  Math.abs(b.signedCoverageDeltaPx)-Math.abs(a.signedCoverageDeltaPx))[0]??null;
  const iou=intersection/Math.max(1,union),dice=2*intersection/
   Math.max(1,modelCount+referenceCount);
  return {
   schema:AIG_SILHOUETTE_COMPARE_SCHEMA,angle,width,height,
   modelSHA,referenceSHA,renderedSubjectPixels:modelCount,
+  verticalScanlineProfile:{
+   schema:'AIG_REAL3D_12_BAND_IMAGE_COVERAGE_DELTA_V1',
+   bandCount:12,bands:profile,
+   worstBandId:worst?.id??null,
+   worstBandSignedCoverageDeltaPx:worst?.signedCoverageDeltaPx??null,
+   measurementsAreImagePixelCoverageNot3DBodyOrAnatomicalRatios:true,
+   modelGeometryModified:false,
+   automatedAnatomicalFeatureLabeling:false
+  },
   transparentReferenceSubjectPixels:referenceCount,
   foregroundIntersectionPixels:intersection,
   foregroundUnionPixels:union,
