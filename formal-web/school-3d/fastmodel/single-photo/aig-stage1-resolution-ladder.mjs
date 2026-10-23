@@ -71,11 +71,11 @@ export function verifyAIGStage1ResolutionResult({
  if(!selected||![renderTargetWidth,renderTargetHeight,
   pngWidth,pngHeight].every(x=>Number.isInteger(x)&&x>0))
   invalid('TARGET_AND_PNG_DIMENSIONS_REQUIRED');
+ const preset=AIG_STAGE1_RESOLUTION_PRESETS[selected.level];
+ if(!preset||!['landscape','portrait'].includes(selected.orientation))
+  invalid('KNOWN_NATIVE_RESOLUTION_REQUIRED');
  const [expectedWidth,expectedHeight]=
-  selected.orientation==='portrait'?
-   [...AIG_STAGE1_RESOLUTION_PRESETS[selected.level]].reverse():
-   AIG_STAGE1_RESOLUTION_PRESETS[selected.level]??[];
- if(!expectedWidth||!expectedHeight)invalid('KNOWN_NATIVE_RESOLUTION_REQUIRED');
+  selected.orientation==='portrait'?[preset[1],preset[0]]:preset;
  const ok=renderTargetWidth===expectedWidth&&
   renderTargetHeight===expectedHeight&&
   pngWidth===expectedWidth&&pngHeight===expectedHeight;
