@@ -6,6 +6,8 @@ on:
     paths:
       - 'formal-web/shared-3d/aig-real3d-webgl.mjs'
       - 'formal-web/shared-3d/aig-real3d-render-inspection*'
+      - 'formal-web/shared-3d/aig-real3d-human-brown-render-lab*'
+      - 'formal-web/shared-3d/tests/aig-real3d-human-brown-render.real-browser.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-render-inspection*'
       - 'formal-web/shared-3d/tests/aig-real3d-human-brown-render-contract.test.mjs'
       - 'formal-web/shared-3d/authority/aig-real3d-human-brown-render-v1.json'
@@ -33,6 +35,8 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-render-inspection.mjs
           node --check formal-web/shared-3d/aig-real3d-render-inspection-lab.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-render-inspection.real-browser.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-human-brown-render.real-browser.mjs
+          node --check formal-web/shared-3d/aig-real3d-human-brown-render-lab.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-render-inspection.test.mjs formal-web/shared-3d/tests/aig-real3d-human-brown-render-contract.test.mjs
           test -s docs/REAL3D-HUMAN-BROWN-RENDER-V1-FORMAL-20261024.md
           grep -q "setInspectionMode" formal-web/shared-3d/aig-real3d-webgl.mjs
@@ -42,7 +46,7 @@ jobs:
   browser:
     needs: source
     runs-on: ubuntu-latest
-    timeout-minutes: 19
+    timeout-minutes: 24
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -62,9 +66,12 @@ jobs:
             sleep 1
           done
           node formal-web/shared-3d/tests/aig-real3d-render-inspection.real-browser.mjs
+          node formal-web/shared-3d/tests/aig-real3d-human-brown-render.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: Real3D-Neutral-Silhouette-Lighting-7-GPU-Frames-NONHUMAN-QA
-          path: artifacts/aig-real3d-neutral-geometry-frame/
+          path: |
+            artifacts/aig-real3d-neutral-geometry-frame/
+            artifacts/aig-real3d-brown-4pass-real-gpu/
           if-no-files-found: warn

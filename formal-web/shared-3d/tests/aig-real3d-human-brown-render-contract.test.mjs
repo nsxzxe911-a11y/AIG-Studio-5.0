@@ -47,7 +47,12 @@ test('Human appearance cannot pass from synthetic fixture or GPU screenshot alon
  assert.equal(c.acceptance.no_false_pass_from_gpu_success,true);
  assert.equal(c.acceptance.production_visual_gate,
   'BLOCK_PENDING_REAL_HUMAN_SOURCE_AND_4_VIEW_REVIEW');
- assert.equal(c.status,'FORMAL_SPEC_APPROVED_RUNTIME_PENDING');
+ assert.equal(c.status,'STANDARD_BROWN_GPU_PIPELINE_PASS__NATURAL_HUMAN_VISUAL_BLOCK');
+ assert.equal(c.implementation_evidence.real_browser_gpu,'PASS');
+ assert.equal(c.implementation_evidence.natural_human_quality,'BLOCK');
+ assert.equal(c.implementation_evidence.verification,'NONHUMAN_ELLIPSE_GLB_ONLY');
+ for(const pass of graph.slice(1,5))
+  assert.equal(pass.status,'WEBGL_GPU_PASS_SYNTHETIC_NONHUMAN_ONLY');
 });
 test('No source geometry mutations or FX before human visual acceptance',()=>{
  assert.equal(graph[3].affect_geometry,false);

@@ -66,10 +66,45 @@ const fs=[
  'float shine=mix(105.0,7.0,uRoughness);',
  'float spec=pow(max(dot(n,halfV),0.0),shine)*(0.06+uMetallic*0.44);',
  'vec3 shaded=uColor.rgb*(0.24+0.76*diffuse)+vec3(spec)+uEmission;',
- 'if(uInspectMode>2.5){shaded=uColor.rgb;}',
+ 'if(uInspectMode>6.5){',
+  'float soft=max(dot(n,l),0.0);',
+  'shaded=vec3(0.58039,0.41961,0.29804)*(0.47+0.50*soft)', 
+  '+vec3(0.75,0.57,0.43)*min(0.065,pow(max(dot(n,halfV),0.0),28.0)*0.075);',
+  '}', 
+  'else if(uInspectMode>5.5){',
+  'float soft=max(dot(n,l),0.0);',
+  'shaded=vec3(0.58039,0.41961,0.29804)*(0.47+0.50*soft);',
+  '}',
+  'else if(uInspectMode>4.5){shaded=vec3(0.58039,0.41961,0.29804);}',
+  'else if(uInspectMode>3.5){shaded=vec3(0.58039,0.41961,0.29804);}',
+  'else if(uInspectMode>2.5){shaded=uColor.rgb;}',
  'else if(uInspectMode>1.5){shaded=normalize(vNormal)*0.5+0.5;}',
  'else if(uInspectMode>0.5){shaded=vec3(0.94,0.96,0.98);}',
  'gl_FragColor=vec4(shaded,uInspectMode>0.5?1.0:uColor.a);}'
+].join('\n');
+// Mask-based screen-space edge pass: outline is outside original geometry, never triangle wireframe.
+const outlineVs=[
+ 'attribute vec2 aCorner;varying vec2 vUv;',
+ 'void main(){vUv=aCorner*0.5+0.5;gl_Position=vec4(aCorner,0.0,1.0);}'
+].join('\n');
+const outlineFs=[
+ 'precision mediump float;',
+ 'varying vec2 vUv;',
+ 'uniform sampler2D uMask;uniform vec2 uPixel;',
+ 'void main(){',
+ 'float center=step(0.5,texture2D(uMask,vUv).r);',
+ 'vec2 x=vec2(uPixel.x,0.0),y=vec2(0.0,uPixel.y);',
+ 'float nearMask=max(max(step(0.5,texture2D(uMask,vUv+x).r),',
+ 'step(0.5,texture2D(uMask,vUv-x).r)),',
+ 'max(step(0.5,texture2D(uMask,vUv+y).r),',
+ 'step(0.5,texture2D(uMask,vUv-y).r)));',
+ 'nearMask=max(nearMask,max(max(',
+ 'step(0.5,texture2D(uMask,vUv+x+y).r),',
+ 'step(0.5,texture2D(uMask,vUv-x-y).r)),',
+ 'max(step(0.5,texture2D(uMask,vUv-x+y).r),',
+ 'step(0.5,texture2D(uMask,vUv+x-y).r))));',
+ 'gl_FragColor=vec4(0.090,0.067,0.055,(1.0-center)*nearMask);',
+ '}'
 ].join('\n');
 const lineVs=[
  'attribute vec3 aPosition;uniform mat4 uModel,uVP;',
@@ -110,9 +145,66 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  const camera={projection:'perspective',yaw:.7,pitch:.36,distance:14,
   focus:[0,0,0],fovDeg:48,orthoSpan:9,near:.01,far:20000};
  let dead=false,lost=false,cache=new WeakMap(),buffers=[],last=null;
- const INSPECTION_MODES=['LIT','SILHOUETTE','NORMALS','ALBEDO'];
+ const INSPECTION_MODES=['LIT','SILHOUETTE','NORMALS','ALBEDO',
+  'BLACK_CONTOUR','BROWN_FLAT','BROWN_VOLUME','BROWN_FINISH'];
  let inspectionMode='LIT';
  let currentQuality=quality,lastFrameBudget=null;
+ let edgeProg=null,edgeUniforms=null,edgeQuad=null;
+ let maskFbo=null,maskTexture=null,maskDepth=null,maskSize=[0,0];
+ const isBrownMode=()=>INSPECTION_MODES.indexOf(inspectionMode)>=4;
+ function outlineResources(width,height){
+  if(!edgeProg){
+   edgeProg=program(gl,outlineVs,outlineFs);
+   edgeUniforms={
+    corner:gl.getAttribLocation(edgeProg,'aCorner'),
+    mask:gl.getUniformLocation(edgeProg,'uMask'),
+    pixel:gl.getUniformLocation(edgeProg,'uPixel')
+   };
+   edgeQuad=createBuffer(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]));
+  }
+  if(maskSize[0]===width&&maskSize[1]===height)return;
+  if(maskFbo){gl.deleteFramebuffer(maskFbo);gl.deleteTexture(maskTexture);
+   gl.deleteRenderbuffer(maskDepth);}
+  maskFbo=gl.createFramebuffer();
+  maskTexture=gl.createTexture();maskDepth=gl.createRenderbuffer();
+  gl.bindTexture(gl.TEXTURE_2D,maskTexture);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,width,height,0,
+   gl.RGBA,gl.UNSIGNED_BYTE,null);
+  gl.bindRenderbuffer(gl.RENDERBUFFER,maskDepth);
+  gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,width,height);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,maskFbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,
+   gl.TEXTURE_2D,maskTexture,0);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,
+   gl.RENDERBUFFER,maskDepth);
+  const ok=gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  gl.bindTexture(gl.TEXTURE_2D,null);
+  gl.bindRenderbuffer(gl.RENDERBUFFER,null);
+  if(ok!==gl.FRAMEBUFFER_COMPLETE)throw Error('AIG3D_BROWN_MASK_FRAMEBUFFER_BLOCK');
+  maskSize=[width,height];
+ }
+ function compositeBlackOuterOutline(width,height){
+  gl.disable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+  gl.useProgram(edgeProg);
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,maskTexture);
+  gl.uniform1i(edgeUniforms.mask,0);
+  // Constant ~2-pixel external black edge at native 1080-wide GPU output.
+  const thickness=Math.max(1,Math.min(3,width/540));
+  gl.uniform2f(edgeUniforms.pixel,thickness/width,thickness/height);
+  gl.bindBuffer(gl.ARRAY_BUFFER,edgeQuad);
+  gl.enableVertexAttribArray(edgeUniforms.corner);
+  gl.vertexAttribPointer(edgeUniforms.corner,2,gl.FLOAT,false,0,0);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  gl.disable(gl.BLEND);gl.bindTexture(gl.TEXTURE_2D,null);
+  gl.enable(gl.DEPTH_TEST);
+ }
  const requestedHardwareAA=gl.getContextAttributes()?.antialias===true;
  const activeMSAASamples=()=>{
   try{return requestedHardwareAA?Math.max(0,Number(gl.getParameter(gl.SAMPLES))||0):0;}
@@ -187,7 +279,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    orthographic(camera.orthoSpan,canvas.width/Math.max(1,canvas.height),camera.near,camera.far);
   return {eye,vp:multiply(projection,lookAt(eye,f,[0,1,0]))};
  }
- function meshDraw(node,model,vp,eye){
+ function meshDraw(node,model,vp,eye,forcedInspection=null){
   const mesh=bufferMesh(node.mesh),mat=node.material;
   gl.useProgram(meshProg);
   gl.bindBuffer(gl.ARRAY_BUFFER,mesh.pos);
@@ -202,7 +294,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   gl.uniform3fv(u.eye,new Float32Array(eye));
   gl.uniform3fv(u.emissive,new Float32Array(mat.emissive));
   gl.uniform1f(u.metal,mat.metallic);gl.uniform1f(u.rough,mat.roughness);
-  gl.uniform1f(u.inspect,INSPECTION_MODES.indexOf(inspectionMode));
+  gl.uniform1f(u.inspect,forcedInspection===null?INSPECTION_MODES.indexOf(inspectionMode):forcedInspection);
   if(mat.doubleSided)gl.disable(gl.CULL_FACE);else gl.enable(gl.CULL_FACE);
   gl.drawElements(gl.TRIANGLES,mesh.count,mesh.type,0);
   return mesh.count/3;
@@ -240,21 +332,42 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    lastFrameBudget={maxFramePixels:3200000,effectiveScale:1,
     targetScale:1,cappedBySafety:false};
   }else resize();
+  const {eye,vp}=eyeAndVP();
+  const brown=isBrownMode();
+  if(brown){
+   outlineResources(canvas.width,canvas.height);
+   gl.bindFramebuffer(gl.FRAMEBUFFER,maskFbo);
+   gl.viewport(0,0,canvas.width,canvas.height);
+   gl.clearColor(0,0,0,1);gl.clearDepth(1);
+   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);
+   gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+   for(const node of scene.nodes)if(node.visible){
+    // White mask uses original indexed XYZ triangles in the very same GPU.
+    meshDraw(node,getAIG3DWorldMatrix(scene,node.id),vp,eye,1);
+   }
+   gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+   gl.viewport(0,0,canvas.width,canvas.height);
+  }
   gl.clearColor(...background);gl.clearDepth(1);
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-  const {eye,vp}=eyeAndVP();
   let triangles=0,nodes=0,rapid=0,feed=0;
   for(const node of scene.nodes)if(node.visible){
    if(triangles+node.mesh.triangleCount>200000)
     throw Error('AIG3D_GPU_TRIANGLE_BUDGET_BLOCKED');
-   triangles+=meshDraw(node,getAIG3DWorldMatrix(scene,node.id),vp,eye);nodes++;
+   if(inspectionMode!=='BLACK_CONTOUR')
+    meshDraw(node,getAIG3DWorldMatrix(scene,node.id),vp,eye);
+   triangles+=node.mesh.triangleCount;nodes++;
   }
-  for(const overlay of scene.overlays){
+  if(brown)compositeBlackOuterOutline(canvas.width,canvas.height);
+  else for(const overlay of scene.overlays){
    const x=renderPaths(overlay.segments,vp);rapid+=x.rapid;feed+=x.feed;
   }
   last={status:'WEBGL_XYZ_TRIANGLES_RENDERED',webglVersion:webgl2?2:1,
    triangles,nodes,rapid,feed,cameraProjection:camera.projection,
    inspectionMode,postProcessBloomApplied:false,
+   exactCoffeeBrownOverride:brown&&inspectionMode!=='BLACK_CONTOUR',
+   blackContourFromRealGPUObjectMask:brown,
+   blackOutlineNotTriangleWireframe:brown,
    meshVertexPositionsModifiedByRenderer:false,
    allocatedFramePixels:canvas.width*canvas.height,maxFramePixels:lastFrameBudget.maxFramePixels,
    antialiasProfile:currentQuality,effectiveSuperSampleScale:lastFrameBudget.effectiveScale,
@@ -359,6 +472,9 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   canvas.removeEventListener('webglcontextlost',contextLost);
   for(const b of buffers)gl.deleteBuffer(b);
   gl.deleteProgram(meshProg);gl.deleteProgram(lineProg);
+  if(edgeProg)gl.deleteProgram(edgeProg);
+  if(maskFbo){gl.deleteFramebuffer(maskFbo);gl.deleteTexture(maskTexture);
+   gl.deleteRenderbuffer(maskDepth);}
   buffers=[];cache=new WeakMap();
  }
  return {status:'READY',contextVersion:webgl2?2:1,render,destroy,
