@@ -121,6 +121,22 @@ try{
    assert.equal(proof.real38LazyAssetIndex.indexedAssetsAreMetadataNotLoadedMeshes,true);
    assert.equal(proof.real37ScalableCoreAndWardrobe.wardrobe.garmentMeshCount,2);
    assert.equal(proof.real37ScalableCoreAndWardrobe.wardrobe.bodyGeometryIdentityPreserved,true);
+   // User-approved heroine reference sheet is REAL source evidence, not
+   // synthetic classmate silhouette. RGB refit changes actual 3D colours
+   // but may NEVER claim real facial likeness completed.
+   await page.locator('#scan314-heroine-authority > summary').click();
+   await page.locator('#scan314-apply-reference').click();
+   const heroineRefit=JSON.parse(await page.locator('#scan29-proof').textContent());
+   assert.equal(heroineRefit.real314HeroineApprovedVisualReferenceFit
+    .approvedReferenceSheetSHA256,
+    '1deed212a2adcdc821e4291c6021fd1db490644da9a9c9b497f8243a7da296c1');
+   assert.ok(heroineRefit.real314HeroineApprovedVisualReferenceFit
+    .actualBodyVertexColoursChanged>15);
+   assert.equal(heroineRefit.real314HeroineApprovedVisualReferenceFit
+    .realUserApprovedHeroineAppearancePASS,false);
+   assert.equal(heroineRefit.real314HeroineApprovedVisualReferenceFit
+    .actualFaceEyeNoseMouth3DShapeMatched,false);
+
    // 3.13: the hero remains source-bound. Additional crowd bodies are
    // explicitly SAME-mesh technical test instances, NOT distinct classmates.
    await page.locator('#scan313-classroom > summary').click();
@@ -268,6 +284,17 @@ try{
    const continuous=JSON.parse(await page.locator('#scan29-proof').textContent());
    assert.ok(continuous.real312ContinuousSecondaryMovement.simulatedFrames>=12);
    assert.equal(continuous.real312ContinuousSecondaryMovement.fullHairStrandAndFabricPhysicsCertified,false);
+   await page.locator('#scan314-audit-triangle').click();
+   const exact=JSON.parse(await page.locator('#scan29-proof').textContent())
+    .real314ExactBodyGarmentTriangleIntersections;
+   assert.ok(exact,'real triangle-intersection audit must produce evidence');
+   assert.equal(exact.schema,
+    'AIG_REAL3D_3_14_EXACT_DISCRETE_TRIANGLE_PAIRS');
+   assert.ok(exact.exactTrianglePairsTested>=0);
+   assert.equal(exact.releaseAllowed,false);
+   assert.equal(exact.fullContinuousTimeCollisionFreeCertified,false);
+   assert.equal(exact.userApprovedHeroineAppearanceCertified,false);
+
    await page.locator('#viewport').screenshot({
     path:out+'/'+device.name+'-real3d-3-12-hair-skirt-dynamic-settle.png'
    });
