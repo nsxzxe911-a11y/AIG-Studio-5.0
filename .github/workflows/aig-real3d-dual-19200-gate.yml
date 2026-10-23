@@ -8,7 +8,10 @@ on:
       - '.github/workflows/aig-real3d-dual-19200-gate.yml'
   pull_request:
     paths:
-      - 'formal-web/shared-3d/**'
+      - 'formal-web/shared-3d/aig-real3d-dual-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-dual-*'
+      - 'formal-web/shared-3d/aig-real3d-core.mjs'
+      - 'formal-web/shared-3d/aig-real3d-webgl.mjs'
       - '.github/workflows/aig-real3d-dual-19200-gate.yml'
   workflow_dispatch:
 jobs:

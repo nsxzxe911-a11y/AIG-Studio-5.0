@@ -7,6 +7,8 @@ import {projectAIGNativeOBJLandmarks,summarizeAIGLandmarkHeightRegions}
  from './aig-real3d-native-anatomy-projection.mjs';
 import {createAIGNativeAnatomyAnnotation}
  from './aig-real3d-native-anatomy-annotation.mjs';
+import {auditAIGNativeOBJLocalSurface}
+ from './aig-real3d-local-surface-topology.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {
  auditAIG3DSourceSilhouette,validateAIGInspectionCapturePlan,
@@ -85,6 +87,8 @@ $('inspect').addEventListener('click',async()=>{
  running=true;$('inspect').disabled=true;$('report-download').disabled=true;report=null;
  release();gallery.replaceChildren();$('reference-gallery').replaceChildren();
  $('anatomy-gallery').replaceChildren();$('anatomy-region-table').replaceChildren();
+ $('surface-table').replaceChildren();
+ $('surface-stats').textContent='未提供可驗證的原始 OBJ 網格標記，局部接合技術 Gate BLOCK。';
  $('anatomy-stats').textContent='來源標記尚未通過貼合檢查；真人自然外觀 BLOCK。';
  profiles=[];$('profile-angle').disabled=true;
  $('profile-table').replaceChildren();
@@ -117,8 +121,16 @@ $('inspect').addEventListener('click',async()=>{
     bytes,heightMm,sourceName:file.name,sourceSha256:hash
   });
   const audit=auditAIG3DSourceSilhouette(scene);
-  if(!(isOBJ?evidence.geometryPASS:evidence.renderGeometryPASS))
-   throw Error('原始幾何 Gate BLOCK：'+JSON.stringify(evidence.geometricErrors??evidence));
+  const nativeGeometryGatePASS=isOBJ?evidence.geometryPASS:evidence.renderGeometryPASS;
+  // A flawed OBJ with REAL indexed source triangles may still be inspected
+  // read-only to expose broken seams. It must NEVER be called release-ready.
+  if(!nativeGeometryGatePASS){
+   if(!isOBJ||!Number.isInteger(evidence.actualTriangles)||
+      evidence.actualTriangles<2000)
+    throw Error('原始幾何 Gate BLOCK：'+JSON.stringify(evidence.geometricErrors??evidence));
+   setStatus('原始 OBJ 幾何 Gate BLOCK：'+evidence.geometricErrors.join('、')+
+     '。僅允許唯讀診斷截圖，不是正式可用人體。');
+  }
   const canvas=$('native-webgl');
   renderer=createAIG3DRenderer(canvas,{quality:'balanced',
    pixelRatio:1,background:[.769,.745,.702,1]});
@@ -159,6 +171,9 @@ $('inspect').addEventListener('click',async()=>{
    throw Error('SOURCE_GEOMETRY_CHANGED_DURING_RENDER');
   const result={
    schema:AIG_INSPECTION_FRAME_SCHEMA,
+   rawNativeGeometryGatePASS:nativeGeometryGatePASS,
+   diagnosticOnlyWithBadSource:!nativeGeometryGatePASS,
+   sourceMeshGeometryErrors:isOBJ?(evidence.geometricErrors??[]):[],
    userSourceName:file.name,sourceSha256:hash,
    measuredHeightMm:heightMm,
    geometry:audit,originalGLB:evidence,
@@ -207,10 +222,37 @@ $('inspect').addEventListener('click',async()=>{
     silhouetteResults.push(data.diagnostic);
    }catch(e){silhouetteProblems.push({angle,error:e.message});}
   }
-  let anatomicalProjection=null;
+  let anatomicalProjection=null,localSurface=null;
   const markerGateOK=isOBJ&&evidence.landmarkAudit?.complete===true&&
    landmarks!==null;
   if(markerGateOK){
+   // The ORIGINAL indexed triangles are the only geometry input. A GPU
+   // view, 2D alpha mask or sidecar label alone cannot repair a seam.
+   localSurface=auditAIGNativeOBJLocalSurface({
+    objText,landmarks,heightMm,upAxis:axis,sourceSha256:hash
+   });
+   $('surface-stats').textContent='五個來源標記區域的網格拓樸已分析。技術異常：'+
+    localSurface.regions.filter(r=>r.anomalyCodes.length).length+'/5；'+
+    '這不驗證五指、足趾或臉部自然性。';
+   const table=document.createElement('table');
+   const head=document.createElement('thead'),titles=document.createElement('tr');
+   for(const title of ['真 OBJ 區域','原始邊數','開放邊','非流形邊','面片方向錯誤',
+    '標記所屬相連元件','最大標記與表面距離 mm','技術異常']){
+    const th=document.createElement('th');th.textContent=title;titles.append(th);
+   }
+   head.append(titles);table.append(head);
+   const body=document.createElement('tbody');
+   for(const region of localSurface.regions){
+    const tr=document.createElement('tr');tr.dataset.region=region.id;
+    for(const value of [region.label,region.neighborhoodEdges,
+     region.openEdges,region.nonManifoldEdges,region.inconsistentFaceWindingEdges,
+     region.landmarkConnectedComponents,region.largestMarkerSnapErrorMm,
+     region.anomalyCodes.join('、')||'未檢測到上述技術異常']){
+     const td=document.createElement('td');td.textContent=String(value);tr.append(td);
+    }
+    body.append(tr);
+   }
+   table.append(body);$('surface-table').append(table);
    const views=[],annotations=[],regions=[];
    for(const angle of ['front','side','back','threeQuarter']){
     const projection=projectAIGNativeOBJLandmarks({
@@ -293,7 +335,7 @@ $('inspect').addEventListener('click',async()=>{
    '已比對 '+summary.count+'/4 視角；平均重合率：'+
    (summary.averageIoU===null?'無法計算':(summary.averageIoU*100).toFixed(2)+'%')+
    '；失敗：'+silhouetteProblems.length+'；這不是人體自然度自動驗收。';
-  report={...result,sourceReview,anatomicalProjection,silhouetteComparison:{
+  report={...result,sourceReview,anatomicalProjection,localSurfaceTopology:localSurface,silhouetteComparison:{
    ...summary,images:silhouetteResults,errors:silhouetteProblems,
    transparentReferencesUploaded:selected.length,
    fourViewSilhouetteComparePASS:summary.allFourAnglesCompared&&
@@ -302,10 +344,12 @@ $('inspect').addEventListener('click',async()=>{
   }};
   $('evidence').textContent=JSON.stringify(report,null,2);
   $('report-download').disabled=false;
-  setStatus('來源 '+file.name+' 完成 7 張真 GPU 圖；'+
-   (sourceReview.readyForHumanReferenceReview?'已具備人工外觀核對前置資料。':
-    '來源或人體標記仍有 Gate 缺口（請下載報告）。')+
-   ' 自然人體／照片一比一仍 BLOCK。',true);
+  setStatus('來源 '+file.name+' 完成 7 張唯讀 GPU 診斷圖；'+
+   (!nativeGeometryGatePASS?'【原始幾何 FAIL：禁止正式發布】'+
+     (evidence.geometricErrors??[]).join('、')+'。':
+    (sourceReview.readyForHumanReferenceReview?
+     '已具備人工外觀核對前置資料。':'來源或人體標記仍有 Gate 缺口。'))+
+   ' 自然人體／照片一比一始終 BLOCK。',nativeGeometryGatePASS);
  }catch(e){
   setStatus('BLOCK：'+(e?.message||String(e)));
   $('evidence').textContent='檢查未通過；已顯示的圖片不得作為完整證據。';

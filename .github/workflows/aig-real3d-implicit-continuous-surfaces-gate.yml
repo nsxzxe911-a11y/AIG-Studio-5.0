@@ -1,12 +1,10 @@
+# ARCHIVED: rejected procedural human candidates. No automatic PR QA.
+# Historical branch or explicitly requested workflow_dispatch only.
 name: AIG Real3D genuine SDF vs Metaball unified body surface Gate
 on:
   push:
     branches:
       - verify/real3d-continuous-surface-sdf-metaball-20261024
-    paths:
-      - 'formal-web/shared-3d/**'
-      - '.github/workflows/aig-real3d-implicit-continuous-surfaces-gate.yml'
-  pull_request:
     paths:
       - 'formal-web/shared-3d/**'
       - '.github/workflows/aig-real3d-implicit-continuous-surfaces-gate.yml'
