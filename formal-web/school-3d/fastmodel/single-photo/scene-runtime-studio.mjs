@@ -2,6 +2,7 @@ import {PhotoViewer} from './viewer.mjs';
 import {installAIG26VisionPanel} from './aig-vision-metric-color-2-6-ui.mjs';
 import {installAIG27SegmentationPanel} from './aig-seeded-segmentation-2-7-ui.mjs';
 import {installAIG28LocalLearning} from './aig-local-learner-2-8-ui.mjs';
+import {installAIG28BMultiSource} from './aig-multisource-occlusion-2-8b-ui.mjs';
 import {buildAIG23PhotoActor} from './aig-photo-rig-world-2-3.mjs';
 import {detectAIG24Image} from './aig-auto-image-detect-2-4.mjs';
 import {AIG25WorldMovieRecorder,validateAIG25TrueWorldMovie,
@@ -1082,9 +1083,14 @@ const aig26Source=installAIG26VisionPanel({getLibrary:()=>library});
 const aig27Source=installAIG27SegmentationPanel({
  getSourceState:()=>aig26Source,getLibrary:()=>library
 });
-installAIG28LocalLearning({
+const aig28Learner=installAIG28LocalLearning({
  getImage:()=>aig26Source,
  getSegmentation:()=>aig27Source,
  getLibrary:()=>library
+});
+installAIG28BMultiSource({
+ getImage:()=>aig26Source,
+ getSegmentation:()=>aig27Source,
+ getLearner:()=>aig28Learner
 });
 init();
