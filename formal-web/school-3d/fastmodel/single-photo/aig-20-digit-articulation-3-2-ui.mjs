@@ -12,10 +12,13 @@ import {aig33PrepareImplicitGroups,AIG33_SCHEMA}
  from './aig-implicit-digit-field-3-3.mjs';
 import {makeAIG33ImplicitSkinLayer,AIG33_SHADER_SCHEMA}
  from './aig-implicit-digit-raymarch-3-3.mjs';
+import {constrainAIG34DigitPoseToPhoto,AIG34_SCHEMA}
+ from './aig-photo-digit-silhouette-3-4.mjs';
 const $=id=>document.getElementById(id);
 const KNOWN=new Map(AIG32_DIGITS.map(v=>[v.id,v]));
 export function installAIG32DigitControls({
- getFusedScan,getBodyPose=()=>null
+ getFusedScan,getBodyPose=()=>null,
+ getPhotoDigitConstraints=()=>[],getOriginalPhoto=()=>null
 }={}){
  if(typeof getFusedScan!=='function'||typeof getBodyPose!=='function'||
   !$('digits32-build')||!$('digits32-proof'))
@@ -63,6 +66,10 @@ export function installAIG32DigitControls({
    selectedSurfaceEngine:$('digits33-render-mode').value,
    displayedSurfaceEngine:actualSurfaceMode,
    analyticImplicitField:implicitField?.schema??null,
+   photo34ConstraintSchema:AIG34_SCHEMA,
+   verifiedSource2DPhotoTipsApplied:generated?.sourcePhotoConstraintsActuallyApplied??0,
+   sourceXYConstrainedGroupCount:generated?.constrainedGroupCount??0,
+   sourcePixelsAppliedWithDepthStillUnknown:generated?.surfaceSourceEvidence??null,
    actualAnalyticalCapsuleCount:implicitField?.actualImplicitCapsuleCount??0,
    realSDFRasterGroupCount:implicitField?.implicitGroupCount??0,
    fourBoundedProxyBoxesUsedOnlyForPixelCoverage:actualSurfaceMode==='GLSL3_IMPLICIT_SDF',
@@ -142,11 +149,22 @@ export function installAIG32DigitControls({
    rig=makeAIG32DigitRig(sourceFused);
    sourceSha=s.report.sourceSha256;
   }
-  const next=poseAIG32AllDigits(rig,poses,{
+  const wantsImplicit=$('digits33-render-mode').value==='IMPLICIT_SDF';
+  let next=poseAIG32AllDigits(rig,poses,{
    radialSegments:16,ringsPerPhalanx:5
   });
-  if(!next.meshes.length)throw Error('目前沒有任何可見的手臂或腿部來源，不能虛構 20 根手指腳趾');
-  const wantsImplicit=$('digits33-render-mode').value==='IMPLICIT_SDF';
+  if(!next.meshes.length)
+   throw Error('目前沒有任何可見的手臂或腿部來源，不能虛構 20 根手指腳趾');
+  const sourceConstraints=getPhotoDigitConstraints();
+  if(wantsImplicit&&Array.isArray(sourceConstraints)&&sourceConstraints.length){
+   const photo=getOriginalPhoto();
+   if(photo?.sha!==s.report.sourceSha256)
+    throw Error('3.4 照片 SHA 與原 3D 模型不一致');
+   next=constrainAIG34DigitPoseToPhoto({
+    result:next,rig,constraints:sourceConstraints,
+    photoWidth:photo.width,photoHeight:photo.height
+   });
+  }
   let newGroup,newField=null,mode;
   const created=new Map();
   if(wantsImplicit){
@@ -211,6 +229,12 @@ export function installAIG32DigitControls({
   for(const [id,mesh] of created)meshes.set(id,mesh);
   implicitField=newField;actualSurfaceMode=mode;
   generated=next;
+  if(mode==='GLSL3_IMPLICIT_SDF'&&focusProof?.requestedSourcePart&&
+   focusProof.requestedSourcePart!=='body'){
+   s.mesh.visible=false;
+   for(const mesh of newGroup.children)
+    mesh.visible=mesh.name.endsWith('_'+focusProof.requestedSourcePart);
+  }
   for(const d of AIG32_DIGITS){
    const disabled=next.blockedMissingSourceDigits.includes(d.id);
    const input=$('digits32-curl-'+d.id);
@@ -357,6 +381,11 @@ export function installAIG32DigitControls({
    if(!group?.parent)return;
    try{commit({reanchor:true})}
    catch(e){status('3.1 身體姿勢改變後，指趾同步遭阻擋：'+String(e.message||e),true)}
+  },
+  refreshFromPhotoContours(){
+   if(!group?.parent)return;
+   try{commit()}
+   catch(e){status('3.4 照片輪廓接入失敗：'+String(e.message||e),true)}
   },
   get proof(){return generated},
   clear:reset
