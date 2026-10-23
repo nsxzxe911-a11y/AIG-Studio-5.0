@@ -1097,15 +1097,25 @@ installAIG28BMultiSource({
  getSegmentation:()=>aig27Source,
  getLearner:()=>aig28Learner
 });
+let aig31Body=null;
 const aig30Scan=installAIG29ContinuousScan({
  getImage:()=>aig26Source,
  getSegmentation:()=>aig27Source,
- getSharedViewer:async()=>{await ensureWorldViewer();return viewer}
+ getSharedViewer:async()=>{await ensureWorldViewer();return viewer},
+ getBodyPose:()=>aig31Body?.pose??null
 });
 let aig32Digits=null;
-const aig31Body=installAIG31HeadBodyControls({
+aig31Body=installAIG31HeadBodyControls({
  getFusedScan:()=>aig30Scan,
- onPoseApplied:()=>aig32Digits?.refreshFromHeadBodyPose()
+ onPoseApplied:(actualPose)=>{
+  // The actual posed body drives attached garment mesh vertices.
+  // Garment sync failure must not stop the existing 3.1 joints or fingers.
+  try{aig30Scan.applyBodyPose(actualPose)}
+  catch(e){$('scan37-status').textContent=
+   '服裝跟隨骨架暫未通過：'+String(e?.message||e)+
+   '；人體模型與來源保留。'}
+  aig32Digits?.refreshFromHeadBodyPose();
+ }
 });
 const aig34Photo=installAIG34PhotoDigitPanel({
  getPhoto:()=>aig26Source,
