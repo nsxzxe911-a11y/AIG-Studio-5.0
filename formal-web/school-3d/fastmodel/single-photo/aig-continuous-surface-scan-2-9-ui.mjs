@@ -282,6 +282,10 @@ export function installAIG29ContinuousScan({
    sourceSha256:scan.sourceSha256,
    bodyRestGeometryIdentityPreserved:true
   };
+  $('scan37-status').textContent='3.9 真骨架同步：'+
+   motion39Proof.actualGarmentMeshesFollowingRig+' 件獨立 3D 衣物；'+
+   motion39Proof.realGarmentVerticesMoved+' 個衣物頂點隨人體實際關節位移。'+
+   '布料碰撞與裙擺物理尚未通過。';
   proof();
   return motion39Proof;
  };
