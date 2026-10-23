@@ -11,7 +11,7 @@ import {makeAIG31HeadBodyRig,poseAIG31FusedMesh,
 const $=id=>document.getElementById(id);
 const JOINT_KEYS=Object.keys(AIG31_JOINT_LIMITS);
 const message=e=>String(e?.message||e);
-export function installAIG31HeadBodyControls({getFusedScan}={}){
+export function installAIG31HeadBodyControls({getFusedScan,onPoseApplied}={}){
  if(typeof getFusedScan!=='function'||!$('rig31-activate')||
   !$('rig31-camera-front'))throw Error('AIG31_FORMAL_WEBGL_JOINT_UI_REQUIRED');
  let rig=null,attachedMesh=null,sourceSha=null,pose=null,
@@ -106,6 +106,9 @@ export function installAIG31HeadBodyControls({getFusedScan}={}){
   geo.attributes.position.needsUpdate=true;
   geo.attributes.normal.needsUpdate=true;
   pose=value;refreshProof();
+  // First-party Real3D 3.2 attachment: keep real finger/toe roots on the
+  // newly posed wrist/ankle sources; failures are reported in 3.2 UI.
+  if(typeof onPoseApplied==='function')onPoseApplied(value);
   status('真正的 3D 頂點關節變形：'+value.actualMovedVertexCount+
    ' 點；頭部 '+value.headActualMovedVertices+
    '、頸部 '+value.neckActualMovedVertices+
