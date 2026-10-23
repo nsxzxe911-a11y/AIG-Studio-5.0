@@ -12,18 +12,40 @@ export const AIG_STAGE1_COORDINATES=Object.freeze({
 export const AIG_STAGE1_GENDERS=Object.freeze(['male','female']);
 const bad=s=>{throw Error('AIG_STAGE1_'+s)};
 const PROFILE=Object.freeze({
- male:Object.freeze({height:1.78,shoulder:.137,hip:.105,
-  waist:.091,chest:.129,headX:.061,headY:.071,armX:.153,
-  legX:.064,legThigh:.066,legCalf:.045,
+ male:Object.freeze({height:1.78,shoulder:.126,hip:.109,
+  waist:.091,chest:.126,headX:.055,headY:.071,armX:.143,
+  legX:.073,legThigh:.060,legCalf:.043,
   swim:'fitted-briefs',swimColor:'#234b71'}),
- female:Object.freeze({height:1.68,shoulder:.119,hip:.116,
-  waist:.084,chest:.115,headX:.061,headY:.072,armX:.145,
-  legX:.066,legThigh:.069,legCalf:.048,
+ female:Object.freeze({height:1.68,shoulder:.114,hip:.118,
+  waist:.084,chest:.112,headX:.055,headY:.072,armX:.135,
+  legX:.078,legThigh:.065,legCalf:.044,
   swim:'fitted-one-piece',swimColor:'#296f72'})
 });
 const round=v=>+v.toFixed(6);
-const vertices=[],indices=[];
+// Smooth adjoining anatomical rings without changing head/body height or
+// filling the left and right leg gap. Retain original source ring locations.
+function refineRings(points,steps=3){
+ const result=[];
+ for(let i=0;i<points.length-1;i++){
+  const a=points[i],b=points[i+1],p=points[Math.max(0,i-1)],
+   n=points[Math.min(points.length-1,i+2)];
+  if(!i)result.push(a);
+  for(let j=1;j<=steps;j++){
+   const t=j/steps,t2=t*t,t3=t2*t,r={};
+   for(const k of ['x','z','rx','rz']){
+    const v=(2*t3-3*t2+1)*a[k]+(t3-2*t2+t)*(b[k]-p[k])*.5+
+      (-2*t3+3*t2)*b[k]+(t3-t2)*(n[k]-a[k])*.5;
+    r[k]=k==='rx'||k==='rz'?
+     Math.max(.001,Math.min(v,Math.max(a[k],b[k])*1.08)):v;
+   }
+   r.y=a.y+(b.y-a.y)*t;
+   result.push(r);
+  }
+ }
+ return result;
+}
 function loft(points,{segments=28,caps=true}={}){
+ points=refineRings(points);
  if(points.length<2)bad('AT_LEAST_TWO_LOFT_LEVELS');
  const xyz=[],faces=[];
  for(const r of points){
@@ -93,8 +115,8 @@ function makeAdult(gender){
  // Torso is smoothly ringed and deliberately one human-volume surface,
  // not several stacked cylinder primitives.
  const torso=[
-  [.510,0,0,p.hip*.69,.070],
-  [.537,0,0,p.hip*.91,.091],
+  [.510,0,0,p.hip*.72,.070],
+  [.537,0,0,p.hip*.93,.091],
   [.570,0,0,p.hip,.100],
   [.602,0,-.006,p.waist*.97,.082],
   [.655,0,-.007,p.waist,.084],
@@ -110,15 +132,17 @@ function makeAdult(gender){
   [.858,0,0,.039,.038],[.871,0,0,.035,.036],
   [.892,0,0,.038,.037]
  ],'body','chest');
+ // Neutral elongated head: jaw -> cheek -> temples -> cranial dome.
  const head=[
-  [.863,0,0,.028,.028],
-  [.882,0,-.002,p.headX*.75,.040],
-  [.904,0,-.004,p.headX*.98,.053],
-  [.934,0,-.003,p.headX,.057],
-  [.958,0,-.001,p.headX*.95,.053],
-  [.978,0,0,p.headX*.73,.046],
-  [.991,0,0,p.headX*.34,.024],
-  [1.000,0,0,.004,.005]
+  [.863,0,-.012,.020,.018],
+  [.875,0,-.010,p.headX*.54,.030],
+  [.893,0,-.008,p.headX*.78,.043],
+  [.915,0,-.005,p.headX*.96,.052],
+  [.942,0,-.003,p.headX,.057],
+  [.967,0,0,p.headX*.92,.052],
+  [.984,0,.003,p.headX*.66,.039],
+  [.994,0,.004,p.headX*.33,.020],
+  [1.000,0,.004,.002,.003]
  ];
  put('head','neutral-head-no-hair-no-face-texture',head,'body','neck');
  for(const s of [-1,1]){
@@ -126,12 +150,14 @@ function makeAdult(gender){
   const armStart=s*p.shoulder,elbow=s*(p.armX+.036),
    wrist=s*(p.armX+.054),hand=s*(p.armX+.057);
   put(side+'UpperArm','upper-arm',[
-   [.808,armStart,0,.036,.041],
-   [.787,armStart+s*.016,0,.042,.042],
-   [.745,armStart+s*.023,-.001,.039,.039],
-   [.704,armStart+s*.035,-.003,.033,.034],
-   [.657,elbow,-.004,.028,.029],
-   [.640,elbow,-.004,.027,.027]
+   [.839,armStart-s*.002,0,.012,.015],
+   [.829,armStart,0,.025,.030],
+   [.808,armStart,0,.032,.035],
+   [.787,armStart+s*.013,0,.036,.038],
+   [.745,armStart+s*.023,-.001,.035,.036],
+   [.704,armStart+s*.033,-.003,.031,.033],
+   [.657,elbow,-.004,.027,.028],
+   [.640,elbow,-.004,.026,.026]
   ],'body',side+'Shoulder');
   put(side+'Forearm','forearm',[
    [.645,elbow,-.004,.028,.029],
@@ -149,12 +175,12 @@ function makeAdult(gender){
   ],'body',side+'Wrist');
   const hip=s*p.legX,knee=s*(p.legX+.005),ankle=s*(p.legX+.006);
   put(side+'Thigh','distinct-thigh',[
-   [.522,hip,0,p.legThigh*.90,.073],
-   [.499,hip,0,p.legThigh,.075],
-   [.456,hip+s*.002,0,p.legThigh*.94,.072],
-   [.394,hip+s*.002,-.005,p.legThigh*.78,.064],
-   [.333,knee,-.014,.049,.049],
-   [.285,knee,-.018,.041,.044]
+   [.522,hip,0,p.legThigh*.85,.067],
+   [.499,hip,0,p.legThigh,.073],
+   [.456,hip+s*.002,0,p.legThigh*.96,.070],
+   [.394,hip+s*.002,-.005,p.legThigh*.82,.064],
+   [.333,knee,-.014,.045,.046],
+   [.285,knee,-.018,.040,.043]
   ],'body',side+'Hip');
   put(side+'Calf','distinct-calf',[
    [.300,knee,-.018,.042,.044],
@@ -226,6 +252,7 @@ function makeAdult(gender){
  return Object.freeze({
   schema:AIG_STAGE1_SCHEMA,gender,profile:p,
   adultTechnicalReferenceOnly:true,
+  bodySurfaceRevision:'SMOOTH_RING_LOFT_SHOULDER_HEAD_HIP_CLEARANCE',
   originCoordinates:AIG_STAGE1_COORDINATES,
   heightMeters:H,heightMm:Math.round(H*1000000)/1000,
   coordinateAuthority:'mm/0.001',rendererAdapterWorldUnit:'meters',
