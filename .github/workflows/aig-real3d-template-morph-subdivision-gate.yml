@@ -1,0 +1,70 @@
+name: AIG Real3D True Anatomical Template Morph + Subdivision Front GPU
+on:
+  push:
+    branches:
+      - verify/real3d-anatomical-template-morph-subdivision-20261024
+    paths:
+      - 'formal-web/shared-3d/**'
+      - '.github/workflows/aig-real3d-template-morph-subdivision-gate.yml'
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/**'
+      - '.github/workflows/aig-real3d-template-morph-subdivision-gate.yml'
+  workflow_dispatch:
+jobs:
+  template-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    name: No-old-SDF male/female landmark template real geometry Gate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Real triangulation and Subdivision manifold closure
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-anatomical-template-morph.mjs
+          node --check formal-web/shared-3d/aig-real3d-template-lab.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-template-morph-subdivision.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-template-morph-subdivision.test.mjs
+      - name: Protect original AIG RGB UI and CNC while pursuing new anatomy
+        run: |
+          grep -q '3ax-nc-workbench.html' formal-web/aig-new-home.html
+          grep -q 'aig-download-center.html' formal-web/aig-new-home.html
+          grep -q 'aig-real3d-template-lab.mjs' formal-web/shared-3d/aig-real3d-template-lab.html
+          grep -q 'bodySegmentsNotIndependent:true' formal-web/shared-3d/aig-real3d-anatomical-template-morph.mjs
+          grep -q 'naturalHumanAppearancePASS:false' formal-web/shared-3d/aig-real3d-anatomical-template-morph.mjs
+          grep -q '19200' formal-web/shared-3d/aig-real3d-dual-kernel-19200.mjs
+  real-template-browser:
+    runs-on: ubuntu-latest
+    needs: template-source
+    timeout-minutes: 20
+    name: Four 1080x1920 real WebGL Native GPU photos with same camera
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Male female actual template and subdivision PNG proof
+        run: |
+          python3 -m http.server 8771 --bind 127.0.0.1 --directory formal-web >/tmp/aig-real3d-template.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8771/shared-3d/aig-real3d-template-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-template-morph-subdivision.real-browser.mjs
+          test -s artifacts/aig-real3d-template-morph-actual-gpu/female-template-morph-FRONT-1080x1920-ACTUAL-GPU.png
+          test -s artifacts/aig-real3d-template-morph-actual-gpu/female-subdivision-FRONT-1080x1920-ACTUAL-GPU.png
+          test -s artifacts/aig-real3d-template-morph-actual-gpu/male-template-morph-FRONT-1080x1920-ACTUAL-GPU.png
+          test -s artifacts/aig-real3d-template-morph-actual-gpu/male-subdivision-FRONT-1080x1920-ACTUAL-GPU.png
+          test -s artifacts/aig-real3d-template-morph-actual-gpu/manifest.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-REAL3D-TEMPLATE-MORPH-SUBDIVISION-FOUR-TRUE-WEBGL-UNAPPROVED
+          path: artifacts/aig-real3d-template-morph-actual-gpu/
+          if-no-files-found: warn
