@@ -211,9 +211,15 @@ try{
    console.log('AIG31_HEAD_NECK_INDEPENDENT_REAL_VERTICES_180_ORBIT_FULL_JOINTS_PASS',
     device.name);
   }catch(e){
-   await page.screenshot({
-    path:out+'/'+device.name+'-FAIL-full-page.png',fullPage:true
+   await page.locator('#viewport').screenshot({
+    path:out+'/'+device.name+'-FAIL-webgl.png',timeout:12000
    }).catch(()=>{});
+   await writeFile(out+'/'+device.name+'-FAIL-status.json',JSON.stringify({
+    device:device.name,error:String(e.message||e),
+    real31Status:await page.locator('#rig31-status').textContent().catch(()=>null),
+    real30Status:await page.locator('#scan29-status').textContent().catch(()=>null),
+    sourceRigProof:await page.locator('#rig31-proof').textContent().catch(()=>null)
+   },null,2)).catch(()=>{});
    throw Error(device.name+': '+String(e.message||e)+
     ' scanStatus='+await page.locator('#scan29-status').textContent().catch(()=>null)+
     ' rigStatus='+await page.locator('#rig31-status').textContent().catch(()=>null)+
