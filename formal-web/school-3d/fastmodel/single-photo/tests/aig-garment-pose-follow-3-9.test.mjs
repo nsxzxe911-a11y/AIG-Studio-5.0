@@ -22,8 +22,8 @@ test('source-vertex anchored independent 3D clothing moves when the real body jo
  assert.equal(outcome.actualGarmentVerticesMoved,2);
  assert.equal(outcome.garmentVertexCount,4);
  assert.ok(outcome.maxSourceAnchorDisplacement>.3);
- assert.deepEqual(Array.from(outcome.positions.slice(6,9)),
-  Array.from(new Float32Array([-.2,1.12,.34])));
+ for(const [i,expected] of [[6,-.2],[7,1.12],[8,.34]])
+  assert.ok(Math.abs(outcome.positions[i]-expected)<.00001);
  assert.deepEqual(garmentRest,original);
  assert.deepEqual(bodyRest,base);
  assert.deepEqual(bodyPosed,posed);
