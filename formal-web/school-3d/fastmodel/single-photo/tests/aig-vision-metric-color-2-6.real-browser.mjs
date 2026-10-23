@@ -96,6 +96,13 @@ try{
     buffer:Buffer.from(JSON.stringify(mask))
    });
    await page.locator('#vision26-label-import').click();
+   // Reading external JSON is asynchronous. Do not race file.text() and
+   // claim missing labels merely because Playwright click returned early.
+   await page.waitForFunction(()=>{
+    try{return JSON.parse(document.getElementById('vision26-proof').textContent)
+     .semantic?.proofStatus==='UNREVIEWED_2D_LABELS_ONLY'}
+    catch{return false}
+   },null,{timeout:12000});
    const semantic=JSON.parse(await page.locator('#vision26-proof').textContent()).semantic;
    assert.equal(semantic.automaticSemanticModelExecutedHere,false);
    assert.equal(semantic.proofStatus,'UNREVIEWED_2D_LABELS_ONLY');
