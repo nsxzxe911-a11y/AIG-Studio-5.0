@@ -12,6 +12,8 @@ import {buildAIG35UnifiedAppearance}
  from './aig-unified-appearance-3-5.mjs';
 import {buildAIG37Outfit,separateAIG37BodyColours}
  from './aig-modular-outfits-3-7.mjs';
+import {createAIG38CharacterCatalog}
+ from './aig-character-asset-index-3-8.mjs';
 const $=id=>document.getElementById(id);
 export function installAIG29ContinuousScan({
  getImage,getSegmentation,getSharedViewer
@@ -23,6 +25,8 @@ export function installAIG29ContinuousScan({
  let drawProof=null,scanStamp=null,appearanceProof=null;
  let core36Proof=null,lighting36Proof=null,restore36Lighting=null;
  let wardrobe37Proof=null,wardrobe37Layer=null,body37Proof=null;
+ const wardrobe38=createAIG38CharacterCatalog();
+ let browse38Offset=0;
  const status=(message,bad=false)=>{
   $('scan29-status').textContent=(bad?'BLOCKED：':'')+message;
   $('scan29-status').style.color=bad?'#ffd298':'#aef5e6';
@@ -56,6 +60,7 @@ export function installAIG29ContinuousScan({
    unifiedReal35AppearancePipeline:appearanceProof,
    unifiedReal36OneKernel120LogicalSlots:core36Proof,
    real36Lighting:lighting36Proof,
+   real38LazyAssetIndex:wardrobe38.snapshot(),
    real37ScalableCoreAndWardrobe:core36Proof?.plan?.schema===
     'AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS'?{
      selectedLogicalSlots:core36Proof.plan.logicalSlotsConfigured,
@@ -158,6 +163,53 @@ export function installAIG29ContinuousScan({
    actualShadowMapActive:!!key&&selected.shadows,
    physicalRayTracingVerified:false};
  }
+ function refresh38Browser(){
+  const slot=$('scan38-slot').value,
+   query=$('scan38-query').value;
+  const requested=wardrobe38.page({
+   slot:slot==='all'?null:slot,query,
+   offset:browse38Offset,limit:8
+  });
+  if(browse38Offset>=requested.totalMatched&&browse38Offset){
+   browse38Offset=Math.max(0,8*Math.floor(
+    Math.max(0,requested.totalMatched-1)/8));
+   return refresh38Browser();
+  }
+  const container=$('scan38-items');
+  container.replaceChildren();
+  for(const item of requested.items){
+   const row=document.createElement('div');
+   row.setAttribute('role','listitem');
+   row.style.cssText='padding:5px 0;border-bottom:1px solid #1b4253';
+   const installed=item.status==='installed';
+   row.textContent=(installed?'● 已有技術幾何：':'○ 待製作真 3D 資產：')+
+    item.title+' ['+item.id+']';
+   row.style.color=installed?'#b8efe0':'#b5c6d0';
+   container.append(row);
+  }
+  $('scan38-prev').disabled=browse38Offset===0;
+  $('scan38-next').disabled=browse38Offset+8>=requested.totalMatched;
+  $('scan38-status').textContent='目錄索引 '+requested.totalIndexed+
+   ' 筆，本篩選 '+requested.totalMatched+' 筆；第 '+
+   (requested.totalMatched?browse38Offset+1:0)+'–'+
+   Math.min(browse38Offset+8,requested.totalMatched)+
+   ' 筆。單次畫面最多 8 筆；實際穿戴 '+wardrobe38.active.size+
+   ' 套，未載入資產一律不佔用 GPU 網格。';
+ }
+ const record38Wear=(outfitId,meshReady)=>{
+  const current=wardrobe38.snapshot().activeIds;
+  if(outfitId==='body-proxy'){
+   for(const id of current)if(id.startsWith('procedural:'))
+    wardrobe38.remove(id);
+  }else{
+   const id='procedural:'+outfitId;
+   // Reject before allocating/committing the renderer if the manifest
+   // claims an uninstalled asset or breaches the GPU budget.
+   wardrobe38.planWear(id);
+   wardrobe38.commitWear(id,meshReady);
+  }
+  refresh38Browser();
+ }
  function prepareWardrobe37(shell,bodyHeightUnits,outfitId){
   const result=buildAIG37Outfit(shell,{bodyHeightUnits,outfitId});
   const layer=new THREE.Group();
@@ -188,10 +240,13 @@ export function installAIG29ContinuousScan({
   if(rendererSource.movieMode||rendererSource.reviewBusy)
    throw Error('共用畫面正在錄影或檢查，暫停服裝更新');
   const outfitId=$('scan37-outfit').value;
+  if(outfitId!=='body-proxy')
+   wardrobe38.planWear('procedural:'+outfitId);
   const next=prepareWardrobe37(scan.fusedOnePieceMesh,
    scan.bodyHeightUnits,outfitId);
   const previous=wardrobe37Layer;
   overlay.add(next.layer);wardrobe37Layer=next.layer;
+  record38Wear(outfitId,true);
   wardrobe37Proof={...next.result,pieces:next.result.pieces.map(
    item=>({role:item.role,name:item.name,
     triangleCount:item.geometry.triangleCount})),
@@ -295,6 +350,7 @@ export function installAIG29ContinuousScan({
    const prev=overlay;
    overlay=group;scan=reconstruction;rendererSource=viewer;
    wardrobe37Layer=stagedWardrobe.layer;
+   record38Wear(stagedWardrobe.result.outfitId,true);
    appearanceProof=newAppearanceProof;
    probeLines=null;scanStamp=scan.sourceSha256;
    wardrobe37Proof={...stagedWardrobe.result,
@@ -338,7 +394,9 @@ export function installAIG29ContinuousScan({
     drawProof.realActiveWebGLContext&&drawProof.actualSubmittedTriangles>0;
    $('scan36-visible').textContent=visible?
     '已在同一個真 WebGL 視窗提交 '+drawProof.actualSubmittedTriangles+
-    ' 個三角面；120 邏輯工作槽已完成 '+core36Proof.vertexColourWork.completedIdenticalKernelSlots+
+    ' 個三角面；'+core36Proof.plan.logicalSlotsConfigured+
+    ' 個已配置邏輯工作槽，實際完成 '+
+    core36Proof.vertexColourWork.completedIdenticalKernelSlots+
     ' 個真著色分塊。工作槽非實體 CPU/GPU，亦非外觀驗收。':
     '顯示證據不足：請查看 WebGL／相機診斷；保留原來源與 GLB。';
    proof();
@@ -354,6 +412,19 @@ export function installAIG29ContinuousScan({
  };
  $('scan29-build').addEventListener('click',async()=>{
   try{await buildPreview()}catch(e){status(String(e.message||e),true)}
+ });
+ $('scan38-query').addEventListener('input',()=>{
+  browse38Offset=0;refresh38Browser();
+ });
+ $('scan38-slot').addEventListener('change',()=>{
+  browse38Offset=0;refresh38Browser();
+ });
+ $('scan38-prev').addEventListener('click',()=>{
+  browse38Offset=Math.max(0,browse38Offset-8);
+  refresh38Browser();
+ });
+ $('scan38-next').addEventListener('click',()=>{
+  browse38Offset+=8;refresh38Browser();
  });
  $('scan37-outfit').addEventListener('change',()=>{
   try{update37Wardrobe()}catch(e){
@@ -429,6 +500,7 @@ export function installAIG29ContinuousScan({
   removeOverlay();proof();
   status('照片來源已變更，3.0 暫存融合曲面失效；原 3D 世界未刪除。');
  });
+ refresh38Browser();
  proof();return {
   get report(){return scan},
   get mesh(){return overlay?.children?.find(
