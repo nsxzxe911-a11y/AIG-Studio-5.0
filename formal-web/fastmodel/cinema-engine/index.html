@@ -89,9 +89,17 @@
    <p>字幕即時繪製在預覽與影像輸出中。自動配音功能尚未接入。</p>
   </section>
   <section id="audio-options" class="setting"><h2>音樂／音效</h2>
+   <label for="audio-preview">背景音樂（完整片段循環）</label>
    <button id="audio-button" class="outline-button">♫ 放入本機音樂</button>
    <audio id="audio-preview" controls preload="metadata"></audio>
-   <p>可以真實預聽素材；本階輸出的 WebM **尚未混入**音樂與配音。</p>
+   <label for="sfx-preview">音效（從影片開頭播放一次）</label>
+   <button id="sfx-button" class="outline-button">✧ 放入本機音效</button>
+   <audio id="sfx-preview" controls preload="metadata"></audio>
+   <label for="music-volume">配樂音量 <output id="music-volume-value">65%</output></label>
+   <input id="music-volume" type="range" min="0" max="100" value="65">
+   <label for="sfx-volume">音效音量 <output id="sfx-volume-value">75%</output></label>
+   <input id="sfx-volume" type="range" min="0" max="100" value="75">
+   <p>支援本機音樂與音效實際解碼，Canvas WebM 可混入雙音軌。影片原始聲音、AI 配音與 TTS 尚未混音，未實測前不得宣稱完整電影。</p>
   </section>
   <section id="render-options" class="setting"><h2>動畫輸出</h2>
    <label for="fps">影格率</label>
@@ -99,7 +107,7 @@
    <label for="export-size">輸出尺寸</label>
    <select id="export-size"><option value="960x540">960 × 540（先驗證）</option><option value="1920x1080">1920 × 1080（1080P）</option></select>
    <button id="export-webm" class="outline-button">開始輸出 WebM 畫面軌</button>
-   <p>僅在瀏覽器支援 MediaRecorder 且有素材時可輸出；並非宣稱已做出完整電影。2K／4K 暫不提供假成功按鈕。</p>
+   <p>在瀏覽器支援 MediaRecorder 時輸出 WebM，匯入的背景音樂和音效可用 Web Audio 混音；AI 配音、原始影片聲音、MP4/H.264 與 2K/4K 尚未完成。</p>
   </section>
  </aside>
 </div>
@@ -112,5 +120,6 @@
 <input type="file" id="video-file" accept="video/mp4,video/webm,video/ogg" multiple hidden>
 <input type="file" id="glb-file" accept=".glb,model/gltf-binary" hidden>
 <input type="file" id="audio-file" accept="audio/mpeg,audio/ogg,audio/wav,audio/webm" hidden>
+<input type="file" id="sfx-file" accept="audio/mpeg,audio/ogg,audio/wav,audio/webm" hidden>
 <script type="module" src="./app.mjs"></script>
 </body></html>
