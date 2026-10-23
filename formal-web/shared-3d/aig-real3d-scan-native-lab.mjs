@@ -1,5 +1,6 @@
 /** Scan-native R&D gallery. Local files only; does not upload personal assets. */
 import {buildAIGReal3DScanNative} from './aig-real3d-scan-native-mesh.mjs';
+import {buildAIGReal3DGLBStatic} from './aig-real3d-glb-native-mesh.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 const $=id=>document.getElementById(id);
 let renderer=null,locked=false;
@@ -52,9 +53,10 @@ $('load-source').addEventListener('click',async()=>{
  let loaded=null;
  try{
   const obj=$('source-obj').files?.[0];
-  if(!obj||!obj.name.toLowerCase().endsWith('.obj')||
-     obj.size>14000000||obj.size<30)
-   throw Error('請提供本機 OBJ 網格來源（14MB 內）');
+  if(!obj||!(/\.(obj|glb)$/i.test(obj.name))||
+     obj.size>(obj.name.toLowerCase().endsWith('.glb')?50000000:14000000)||
+     obj.size<30)
+   throw Error('請提供本機 OBJ（14MB 內）或 GLB（50MB 內）來源');
   const heightMm=Number($('source-height').value);
   const bytes=await obj.arrayBuffer();
   const sha256=await hash(bytes);
@@ -67,14 +69,20 @@ $('load-source').addEventListener('click',async()=>{
    landmarks=decoded.landmarks??decoded;
   }
   status('檢查 OBJ 真頂點、面、單一連通體、開放邊、人體比例…');
-  loaded=buildAIGReal3DScanNative({
-   objText:new TextDecoder('utf-8',{fatal:true}).decode(bytes),
-   sourceName:obj.name,sourceSha256:sha256,heightMm,
-   upAxis:$('up-axis').value,landmarks
-  });
+  loaded=obj.name.toLowerCase().endsWith('.glb')?
+   buildAIGReal3DGLBStatic({bytes,heightMm,sourceName:obj.name,
+    sourceSha256:sha256}):
+   buildAIGReal3DScanNative({
+    objText:new TextDecoder('utf-8',{fatal:true}).decode(bytes),
+    sourceName:obj.name,sourceSha256:sha256,heightMm,
+    upAxis:$('up-axis').value,landmarks
+   });
   $('proof').textContent=JSON.stringify(loaded.evidence,null,2);
-  if(!loaded.evidence.geometryPASS)
-   throw Error('幾何 Gate BLOCK：'+loaded.evidence.geometricErrors.join(', '));
+  const pipelineOK=loaded.evidence.geometryPASS??loaded.evidence.renderGeometryPASS;
+  if(!pipelineOK)
+   throw Error('幾何 Gate BLOCK：'+
+    (loaded.evidence.geometricErrors?.join(', ')||
+     '模型三維尺度／退化面不符合基本渲染要求'));
   const views=[
    {id:'FRONT',label:'正面',yaw:Math.PI},
    {id:'SIDE',label:'側面',yaw:Math.PI/2},
