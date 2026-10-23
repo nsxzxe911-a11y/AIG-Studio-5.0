@@ -14,6 +14,8 @@ import {buildAIG37Outfit,separateAIG37BodyColours}
  from './aig-modular-outfits-3-7.mjs';
 import {createAIG38CharacterCatalog}
  from './aig-character-asset-index-3-8.mjs';
+import {createAIG39StabilitySession,planAIG39ConservativeBudget}
+ from './aig-runtime-stability-3-9.mjs';
 const $=id=>document.getElementById(id);
 export function installAIG29ContinuousScan({
  getImage,getSegmentation,getSharedViewer
@@ -26,6 +28,7 @@ export function installAIG29ContinuousScan({
  let core36Proof=null,lighting36Proof=null,restore36Lighting=null;
  let wardrobe37Proof=null,wardrobe37Layer=null,body37Proof=null;
  const wardrobe38=createAIG38CharacterCatalog();
+ const stability39=createAIG39StabilitySession();
  let browse38Offset=0;
  const status=(message,bad=false)=>{
   $('scan29-status').textContent=(bad?'BLOCKED：':'')+message;
@@ -61,6 +64,7 @@ export function installAIG29ContinuousScan({
    unifiedReal36OneKernel120LogicalSlots:core36Proof,
    real36Lighting:lighting36Proof,
    real38LazyAssetIndex:wardrobe38.snapshot(),
+   real39RuntimeStability:stability39.snapshot(),
    real37ScalableCoreAndWardrobe:core36Proof?.plan?.schema===
     'AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS'?{
      selectedLogicalSlots:core36Proof.plan.logicalSlotsConfigured,
@@ -245,8 +249,13 @@ export function installAIG29ContinuousScan({
   const next=prepareWardrobe37(scan.fusedOnePieceMesh,
    scan.bodyHeightUnits,outfitId);
   const previous=wardrobe37Layer;
-  overlay.add(next.layer);wardrobe37Layer=next.layer;
-  record38Wear(outfitId,true);
+  overlay.add(next.layer);
+  try{record38Wear(outfitId,true)}
+  catch(error){
+   disposeGroup(next.layer);
+   throw error;
+  }
+  wardrobe37Layer=next.layer;
   wardrobe37Proof={...next.result,pieces:next.result.pieces.map(
    item=>({role:item.role,name:item.name,
     triangleCount:item.geometry.triangleCount})),
@@ -261,7 +270,8 @@ export function installAIG29ContinuousScan({
    '目前是程序化衣型，不是女主角真實裁縫版。';
   proof();
  };
- const buildPreview=async()=>{
+ const buildPreview=async(token)=>{
+  stability39.assertCurrent(token);
   const data=source(),radialSegments=Number($('scan29-radial').value),
    sliceStep=Number($('scan29-step').value),
    depthRatio=Number($('scan29-depth').value);
@@ -286,6 +296,7 @@ export function installAIG29ContinuousScan({
    reconstruction.surfaces.length!==1)
    throw Error('單一人體曲面未符合連通封閉 Gate，保留原 3D 場景');
   const viewer=await getSharedViewer();
+  stability39.assertCurrent(token);
   if(!viewer?.scene||!viewer.renderer||viewer.movieMode||
    viewer.reviewBusy||viewer.renderer.getContext()?.isContextLost?.())
    throw Error('唯一共用 WebGL 核心不可用，保留上次成功模型');
@@ -296,6 +307,13 @@ export function installAIG29ContinuousScan({
    mobile:matchMedia('(pointer:coarse)').matches,
    gpuContextAvailable:true,
    rayTracingRequested:$('scan36-light')?.value==='raytrace'
+  });
+  const resource39=planAIG39ConservativeBudget({
+   requestedLogicalSlots:plan.logicalSlotsConfigured,
+   hardwareConcurrency:navigator.hardwareConcurrency??2,
+   deviceMemoryGb:navigator.deviceMemory??null,
+   mobile:matchMedia('(pointer:coarse)').matches,
+   vertexCount:reconstruction.fusedOnePieceMesh.vertexCount
   });
   const group=new THREE.Group();
   group.name='AIG30_ONE_FUSED_WATERTIGHT_SDF_SOURCE_SURFACE';
@@ -308,8 +326,10 @@ export function installAIG29ContinuousScan({
    geometry.setIndex(new THREE.BufferAttribute(shell.indices,1));
    const shaded=await colourAIG36VertexShards({
     shell,source:data,bodyHeightUnits:reconstruction.bodyHeightUnits,
-    colourGain:newAppearanceProof.finalControls.colourGain,plan
+    colourGain:newAppearanceProof.finalControls.colourGain,plan,
+    signal:token.signal
    });
+   stability39.assertCurrent(token);
    const bodyColours=separateAIG37BodyColours(shaded.colours,shell);
    geometry.setAttribute('color',
     new THREE.BufferAttribute(bodyColours.colours,3));
@@ -343,9 +363,11 @@ export function installAIG29ContinuousScan({
    $('scan37-status').textContent='服裝暫時隔離：'+String(e.message||e)+
     '；已保留中性人體素模。';
   }
-  // Only swap the old 2.9 overlay AFTER the new geometry & viewer exist.
+  // Stage the full model and validate ownership before replacing live scene.
+  stability39.assertCurrent(token);
   try{
    viewer.scene.add(group);
+   stability39.assertCurrent(token);
    // Never reset scene, source GLBs, bone mixer, vault or textures.
    const prev=overlay;
    overlay=group;scan=reconstruction;rendererSource=viewer;
@@ -361,7 +383,7 @@ export function installAIG29ContinuousScan({
     outfitsUsedAsSeparateMesh:true,sourceSha256:data.sourceSha256};
    const cameraFit=fitExistingViewer(viewer,group);
    core36Proof={
-    plan,vertexColourWork:{
+    plan,stabilityBudget:resource39,vertexColourWork:{
      actualVerticesColoured:group.userData.core36Shaded.actualVerticesColoured,
      completedIdenticalKernelSlots:group.userData.core36Shaded.completedIdenticalKernelSlots,
      effectiveSlotsUsed:group.userData.core36Shaded.effectiveSlotsUsed,
@@ -378,6 +400,7 @@ export function installAIG29ContinuousScan({
    disposeGroup(prev);
    await new Promise(resolve=>requestAnimationFrame(()=>
     requestAnimationFrame(resolve)));
+   stability39.assertCurrent(token);
    drawProof={
     realActiveWebGLContext:!viewer.renderer.getContext()?.isContextLost?.(),
     actualDrawCalls:viewer.renderer.info.render.calls,
@@ -411,7 +434,17 @@ export function installAIG29ContinuousScan({
   }
  };
  $('scan29-build').addEventListener('click',async()=>{
-  try{await buildPreview()}catch(e){status(String(e.message||e),true)}
+  let token=null;
+  try{
+   token=stability39.begin('source-reconstruction');
+   $('scan29-build').disabled=true;
+   await buildPreview(token);
+   stability39.finish(token);
+   proof();
+  }catch(e){
+   stability39.abandon(token);
+   status(String(e.message||e),true);
+  }finally{$('scan29-build').disabled=false}
  });
  $('scan38-query').addEventListener('input',()=>{
   browse38Offset=0;refresh38Browser();
@@ -427,7 +460,14 @@ export function installAIG29ContinuousScan({
   browse38Offset+=8;refresh38Browser();
  });
  $('scan37-outfit').addEventListener('change',()=>{
-  try{update37Wardrobe()}catch(e){
+  let token=null;
+  try{
+   token=stability39.begin('wardrobe-switch');
+   update37Wardrobe();
+   stability39.finish(token);
+   proof();
+  }catch(e){
+   stability39.abandon(token);
    $('scan37-status').textContent='服裝未套用：'+String(e.message||e)+
     '。已保留上一套衣服與人體模型。';
    status(String(e.message||e),true);
@@ -493,10 +533,12 @@ export function installAIG29ContinuousScan({
   }catch(e){status(String(e.message||e),true)}
  });
  $('scan29-hide').addEventListener('click',()=>{
+  stability39.cancel();
   removeOverlay();proof();
   status('已移除 3.0 融合曲面預覽，原 GLB 動畫／場景／NC 核心保持不變。');
  });
  $('photo23-source').addEventListener('change',()=>{
+  stability39.cancel();
   removeOverlay();proof();
   status('照片來源已變更，3.0 暫存融合曲面失效；原 3D 世界未刪除。');
  });
