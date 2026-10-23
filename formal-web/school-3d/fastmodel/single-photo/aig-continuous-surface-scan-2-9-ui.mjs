@@ -4,8 +4,9 @@
  */
 import * as THREE from 'three';
 import {aig26SRGBToLinear} from './aig-vision-metric-color-2-6.mjs';
-import {buildAIG29ContinuousSurface,inspectAIG29FiveAxisSurface}
- from './aig-continuous-surface-scan-2-9.mjs';
+import {buildAIG29ContinuousSurface} from './aig-continuous-surface-scan-2-9.mjs';
+import {buildAIG30FusedSDF,inspectAIG30FusedFiveAxisSurface}
+ from './aig-fused-manifold-surface-3-0.mjs';
 const $=id=>document.getElementById(id);
 export function installAIG29ContinuousScan({
  getImage,getSegmentation,getSharedViewer
@@ -38,6 +39,10 @@ export function installAIG29ContinuousScan({
    originalSourcePhotoSHA:scan?.sourceSha256??null,
    original2DImageSize:scan?.sourceSize??null,
    genuine3DMeshes:scan?.surfaces.length??0,
+   realFusedSingleManifold:scan?.manifoldAudit?.closedManifold??false,
+   actualSourceManifoldAudit:scan?.manifoldAudit??null,
+   unifiedSDFGridCells:scan?.gridCellCount??null,
+   userSelectedSmoothFusionWidth:scan?.signedDistanceFusionWidth??null,
    actualTriangleCount:scan?.continuousTriangleCount??0,
    actualVertexCount:scan?.continuousVertexCount??0,
    actualSmoothNormalsPresent:!!scan?.surfaces.every(s=>
@@ -67,7 +72,7 @@ export function installAIG29ContinuousScan({
   return {width:a.width,height:a.height,sourceSha256:a.sha,
    pixels:a.original.data,labels:b.segmentation.labels};
  };
- function colorForSourceXYZ(s,data,i,raw,bodyHeightUnits){
+ function colorForSourceXYZ(s,data,i,raw,bodyHeightUnits,classId=s.sourceLabelId){
   const k=i*3,x=s.positions[k],y=s.positions[k+1],z=s.positions[k+2];
   const {width,height,labels,pixels}=data;
   const projectedX=Math.max(0,Math.min(width-1,Math.round(
@@ -75,7 +80,7 @@ export function installAIG29ContinuousScan({
   const projectedY=Math.max(0,Math.min(height-1,Math.round(
    height-1-y/bodyHeightUnits*height)));
   const lookup=(projectedY*width+projectedX),front=z>=0;
-  const observed=front&&labels[lookup]===s.sourceLabelId&&
+  const observed=front&&labels[lookup]===classId&&
    pixels[lookup*4+3]>128;
   const sourceRGB=observed?[
    pixels[lookup*4]/255,pixels[lookup*4+1]/255,
@@ -90,11 +95,20 @@ export function installAIG29ContinuousScan({
    depthRatio=Number($('scan29-depth').value);
   status('正在從真正來源輪廓建立 XYZ 曲面、法線與 PBR 材質…');
   await new Promise(resolve=>setTimeout(resolve,0));
-  const reconstruction=buildAIG29ContinuousSurface({
+  const sourceSections=buildAIG29ContinuousSurface({
    ...data,radialSegments,sliceStep,depthRatio
   });
+  // SDF geometrically FUSES all actual source-constrained body sections.
+  // The old independent tubes are NOT displayed as the outcome.
+  const reconstruction=buildAIG30FusedSDF(sourceSections,{
+   resolution:Number($('scan30-resolution').value),
+   blend:Number($('scan30-blend').value)
+  });
+  if(!reconstruction.manifoldAudit.closedManifold||
+   reconstruction.surfaces.length!==1)
+   throw Error('單一人體曲面未符合連通封閉 Gate，保留原 3D 場景');
   const group=new THREE.Group();
-  group.name='AIG29_REAL_SOURCE_BOUNDED_CONTINUOUS_SURFACE';
+  group.name='AIG30_ONE_FUSED_WATERTIGHT_SDF_SOURCE_SURFACE';
   group.userData={sourceSha256:data.sourceSha256,
    estimatedRearDepth:true,original3DGLBUntouched:true};
   for(const shell of reconstruction.surfaces){
@@ -104,7 +118,10 @@ export function installAIG29ContinuousScan({
    geometry.setIndex(new THREE.BufferAttribute(shell.indices,1));
    const vertexColours=new Float32Array(shell.positions.length);
    for(let i=0;i<shell.vertexCount;i++){
-    const col=colorForSourceXYZ(shell,data,i,shell.sourceVisibleRGB,reconstruction.bodyHeightUnits);
+    const classId=shell.vertexSourceLabelIds[i];
+    const sourceRGB=shell.sourceClassColorRGB[classId]??[.55,.52,.52];
+    const col=colorForSourceXYZ(shell,data,i,sourceRGB,
+     reconstruction.bodyHeightUnits,classId);
     vertexColours.set(col,i*3);
    }
    geometry.setAttribute('color',new THREE.BufferAttribute(vertexColours,3));
@@ -114,10 +131,10 @@ export function installAIG29ContinuousScan({
     side:THREE.FrontSide
    });
    const mesh=new THREE.Mesh(geometry,material);
-   mesh.name='AIG29_SOURCE_LABEL_'+shell.sourceLabelId+'_TRUE_CURVED_SURFACE';
-   mesh.userData={sourceLabelId:shell.sourceLabelId,
-    sourceVisiblePixels:shell.sourceVisiblePixelCount,
-    unknownDepth:true,actualTriangleCount:shell.triangleCount};
+   mesh.name='AIG30_ONE_PIECE_FUSED_HUMANOID_CURVED_SURFACE';
+   mesh.userData={sourceClassIDs:shell.originalPhotoSilhouetteSources,
+    genuinelySingleIndexedSurface:true,unknownBackDepth:true,
+    actualTriangleCount:shell.triangleCount};
    group.add(mesh);
   }
   // Only swap the old 2.9 overlay AFTER the new geometry & viewer exist.
@@ -146,10 +163,10 @@ export function installAIG29ContinuousScan({
     compositorNotBillboard:true
    };
    proof();
-   status('3D 曲面真正送入原 WebGL 視窗：'+
-    reconstruction.surfaces.length+' 個連續曲面、'+
-    reconstruction.continuousTriangleCount+' 個真 XYZ 三角面。'+
-    '前後深度仍是推估，不冒充一比一測量。');
+   status('3.0 單一連通封閉曲面成功：'+
+    reconstruction.continuousTriangleCount+' 個真 XYZ 三角面；'+
+    '每條邊 2 面、無退化面、正向封閉體積 Gate 全 PASS。'+
+    '背面厚度仍為估計，不是實測 1:1／可列印尺度認證。');
   }catch(e){
    if(overlay!==group)disposeGroup(group);
    throw e;
@@ -169,7 +186,7 @@ export function installAIG29ContinuousScan({
     return;
    }
    const standoff=Number($('scan29-standoff').value);
-   const inspection=inspectAIG29FiveAxisSurface(scan,{
+   const inspection=inspectAIG30FusedFiveAxisSurface(scan,{
     standoff,perSurfaceSamples:120
    });
    const pts=new Float32Array(inspection.sampleCount*6);
@@ -184,7 +201,7 @@ export function installAIG29ContinuousScan({
     color:0x65edee,transparent:true,opacity:.80,depthTest:true
    });
    const lines=new THREE.LineSegments(geometry,material);
-   lines.name='AIG29_VIRTUAL_5AX_AB_PROBE_SOURCE_NORMALS';
+   lines.name='AIG30_ONE_PIECE_SURFACE_VIRTUAL_5AX_AB_NORMALS';
    lines.userData={inspection:{
     sampleCount:inspection.sampleCount,
     uniqueAngles:inspection.uniqueSurfaceNormalOrientationBins,
@@ -197,11 +214,11 @@ export function installAIG29ContinuousScan({
  });
  $('scan29-hide').addEventListener('click',()=>{
   removeOverlay();proof();
-  status('已移除 2.9 曲面預覽，原 GLB 動畫／場景／NC 核心保持不變。');
+  status('已移除 3.0 融合曲面預覽，原 GLB 動畫／場景／NC 核心保持不變。');
  });
  $('photo23-source').addEventListener('change',()=>{
   removeOverlay();proof();
-  status('照片來源已變更，2.9 暫存曲面失效；原 3D 世界未刪除。');
+  status('照片來源已變更，3.0 暫存融合曲面失效；原 3D 世界未刪除。');
  });
  proof();return {get report(){return scan},clear:removeOverlay};
 }
