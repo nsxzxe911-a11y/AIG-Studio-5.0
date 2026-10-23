@@ -36,6 +36,9 @@ on:
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-large-wardrobe-3-8.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-120-core-3-6.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-continuous-surface-scan-2-9-ui.mjs'
+      - 'formal-web/index.html'
+      - 'formal-web/real3d-stage1-review.html'
+      - 'formal-web/package.json'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-dual-adult-anatomy.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-dual-adult-runtime.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-unified-19200-ratio-core.mjs'
@@ -199,6 +202,21 @@ jobs:
           grep -q 'AIG_STAGE1_SINGLE_RENDERER_4K_TO_1080P_LADDER_V1' dist/scene-runtime-studio.js
           grep -q 'stage1-output-resolution' dist/scene-runtime-studio.html
           grep -q 'stage1-4k-current' dist/scene-runtime-studio.html
+      - name: Verify AIG original-site compile and actual Stage1 route (not a fake webpage translator)
+        run: |
+          test -s ../../../real3d-stage1-review.html
+          grep -q 'stage1-adult-baselines' dist/scene-runtime-studio.html
+          grep -q 'aig-stage1' dist/scene-runtime-studio.js || grep -q 'AIG_STAGE1_DUAL_ADULT_TRUE_WEBGL_VIEWS' dist/scene-runtime-studio.js
+          PORT=8766 node ../../../server.mjs >/tmp/aig-original-site-route.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for n in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:8766/healthz >/dev/null && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8766/real3d-stage1-review.html | grep -q 'Stage 1'
+          curl -fsS http://127.0.0.1:8766/school-3d/fastmodel/single-photo/dist/scene-runtime-studio.html | grep -q 'stage1-gender'
+          curl -fsS http://127.0.0.1:8766/school-3d/fastmodel/single-photo/dist/scene-runtime-studio.js | grep -q 'AIG_STAGE1'
       - name: Install Chromium for real HTML canvas rendering
         run: |
           npm install --no-save playwright@1.55.0
