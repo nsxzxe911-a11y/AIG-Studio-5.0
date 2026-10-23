@@ -8,6 +8,8 @@ import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {inspectAIGReal3DSource,planAIGReal3DDual19200,
  executeAIGReal3DDual19200}
  from './aig-real3d-dual-kernel-19200.mjs';
+import {runAIG3DIndexedDrawingWorker}
+ from './aig-real3d-dual-worker-bridge.mjs';
 
 const $=id=>document.getElementById(id);
 const canvas=$('view');
@@ -176,6 +178,8 @@ $('dual-verify').addEventListener('click',async()=>{
    hardwareConcurrency:Math.max(1,Math.floor(navigator.hardwareConcurrency||2)),
    deviceMemoryGB:navigator.deviceMemory??null,
    recentFrameMs:recentMeasuredFrameMs,
+   drawingWorkerFactory:typeof Worker==='function'?
+    runAIG3DIndexedDrawingWorker:null,
    shouldAcceptGeometry:()=>dataset?.scene===originalScene
   });
   dualLastResult={
@@ -187,8 +191,9 @@ $('dual-verify').addEventListener('click',async()=>{
    appearanceNaturalHumanVisualGatePASS:false
   };
   $('dual-status').textContent='雙核心真執行已完成：檢查 '+evidence.metrics.drawingVisitedTriangles+
-   ' 個真 XYZ 三角形，GPU 執行 '+evidence.metrics.renderPasses+
-   ' 輪；19,200 為工作槽，人體外觀仍 BLOCK。';
+   ' 個真 XYZ 三角形，CPU Worker '+
+   evidence.metrics.actualCpuWorkersUsed+' 個／GPU '+evidence.metrics.renderPasses+
+   ' 輪；19,200 為邏輯工作槽，人體外觀仍 BLOCK。';
   $('dual-status').dataset.ok='true';
   $('dual-evidence').textContent=JSON.stringify({
    plan:evidence.plan,execution:dualLastResult},null,2);
