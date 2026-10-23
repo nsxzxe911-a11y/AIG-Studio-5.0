@@ -101,11 +101,26 @@ function makeSurface(profile,width,height,{bodyHeightUnits,depthRatio,radialSegm
  for(let ring=0;ring<ringCount;ring++){
   const t=ring/(ringCount-1),py=profile.top+t*(profile.bottom-profile.top);
   const p=interpolate(profile.rows,py);
-  const outsideTop=Math.min(1,t/.05),outsideBottom=Math.min(1,(1-t)/.05);
-  const taper=Math.max(.07,Math.min(outsideTop,outsideBottom));
-  const rx=Math.max(.003,p.width/(2*height)*bodyHeightUnits*taper);
+  // Preserve actual SOURCE side-to-side shape, but regularise pixel stair
+  // steps over ±5 image pixels; smooth photos yield smoothly curved rings.
+  let mid=0,widthPx=0,weight=0;
+  for(let offset=-5;offset<=5;offset+=2){
+   const sample=interpolate(profile.rows,clamp(py+offset,profile.top,profile.bottom));
+   const k=Math.exp(-offset*offset/24);
+   mid+=sample.mid*k;widthPx+=sample.width*k;weight+=k;
+  }
+  const smoothedMid=mid/weight,smoothedWidth=widthPx/weight;
+  // A joint must NOT shrink down to a tiny pin at a body connection.
+  // Caps still seal the original indexed shell; this is an explicit
+  // anatomical continuity PRIOR, not a true photographic measurement.
+  const connectedTop=new Set([4,5,6,7,10,11,12,13,14]).has(profile.label);
+  const connectedBottom=new Set([2,4,5,14]).has(profile.label);
+  const outsideTop=connectedTop?1:Math.min(1,t/.05);
+  const outsideBottom=connectedBottom?1:Math.min(1,(1-t)/.05);
+  const taper=Math.max(.28,Math.min(outsideTop,outsideBottom));
+  const rx=Math.max(.003,smoothedWidth/(2*height)*bodyHeightUnits*taper);
   const rz=Math.max(.002,rx*depthRatio);
-  const worldX=(p.mid-(width-1)/2)/height*bodyHeightUnits;
+  const worldX=(smoothedMid-(width-1)/2)/height*bodyHeightUnits;
   const worldY=((height-1-py)/height)*bodyHeightUnits;
   const idRing=[];
   for(let r=0;r<radialSegments;r++){
@@ -152,6 +167,9 @@ function makeSurface(profile,width,height,{bodyHeightUnits,depthRatio,radialSegm
   depthProvenance:'PRIOR_INFERRED_ELLIPTIC_SECTION_NOT_PHOTOGRAPHIC_DEPTH',
   real3DSurface:true,continuousCrossSections:true,
   indexedEndCapsClosed:true,
+  measuredAnatomicalJointFusionVerified:false,
+  connectedSectionTaperPrior:true,
+  sourcePixelStaircaseSmoothed:true,
   actuallyMeasuredBackSurface:false
  };
  if(zeroArea>0)fail('SURFACE_CONTAINS_DEGENERATE_TRIANGLES');
