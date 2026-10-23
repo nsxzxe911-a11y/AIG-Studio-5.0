@@ -1,4 +1,4 @@
-name: AIG Real3D 3.9 Stable 12000 Kernel and Modular Wardrobe Gate
+name: AIG Real3D 3.10 Stable 19200 Core + Hair + Wardrobe Gate
 on:
   push:
     branches:
@@ -8,6 +8,9 @@ on:
       - 'formal-web/school-3d/fastmodel/single-photo/aig-unified-120-core-3-6.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-character-asset-index-3-8.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-runtime-stability-3-9.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-modular-hair-3-10.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-modular-hair-3-10.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-19200-logical-kernel-3-10.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-garment-pose-follow-3-9.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-garment-pose-follow-3-9.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-runtime-stability-3-9.test.mjs'
@@ -43,6 +46,9 @@ jobs:
           node --check aig-unified-120-core-3-6.mjs
           node --check aig-character-asset-index-3-8.mjs
           node --check aig-runtime-stability-3-9.mjs
+          node --check aig-modular-hair-3-10.mjs
+          node --test tests/aig-modular-hair-3-10.test.mjs
+          node --test tests/aig-19200-logical-kernel-3-10.test.mjs
           node --check aig-garment-pose-follow-3-9.mjs
           node --test tests/aig-garment-pose-follow-3-9.test.mjs
           node --test tests/aig-runtime-stability-3-9.test.mjs
@@ -65,13 +71,16 @@ jobs:
           grep -q 'scan36-light' dist/scene-runtime-studio.html
           grep -q 'scan36-source-preview' dist/scene-runtime-studio.html
           grep -q 'scan37-slot-count' dist/scene-runtime-studio.html
-          grep -q 'value="12000" selected' dist/scene-runtime-studio.html
+          grep -q 'value="19200" selected' dist/scene-runtime-studio.html
+          grep -q 'scan310-hair' dist/scene-runtime-studio.html
           grep -q 'scan38-asset-manager' dist/scene-runtime-studio.html
           grep -q 'AIG_REAL3D_3_5_UNIFIED_SOURCE_APPEARANCE_GATE' dist/scene-runtime-studio.js
           grep -q 'AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS' dist/scene-runtime-studio.js
           grep -q 'AIG_REAL3D_3_8_LAZY_CHARACTER_ASSET_INDEX' dist/scene-runtime-studio.js
           grep -q 'AIG_REAL3D_3_9_SINGLE_KERNEL_STABILITY' dist/scene-runtime-studio.js
           grep -q 'AIG_REAL3D_3_9_ATTACHED_GARMENT_VERTEX_MOTION' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_10_REMOVABLE_SOURCE_ANCHORED_HAIR' dist/scene-runtime-studio.js
+          grep -q 'REAL3D_19200_LOGICAL_WORK_SLOTS' dist/scene-runtime-studio.js
       - name: Install Chromium QA for actual phone/desktop rendered geometry
         run: |
           npm install --no-save playwright@1.55.0
