@@ -35,6 +35,8 @@ import {auditAIG314ActualTriangleIntersections}
  from './aig-triangle-intersection-audit-3-14.mjs';
 import {reviewAIG315HeroineGeometry,planAIG315HeroineCamera}
  from './aig-heroine-render-review-3-15.mjs';
+import {captureAIG316RealWebGLViews,installAIG316SnapshotGallery}
+ from './aig-stage-snapshot-3-16-ui.mjs';
 const $=id=>document.getElementById(id);
 export function installAIG29ContinuousScan({
  getImage,getSegmentation,getSharedViewer,getBodyPose=()=>null
@@ -68,6 +70,15 @@ export function installAIG29ContinuousScan({
   $('scan29-status').textContent=(bad?'BLOCKED：':'')+message;
   $('scan29-status').style.color=bad?'#ffd298':'#aef5e6';
  };
+ const stageGallery316=installAIG316SnapshotGallery({
+  onCapture:(stage)=>captureAIG316RealWebGLViews({
+   viewer:rendererSource,
+   sourceBodyPositions:scan?.fusedOnePieceMesh?.positions,
+   sourceSHA:scan?.sourceSha256,stage,actuallyUserApproved:false
+  })
+ });
+ const captureStage316=stage=>requestAnimationFrame(()=>
+  stageGallery316.capture(stage));
  const disposeGroup=group=>{
   if(!group)return;
   group.parent?.remove(group);
@@ -481,6 +492,7 @@ export function installAIG29ContinuousScan({
    '使用同一個 WebGL 真模型。臉型、五官、服裝紋理尚未重建，'+
    '因此外觀仍為 FAIL，請用三視角繼續比較。';
   proof();
+  captureStage316('03-source-hair-school-uniform');
   return heroine315Proof;
  };
  const apply314HeroineColourFit=()=>{
@@ -557,6 +569,7 @@ export function installAIG29ContinuousScan({
    garmentParts.length+' 件制服與 '+hairParts.length+
    ' 件髮型技術網格。臉部幾何／髮絲／格紋尚未重建，正式外觀 FAIL。';
   proof();
+  captureStage316('02-reference-colour');
   return heroine314Proof;
  };
  const apply39BodyPose=(value,{secondaryTick=false}={})=>{
@@ -990,6 +1003,7 @@ export function installAIG29ContinuousScan({
    stageCommitted=true;
    disposeGroup(prev);
    proof();
+   captureStage316('01-source-mesh');
    status('3.0 網格連通／封閉驗收 PASS；3.5 統一外觀引擎已建立真實 3D 曲面，採用 '+
     unified.selectedMode+'；照片 XY 輪廓平均誤差 '+
     unified.proof.source2DEdgeErrorAfterPx+' px（只評估可見 2D 輪廓）。'+
@@ -1086,6 +1100,7 @@ export function installAIG29ContinuousScan({
    token=stability39.begin('hair-switch');
    update310Hair();
    stability39.finish(token);proof();
+   captureStage316('04-hair-'+$('scan310-hair').value);
   }catch(e){
    stability39.abandon(token);
    $('scan310-hair-status').textContent=
@@ -1100,6 +1115,7 @@ export function installAIG29ContinuousScan({
    update37Wardrobe();
    stability39.finish(token);
    proof();
+   captureStage316('05-outfit-'+$('scan37-outfit').value);
   }catch(e){
    stability39.abandon(token);
    $('scan37-status').textContent='服裝未套用：'+String(e.message||e)+
