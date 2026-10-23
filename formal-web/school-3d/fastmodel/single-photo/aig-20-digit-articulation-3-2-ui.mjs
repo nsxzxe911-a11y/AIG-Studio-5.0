@@ -383,9 +383,16 @@ export function installAIG32DigitControls({
    catch(e){status('3.1 身體姿勢改變後，指趾同步遭阻擋：'+String(e.message||e),true)}
   },
   refreshFromPhotoContours(){
-   if(!group?.parent)return;
-   try{commit()}
-   catch(e){status('3.4 照片輪廓接入失敗：'+String(e.message||e),true)}
+   if(!group?.parent)
+    return {status:'STAGED_NO_3D_SURFACE_YET'};
+   try{
+    commit();
+    return {status:'APPLIED_TO_ACTUAL_RENDERER',
+     appliedTips:generated?.sourcePhotoConstraintsActuallyApplied??0};
+   }catch(e){
+    status('3.4 照片輪廓接入失敗：'+String(e.message||e),true);
+    throw e;
+   }
   },
   get proof(){return generated},
   clear:reset
