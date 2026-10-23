@@ -64,11 +64,17 @@ try{
   name:'QA_SFX_TRUE_660HZ.wav',mimeType:'audio/wav',buffer:makeRealWAV(660,.65)
  });
  await page.waitForFunction(()=>document.getElementById('sfx-short').textContent.includes('QA_SFX_TRUE'),null,{timeout:12000});
+ await page.locator('#voice-file').setInputFiles({
+  name:'QA_VOICE_INPUT_TRUE_330HZ.wav',mimeType:'audio/wav',buffer:makeRealWAV(330,.95)
+ });
+ await page.waitForFunction(()=>document.getElementById('voice-short').textContent.includes('QA_VOICE_INPUT'),null,{timeout:12000});
  assert.match(await page.locator('#feedback').textContent(),/已解碼真實/);
  await page.locator('#music-volume').fill('60');
  await page.locator('#sfx-volume').fill('80');
+ await page.locator('#voice-volume').fill('90');
  assert.equal(await page.locator('#music-volume-value').textContent(),'60%');
  assert.equal(await page.locator('#sfx-volume-value').textContent(),'80%');
+ assert.equal(await page.locator('#voice-volume-value').textContent(),'90%');
  let webmExportPASS=false,webmSize=0,webmRealAudioTrackPASS=false;
  if(await page.evaluate(()=>typeof MediaRecorder!=='undefined'&&
     typeof HTMLCanvasElement.prototype.captureStream==='function'&&
@@ -120,7 +126,8 @@ try{
   webmVideoOnlyExportPASS:webmExportPASS,
   webmBytes:webmSize,
   webmRealAudioTrackPASS,
-  musicAndSFXDecodedAndMixed:true,
+  musicSFXAndUserVoiceDecodedAndMixed:true,
+  genuineTTSGenerated:false,
   aiDialogueVoiceGenerated:false,
   sourceVideoAudioMixVerified:false,
   human3DPhotoReconstructionPASS:false,
