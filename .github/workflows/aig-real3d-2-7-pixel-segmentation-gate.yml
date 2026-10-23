@@ -1,0 +1,53 @@
+name: AIG Real3D 2.7 Genuine Offline Pixel Segmentation Gate
+on:
+  push:
+    branches:
+      - verify/real3d-true-world-movie-2-5-20261023
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-seeded-segmentation-2-7*'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-seeded-segmentation-2-7*'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.*'
+      - '.github/workflows/aig-real3d-2-7-pixel-segmentation-gate.yml'
+  workflow_dispatch:
+jobs:
+  genuine-local-rgba:
+    name: Genuine RGBA hair neck garment source masks phone desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Real source pixel numerical proof and source provenance
+        run: |
+          node --check aig-seeded-segmentation-2-7.mjs
+          node --check aig-seeded-segmentation-2-7-ui.mjs
+          node --check scene-runtime-studio.mjs
+          node --check tests/aig-seeded-segmentation-2-7.real-browser.mjs
+          node --test tests/aig-seeded-segmentation-2-7.test.mjs
+          node --test tests/aig-vision-metric-color-2-6.test.mjs
+      - name: Keep full original AIG geometry and film UI build
+        run: |
+          npm run build
+          test -s dist/scene-runtime-studio.html
+          test -s dist/scene-runtime-studio.js
+          node --check dist/scene-runtime-studio.js
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real phone and desktop RGBA source and vault SHA click Gate
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig27-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-seeded-segmentation-2-7.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-2-7-Only-Genuine-Hair-Neck-Garment-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-2-7-true-pixel-segmentation/
+          if-no-files-found: warn
