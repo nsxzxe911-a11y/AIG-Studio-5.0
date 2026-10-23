@@ -39,3 +39,12 @@ node --test tests/aig-vision-metric-color-2-6.test.mjs
 # Bundled official runtime served as in workflow:
 node tests/aig-vision-metric-color-2-6.real-browser.mjs
 ```
+
+## First independent browser Gate evidence — PASS
+
+- GitHub Actions **run 39876818224**, source commit **4b1697060cb2eb70e37a3083d6a2904ffa499492**:
+  https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39876818224
+- Job **source-verified-real-plane-colour**: COMPLETE / SUCCESS. Verified existing full AIG app build, 2.6 Node numerical test, phone Chromium AND desktop Chromium source image SHA, 5-point mm reference-plane proof, actual neutral pixel colour and externally provenance-linked semantic RLE + persisted 7.16 vault asset.
+- Evidence artifact **12468741716**, `AIG-Real3D-2-6-Only-Source-Measured-mm-Colour-Phone-Desktop`, 1,932,810 bytes. Do not represent this 2.6 evidence as a true 3D heroine scan, source identification model, S23 native FPS, or a completed 2.5 movie.
+- Subsequent commit **1ab0285e** strengthens browser asynchronous evidence waits, preserving the already passing 2.6 implementation. Confirm its subsequent independent run on follow-up if necessary.
+- Existing multi-project 2.5 full web movie Gate is **still RED** due to desktop MediaRecorder `NO_NONEMPTY_ACTUAL_3D_VIDEO_FRAMES`. Independent 2.6 PASS does not waive the 2.5 video/CNC Release Gate.
