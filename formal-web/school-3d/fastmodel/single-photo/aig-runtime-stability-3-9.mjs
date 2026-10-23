@@ -6,7 +6,7 @@
  */
 export const AIG39_STABILITY_SCHEMA='AIG_REAL3D_3_9_SINGLE_KERNEL_STABILITY';
 const fail=s=>{throw Error('AIG39_'+s)};
-const acceptableLabels=new Set(['source-reconstruction','wardrobe-switch']);
+const acceptableLabels=new Set(['source-reconstruction','wardrobe-switch','hair-switch']);
 export function createAIG39StabilitySession(){
  let active=null,generation=0,completed=0,blocked=0,cancelled=0;
  const snapshot=()=>Object.freeze({
