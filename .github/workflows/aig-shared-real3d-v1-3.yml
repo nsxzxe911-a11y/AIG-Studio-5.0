@@ -65,6 +65,8 @@ jobs:
           node --check aig-continuous-surface-scan-2-9-ui.mjs
           node --check tests/aig-continuous-surface-scan-2-9.real-browser.mjs
           node --test tests/aig-continuous-surface-scan-2-9.test.mjs
+          node --check aig-fused-manifold-surface-3-0.mjs
+          node --test tests/aig-fused-manifold-surface-3-0.test.mjs
           node --check aig-map-model-alignment-2-1.mjs
           node --check tests/aig-map-actor-2-1.real-browser.mjs
           node --test tests/aig-map-model-alignment-2-1.test.mjs
