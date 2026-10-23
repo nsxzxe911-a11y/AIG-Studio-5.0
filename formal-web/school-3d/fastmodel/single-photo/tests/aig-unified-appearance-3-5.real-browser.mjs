@@ -82,17 +82,25 @@ try{
    const proof=JSON.parse(await page.locator('#scan29-proof').textContent());
    assert.equal(proof.actualWebGLSceneObjectActive,true);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots?.plan?.schema,
-    'AIG_REAL3D_3_6_ONE_KERNEL_120_LOGICAL_SLOTS');
-   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.logicalSlotsConfigured,120);
+    'AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS');
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.logicalSlotsConfigured,12000);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.kernelImplementationCount,1);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.realWebWorkersSpawned,0);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.sharedWebGLContextCount,1);
-   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.vertexColourWork.completedIdenticalKernelSlots,120);
+   assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.vertexColourWork.completedIdenticalKernelSlots,12000);
    assert.ok(proof.unifiedReal36OneKernel120LogicalSlots.vertexColourWork.actualVerticesColoured>5000);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.cameraFit.cameraFitFromRealMesh,true);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.sourceReferenceVisible,true);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.appearanceGatePassed,false);
    assert.equal(proof.real36Lighting.active,'BALANCED_PBR');
+   assert.equal(proof.real38LazyAssetIndex.totalIndexed,8);
+   assert.equal(proof.real38LazyAssetIndex.activeCount,1,
+    'one installed procedural garment preset may be active, not all clothes');
+   assert.ok(proof.real38LazyAssetIndex.activeIds.includes('procedural:uniform'));
+   assert.equal(proof.real38LazyAssetIndex.indexedAssetsAreMetadataNotLoadedMeshes,true);
+   assert.equal(proof.real37ScalableCoreAndWardrobe.wardrobe.garmentMeshCount,2);
+   assert.equal(proof.real37ScalableCoreAndWardrobe.wardrobe.bodyGeometryIdentityPreserved,true);
+
    assert.ok((await page.locator('#scan36-visible').textContent()).includes('120 邏輯工作槽'));
    await page.locator('#scan36-fit').click();
    assert.ok((await page.locator('#scan29-status').textContent()).includes('重新置中'));
@@ -102,6 +110,25 @@ try{
    assert.equal(rayProof.real36Lighting.rayTracing,false);
    assert.equal(rayProof.unifiedReal36OneKernel120LogicalSlots.plan.parallelHardwareCoresCertified,0);
    await page.locator('#scan36-light').selectOption('balanced');
+   await page.locator('#scan38-asset-manager > summary').click();
+   await page.locator('#scan38-slot').selectOption('hair');
+   assert.ok((await page.locator('#scan38-items').textContent())
+    .includes('待製作真 3D 資產'));
+   assert.ok((await page.locator('#scan38-status').textContent())
+    .includes('目錄索引 8 筆'));
+   await page.locator('#scan37-outfit').selectOption('body-proxy');
+   await page.waitForFunction(()=>document.getElementById('scan37-status')
+    .textContent.includes('body-proxy'));
+   let neutral=JSON.parse(await page.locator('#scan29-proof').textContent());
+   assert.equal(neutral.real38LazyAssetIndex.activeCount,0);
+   assert.equal(neutral.real37ScalableCoreAndWardrobe.wardrobe.garmentMeshCount,0);
+   await page.locator('#scan37-outfit').selectOption('uniform');
+   await page.waitForFunction(()=>document.getElementById('scan37-status')
+    .textContent.includes('uniform'));
+   const redressed=JSON.parse(await page.locator('#scan29-proof').textContent());
+   assert.deepEqual(redressed.real38LazyAssetIndex.activeIds,['procedural:uniform']);
+   assert.equal(redressed.real37ScalableCoreAndWardrobe.wardrobe.sourcePhotoUnmodified,true);
+
 
    assert.equal(proof.unifiedReal35AppearancePipeline?.schema,
     'AIG_REAL3D_3_5_UNIFIED_SOURCE_APPEARANCE_GATE');
@@ -150,6 +177,7 @@ try{
      provenHuman1To1:false,syntheticSourceFixtureNotRealHeroine:true,
      unifiedReal35PhotoXY:proof.unifiedReal35AppearancePipeline,
      unifiedReal36OneKernel120Slots:proof.unifiedReal36OneKernel120LogicalSlots,
+     real38AssetIndex:proof.real38LazyAssetIndex,
      real36RayTracingFallbackProven:true,
      originalUserReferenceNotAvailableToThisSyntheticTest:true,
      existingWorldAndGLBAndCNCLeftIntact:true
