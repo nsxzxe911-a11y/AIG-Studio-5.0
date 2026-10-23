@@ -140,6 +140,37 @@ try{
    const redressed=JSON.parse(await page.locator('#scan29-proof').textContent());
    assert.deepEqual(redressed.real38LazyAssetIndex.activeIds,['procedural:uniform']);
    assert.equal(redressed.real37ScalableCoreAndWardrobe.wardrobe.sourcePhotoUnmodified,true);
+   // Real joint deformation must propagate to REAL independent garment 3D
+   // vertex attributes. A static clothing shell over a moving body is a FAIL.
+   await page.locator('#rig31-activate').click();
+   await page.waitForFunction(()=>JSON.parse(
+    document.getElementById('rig31-proof').textContent)
+    .actualHeadNeckSeparateDeformation===true);
+   const spine=page.locator('#rig31-spineBend');
+   assert.equal(await spine.isDisabled(),false);
+   await spine.evaluate(el=>{
+    el.value='15';el.dispatchEvent(new Event('input',{bubbles:true}));
+   });
+   await page.waitForFunction(()=>{
+    const body=JSON.parse(document.getElementById('rig31-proof').textContent);
+    const layer=JSON.parse(document.getElementById('scan29-proof').textContent)
+     .real39GarmentActuallyFollowingBodyPose;
+    return body.actualSourceVertexMoved>0&&
+     layer?.actualGarmentMeshesFollowingRig>=2&&
+     layer.realGarmentVerticesMoved>0;
+   },null,{timeout:20000});
+   const posedClothes=JSON.parse(await page.locator('#scan29-proof').textContent());
+   assert.equal(posedClothes.real39GarmentActuallyFollowingBodyPose
+    .clothPhysicsAndCollisionStillNotCertified,true);
+   assert.equal(posedClothes.real39GarmentActuallyFollowingBodyPose
+    .originalBodyRestAndClothesUnchanged,true);
+   await page.locator('#rig31-reset').click();
+   await page.waitForFunction(()=>{
+    const layer=JSON.parse(document.getElementById('scan29-proof').textContent)
+     .real39GarmentActuallyFollowingBodyPose;
+    return layer?.realGarmentVerticesMoved===0;
+   },null,{timeout:20000});
+
 
 
    assert.equal(proof.unifiedReal35AppearancePipeline?.schema,
