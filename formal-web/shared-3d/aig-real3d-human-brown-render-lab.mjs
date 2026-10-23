@@ -121,8 +121,16 @@ $('inspect').addEventListener('click',async()=>{
     bytes,heightMm,sourceName:file.name,sourceSha256:hash
   });
   const audit=auditAIG3DSourceSilhouette(scene);
-  if(!(isOBJ?evidence.geometryPASS:evidence.renderGeometryPASS))
-   throw Error('原始幾何 Gate BLOCK：'+JSON.stringify(evidence.geometricErrors??evidence));
+  const nativeGeometryGatePASS=isOBJ?evidence.geometryPASS:evidence.renderGeometryPASS;
+  // A flawed OBJ with REAL indexed source triangles may still be inspected
+  // read-only to expose broken seams. It must NEVER be called release-ready.
+  if(!nativeGeometryGatePASS){
+   if(!isOBJ||!Number.isInteger(evidence.actualTriangles)||
+      evidence.actualTriangles<2000)
+    throw Error('原始幾何 Gate BLOCK：'+JSON.stringify(evidence.geometricErrors??evidence));
+   setStatus('原始 OBJ 幾何 Gate BLOCK：'+evidence.geometricErrors.join('、')+
+     '。僅允許唯讀診斷截圖，不是正式可用人體。');
+  }
   const canvas=$('native-webgl');
   renderer=createAIG3DRenderer(canvas,{quality:'balanced',
    pixelRatio:1,background:[.769,.745,.702,1]});
@@ -163,6 +171,9 @@ $('inspect').addEventListener('click',async()=>{
    throw Error('SOURCE_GEOMETRY_CHANGED_DURING_RENDER');
   const result={
    schema:AIG_INSPECTION_FRAME_SCHEMA,
+   rawNativeGeometryGatePASS:nativeGeometryGatePASS,
+   diagnosticOnlyWithBadSource:!nativeGeometryGatePASS,
+   sourceMeshGeometryErrors:isOBJ?(evidence.geometricErrors??[]):[],
    userSourceName:file.name,sourceSha256:hash,
    measuredHeightMm:heightMm,
    geometry:audit,originalGLB:evidence,
@@ -333,10 +344,12 @@ $('inspect').addEventListener('click',async()=>{
   }};
   $('evidence').textContent=JSON.stringify(report,null,2);
   $('report-download').disabled=false;
-  setStatus('來源 '+file.name+' 完成 7 張真 GPU 圖；'+
-   (sourceReview.readyForHumanReferenceReview?'已具備人工外觀核對前置資料。':
-    '來源或人體標記仍有 Gate 缺口（請下載報告）。')+
-   ' 自然人體／照片一比一仍 BLOCK。',true);
+  setStatus('來源 '+file.name+' 完成 7 張唯讀 GPU 診斷圖；'+
+   (!nativeGeometryGatePASS?'【原始幾何 FAIL：禁止正式發布】'+
+     (evidence.geometricErrors??[]).join('、')+'。':
+    (sourceReview.readyForHumanReferenceReview?
+     '已具備人工外觀核對前置資料。':'來源或人體標記仍有 Gate 缺口。'))+
+   ' 自然人體／照片一比一始終 BLOCK。',true);
  }catch(e){
   setStatus('BLOCK：'+(e?.message||String(e)));
   $('evidence').textContent='檢查未通過；已顯示的圖片不得作為完整證據。';
