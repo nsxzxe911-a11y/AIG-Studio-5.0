@@ -58,6 +58,14 @@ try{
     assert.equal(state.noHairOrSchoolClothing,true);
     assert.equal(state.fullSkinnedBlendWeightsVerified,false);
     assert.equal(state.stage1PASS,false);
+    assert.equal(state.oneSingleCore19200.logicalSlotsConfigured,19200);
+    assert.equal(state.oneSingleCore19200.sharedWebGLRendererCount,1);
+    assert.equal(state.oneSingleCore19200.extraWebGLContextsCreated,0);
+    assert.equal(state.realAnatomyRatioGate.proportions.proportionNumericContractPASS,true);
+    assert.equal(state.realAnatomyRatioGate.skeleton.boneAlignmentNumericContractPASS,true);
+    assert.equal(state.realAnatomyRatioGate.camera.framingNumericContractPASS,true);
+    assert.equal(state.realAnatomyRatioGate.viewport.viewportNumericContractPASS,true);
+    assert.equal(state.realAnatomyRatioGate.stage1ReleasePASS,false);
     assert.equal(state.garmentType,
      gender==='male'?'fitted-briefs':'fitted-one-piece');
     let seen=new Set();
@@ -88,6 +96,11 @@ try{
      document.querySelectorAll('[data-stage1-gallery-gender="'+g+'"] img').length===4,
      gender,{timeout:25000});
     assert.equal(await page.locator('[data-stage1-gallery-gender="'+gender+'"] img').count(),4);
+    const stageComplete=JSON.parse(await page.locator('#stage1-proof').textContent());
+    assert.equal(stageComplete.observedFourViewSnapshotCount,4);
+    assert.equal(stageComplete.realAnatomyRatioGate.numericAndEvidenceGatePASS,true,
+     JSON.stringify(stageComplete.realAnatomyRatioGate.numericAndEvidenceViolations));
+    assert.equal(stageComplete.realAnatomyRatioGate.stage1ReleasePASS,false);
    }
    await page.locator('#stage1-close').dispatchEvent('click');
    await page.waitForFunction(()=>JSON.parse(
