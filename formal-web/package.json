@@ -3,8 +3,12 @@
   "version": "1.2.0",
   "private": true,
   "type": "module",
-  "engines": {"node": ">=20"},
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "start": "node server.mjs"
+    "start": "node server.mjs",
+    "build:real3d": "npm --prefix school-3d/fastmodel/single-photo ci && npm --prefix school-3d/fastmodel/single-photo run build",
+    "test:real3d-stage1": "npm --prefix school-3d/fastmodel/single-photo run build && node --test school-3d/fastmodel/single-photo/tests/aig-stage1-dual-adult.test.mjs"
   }
 }

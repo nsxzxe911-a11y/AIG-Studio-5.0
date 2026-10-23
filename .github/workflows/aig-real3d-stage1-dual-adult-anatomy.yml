@@ -1,0 +1,65 @@
+name: AIG Real3D Stage1 Two Adult Bodies Four-View True WebGL Gate
+on:
+  push:
+    branches:
+      - verify/real3d-unified-appearance-3-5-20261023
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-dual-adult-anatomy.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-dual-adult-runtime.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-dual-adult.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-dual-adult.real-browser.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.html'
+      - '.github/workflows/aig-real3d-stage1-dual-adult-anatomy.yml'
+  workflow_dispatch:
+jobs:
+  anatomical-source-and-snapshots:
+    name: Male briefs + female one-piece; 8 authentic canvas views on phone and desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Real parametric source geometry, independent joints and swim garment tests
+        run: |
+          node --check aig-stage1-dual-adult-anatomy.mjs
+          node --check aig-stage1-dual-adult-runtime.mjs
+          node --check tests/aig-stage1-dual-adult.real-browser.mjs
+          node --test tests/aig-stage1-dual-adult.test.mjs
+      - name: Bundle actual local WebGL app without CDN or reference image substitutes
+        run: |
+          npm run build
+          grep -q 'stage1-capture-both' dist/scene-runtime-studio.html
+          grep -q 'AIG_STAGE1_ADULT_MALE_FEMALE_ANATOMY_V1' dist/scene-runtime-studio.js
+      - name: Install Chromium with actual WebGL software backend
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Capture eight distinct real 3D phone and desktop views
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig-stage1-server.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-stage1-dual-adult.real-browser.mjs
+          root=artifacts/aig-stage1-adult-male-female-swim-geometry
+          for device in phone desktop; do
+            test -s "$root/$device-STAGE1-MANIFEST.json"
+            for person in male female; do
+              for view in front profile rear quarter45; do
+                test -s "$root/$device-$person-$view-ACTUAL-WEBGL.png"
+              done
+            done
+          done
+      - name: Upload genuine stage1 screenshots even on partial failure
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-Stage1-Adult-Male-Briefs-Female-Onepiece-8x2-Real-WebGL
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-stage1-adult-male-female-swim-geometry/
+          if-no-files-found: warn

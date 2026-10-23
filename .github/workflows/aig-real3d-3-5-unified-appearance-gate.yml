@@ -1,0 +1,303 @@
+name: AIG Real3D 3.16 Mandatory Per-Stage Real WebGL Snapshot Gate
+on:
+  push:
+    branches:
+      - verify/real3d-unified-appearance-3-5-20261023
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-unified-appearance-3-5.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-unified-120-core-3-6.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-character-asset-index-3-8.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-runtime-stability-3-9.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-modular-hair-3-10.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-contact-constraints-3-11.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-secondary-motion-3-12.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-classmate-crowd-3-13.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-triangle-contact-3-14.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-heroine-render-review-3-15.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-heroine-render-review-3-15.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage-snapshot-gate-3-16.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage-snapshot-gate-3-16.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-triangle-intersection-audit-3-14.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-heroine-authority-3-14.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-heroine-hair-silhouette-3-14.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-heroine-hair-silhouette-3-14.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-heroine-authority-and-triangle-3-14.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-triangle-contact-3-14.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-classmates-crowd-3-13-ui.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-classmate-crowd-3-13.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-secondary-motion-3-12.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-contact-constraints-3-11.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-modular-hair-3-10.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-19200-logical-kernel-3-10.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-garment-pose-follow-3-9.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-garment-pose-follow-3-9.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-runtime-stability-3-9.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-modular-outfits-3-7.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-large-wardrobe-3-8.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-120-core-3-6.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-continuous-surface-scan-2-9-ui.mjs'
+      - 'formal-web/aig-new-home.html'
+      - 'formal-web/real3d-stage1-review.html'
+      - 'formal-web/package.json'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-true-front-camera.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-true-front-photo.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-true-front-camera.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-true-front-photo.real-browser.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-dual-adult-anatomy.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-dual-adult-runtime.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-unified-19200-ratio-core.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-mm-coordinate-contract.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-4k-adaptive-render.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-resolution-ladder.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-resolution-ladder.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-true4k-capture.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-4k-adaptive-render.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-mm-coordinate-contract.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-unified-19200-ratio-core.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-dual-adult.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-dual-adult.real-browser.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.html'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-appearance-3-5.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-appearance-3-5.real-browser.mjs'
+      - '.github/workflows/aig-real3d-3-5-unified-appearance-gate.yml'
+  pull_request:
+    branches:
+      - verify/real3d-true-world-movie-2-5-20261023
+  workflow_dispatch:
+jobs:
+  same-photo-multi-method-one-geometry:
+    name: Source RGB and human-mask to unified watertight 3D + appearance bounds
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Strict source geometry, screenshot-safe and no misleading 100 percent gate
+        run: |
+          node --check aig-unified-appearance-3-5.mjs
+          node --check aig-unified-120-core-3-6.mjs
+          node --check aig-character-asset-index-3-8.mjs
+          node --check aig-runtime-stability-3-9.mjs
+          node --check aig-modular-hair-3-10.mjs
+          node --check aig-contact-constraints-3-11.mjs
+          node --check aig-secondary-motion-3-12.mjs
+          node --check aig-classmate-crowd-3-13.mjs
+          node --check aig-triangle-contact-3-14.mjs
+          node --check aig-heroine-render-review-3-15.mjs
+          node --test tests/aig-heroine-render-review-3-15.test.mjs
+          node --check tests/aig-stage-snapshot-gate-3-16.mjs
+          node --test tests/aig-stage-snapshot-gate-3-16.test.mjs
+          node --check aig-triangle-intersection-audit-3-14.mjs
+          node --check aig-heroine-authority-3-14.mjs
+          node --check aig-heroine-hair-silhouette-3-14.mjs
+          node --test tests/aig-heroine-hair-silhouette-3-14.test.mjs
+          node --test tests/aig-heroine-authority-and-triangle-3-14.test.mjs
+          node --test tests/aig-triangle-contact-3-14.test.mjs
+          node --check aig-classmates-crowd-3-13-ui.mjs
+          node --test tests/aig-classmate-crowd-3-13.test.mjs
+          node --test tests/aig-secondary-motion-3-12.test.mjs
+          node --test tests/aig-contact-constraints-3-11.test.mjs
+          node --test tests/aig-modular-hair-3-10.test.mjs
+          node --test tests/aig-19200-logical-kernel-3-10.test.mjs
+          node --check aig-garment-pose-follow-3-9.mjs
+          node --test tests/aig-garment-pose-follow-3-9.test.mjs
+          node --test tests/aig-runtime-stability-3-9.test.mjs
+          node --check aig-modular-outfits-3-7.mjs
+          node --test tests/aig-large-wardrobe-3-8.test.mjs
+          node --test tests/aig-unified-120-core-3-6.test.mjs
+          node --check aig-continuous-surface-scan-2-9-ui.mjs
+          node --check scene-runtime-studio.mjs
+          node --test tests/aig-unified-appearance-3-5.test.mjs
+          node --test tests/aig-fused-manifold-surface-3-0.test.mjs
+          node --test tests/aig-photo-digit-silhouette-3-4.test.mjs
+      - name: Bundle actual formal renderer, no second render context
+        run: |
+          npm run build
+          test -s dist/scene-runtime-studio.js
+          test -s dist/scene-runtime-studio.html
+          node --check dist/scene-runtime-studio.js
+          grep -q 'aig35-width' dist/scene-runtime-studio.html
+          grep -q 'aig35-colour' dist/scene-runtime-studio.html
+          grep -q 'scan36-light' dist/scene-runtime-studio.html
+          grep -q 'scan36-source-preview' dist/scene-runtime-studio.html
+          grep -q 'scan37-slot-count' dist/scene-runtime-studio.html
+          grep -q 'value="19200" selected' dist/scene-runtime-studio.html
+          grep -q 'scan310-hair' dist/scene-runtime-studio.html
+          grep -q 'scan38-asset-manager' dist/scene-runtime-studio.html
+          grep -q 'AIG_REAL3D_3_5_UNIFIED_SOURCE_APPEARANCE_GATE' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_8_LAZY_CHARACTER_ASSET_INDEX' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_9_SINGLE_KERNEL_STABILITY' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_9_ATTACHED_GARMENT_VERTEX_MOTION' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_10_REMOVABLE_SOURCE_ANCHORED_HAIR' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_11_REAL_POSE_CONTACT_PROXY' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_12_FIXED_STEP_SECONDARY_HAIR_SKIRT' dist/scene-runtime-studio.js
+          grep -q 'scan313-count' dist/scene-runtime-studio.html
+          grep -q 'scan313-bench' dist/scene-runtime-studio.html
+          grep -q 'AIG_REAL3D_3_13_SOURCED_CLASSMATES_AND_CROWD_BENCH' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_14_SOURCE_BODY_TRIANGLE_CONTACT' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_15_GEOMETRY_FIRST_MULTI_VIEW_GATES' dist/scene-runtime-studio.js
+          grep -q 'scan315-preview' dist/scene-runtime-studio.html
+          grep -q 'scan315-profile' dist/scene-runtime-studio.html
+          grep -q 'AIG_REAL3D_3_14_EXACT_DISCRETE_TRIANGLE_PAIRS' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_14_HEROINE_APPROVED_REFERENCE_LEDGER' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_14_SOURCE_BACKVIEW_HAIR_SILHOUETTE' dist/scene-runtime-studio.js
+          grep -q 'scan314-apply-reference' dist/scene-runtime-studio.html
+          grep -q 'scan314-audit-triangle' dist/scene-runtime-studio.html
+          grep -q 'REAL3D_19200_LOGICAL_WORK_SLOTS' dist/scene-runtime-studio.js
+      - name: Install Chromium QA for actual phone/desktop rendered geometry
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Real shared WebGL screenshots and 3.5 shape, colour, proportion callbacks
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig35-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-unified-appearance-3-5.real-browser.mjs
+          test -s artifacts/aig-real3d-3-5-unified-appearance/phone-stage-snapshots-MANIFEST.json
+          test -s artifacts/aig-real3d-3-5-unified-appearance/desktop-stage-snapshots-MANIFEST.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-3-16-Per-Stage-Phone-Desktop-Actual-WebGL-Snapshots
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-3-5-unified-appearance/
+          if-no-files-found: warn
+
+  stage1-dual-adult-true-webgl:
+    name: Stage1 male briefs female one-piece; 16 true phone/desktop WebGL views
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Two adults and joint geometry strict unit tests
+        run: |
+          node --check aig-stage1-dual-adult-runtime.mjs
+          node --check aig-stage1-dual-adult-anatomy.mjs
+          node --check aig-stage1-unified-19200-ratio-core.mjs
+          node --check aig-stage1-mm-coordinate-contract.mjs
+          node --check aig-stage1-4k-adaptive-render.mjs
+          node --check aig-stage1-resolution-ladder.mjs
+          node --test tests/aig-stage1-resolution-ladder.test.mjs
+          node --check aig-stage1-true4k-capture.mjs
+          node --test tests/aig-stage1-4k-adaptive-render.test.mjs
+          node --test tests/aig-stage1-mm-coordinate-contract.test.mjs
+          node --test tests/aig-stage1-unified-19200-ratio-core.test.mjs
+          node --test tests/aig-stage1-dual-adult.test.mjs
+      - name: Build existing one-context WebGL runtime
+        run: |
+          npm run build
+          grep -q 'AIG_STAGE1_ONE_CORE_19200_PROPORTION_GATE' dist/scene-runtime-studio.js
+          grep -q 'AIG_STAGE1_CANONICAL_MM_0_001_V1' dist/scene-runtime-studio.js
+          grep -q 'AIG_STAGE1_SINGLE_WEBGL_ADAPTIVE_TRUE_4K' dist/scene-runtime-studio.js
+          grep -q 'AIG_STAGE1_SINGLE_RENDERER_4K_TO_1080P_LADDER_V1' dist/scene-runtime-studio.js
+          grep -q 'stage1-output-resolution' dist/scene-runtime-studio.html
+          grep -q 'stage1-4k-current' dist/scene-runtime-studio.html
+      - name: Verify AIG original-site compile and actual Stage1 route (not a fake webpage translator)
+        run: |
+          test -s ../../../aig-new-home.html
+          test -s ../../../real3d-stage1-review.html
+          grep -q 'href="./real3d-stage1-review.html"' ../../../aig-new-home.html
+          grep -q 'href="./aig-new-home.html"' ../../../real3d-stage1-review.html
+          grep -q 'stage1-adult-baselines' dist/scene-runtime-studio.html
+          grep -q 'aig-stage1' dist/scene-runtime-studio.js || grep -q 'AIG_STAGE1_DUAL_ADULT_TRUE_WEBGL_VIEWS' dist/scene-runtime-studio.js
+          PORT=8766 node ../../../server.mjs >/tmp/aig-original-site-route.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for n in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:8766/healthz >/dev/null && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8766/aig-new-home.html | grep -q 'real3d-stage1-review.html'
+          curl -fsS http://127.0.0.1:8766/real3d-stage1-review.html | grep -q 'Stage 1'
+          curl -fsS http://127.0.0.1:8766/school-3d/fastmodel/single-photo/dist/scene-runtime-studio.html | grep -q 'stage1-gender'
+          curl -fsS http://127.0.0.1:8766/school-3d/fastmodel/single-photo/dist/scene-runtime-studio.js | grep -q 'AIG_STAGE1'
+      - name: Install Chromium for real HTML canvas rendering
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Actual male/female four-view WebGL screenshots and 3840x2160 GPU frame
+        env:
+          AIG_STAGE1_TRUE_4K_E2E: '1'
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/stage1-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-stage1-dual-adult.real-browser.mjs
+          test -s artifacts/aig-stage1-adult-male-female-swim-geometry/desktop-male-front-ACTUAL-GPU-3840x2160-4K.png
+          test -s artifacts/aig-stage1-adult-male-female-swim-geometry/desktop-male-front-ACTUAL-GPU-3200x1800-3k.png
+          test -s artifacts/aig-stage1-adult-male-female-swim-geometry/desktop-male-front-ACTUAL-GPU-2560x1440-2k.png
+          test -s artifacts/aig-stage1-adult-male-female-swim-geometry/desktop-male-front-ACTUAL-GPU-1920x1080-1080p.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-Stage1-Website-Translated-Executable-Bundle-NOT-DEPLOYED
+          path: |
+            formal-web/aig-new-home.html
+            formal-web/real3d-stage1-review.html
+            formal-web/school-3d/fastmodel/single-photo/dist/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Stage1-Male-Briefs-Female-Onepiece-Real-WebGL-16-Views
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-stage1-adult-male-female-swim-geometry/
+          if-no-files-found: warn
+
+  stage1-true-frontal-photo-only:
+    name: Stage1 true front 0deg ortho male+female native WebGL PNGs (NO 45deg)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Prove actual frontal 0deg orthographic body bounding, both genders
+        run: |
+          node --check aig-stage1-true-front-camera.mjs
+          node --check aig-stage1-true-front-photo.mjs
+          node --check tests/aig-stage1-true-front-photo.real-browser.mjs
+          node --test tests/aig-stage1-true-front-camera.test.mjs
+      - name: Bundle same original single-WebGL Real3D runtime
+        run: |
+          npm run build
+          grep -q 'stage1-photo-front-both' dist/scene-runtime-studio.html
+          grep -q 'AIG_STAGE1_FRONT_ORTHO_ZERO_YAW_NO_DISTORT_V1' dist/scene-runtime-studio.js
+      - name: Install Chromium GPU emulator for authentic frontal snapshot
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Render one MALE and one FEMALE true 1080x1920 frontal photo
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig-front-photo-server.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-stage1-true-front-photo.real-browser.mjs
+          test -s artifacts/aig-stage1-true-front-orthographic/FRONT-ORTHO-male-1080x1920-ACTUAL-WEBGL.png
+          test -s artifacts/aig-stage1-true-front-orthographic/FRONT-ORTHO-female-1080x1920-ACTUAL-WEBGL.png
+          test -s artifacts/aig-stage1-true-front-orthographic/FRONT-ONLY-MANIFEST.json
+      - name: Upload front-only real male/female WebGL PNG even on failure
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Stage1-TRUE-FRONT-ZERO-ANGLE-2-Actual-WebGL-1080x1920-PNG
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-stage1-true-front-orthographic/
+          if-no-files-found: warn

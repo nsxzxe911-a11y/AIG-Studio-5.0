@@ -4,6 +4,10 @@ import {installAIG27SegmentationPanel} from './aig-seeded-segmentation-2-7-ui.mj
 import {installAIG28LocalLearning} from './aig-local-learner-2-8-ui.mjs';
 import {installAIG28BMultiSource} from './aig-multisource-occlusion-2-8b-ui.mjs';
 import {installAIG29ContinuousScan} from './aig-continuous-surface-scan-2-9-ui.mjs';
+import {installAIG313ClassroomCapacity}
+ from './aig-classmates-crowd-3-13-ui.mjs';
+import {installAIGStage1DualAdultRuntime}
+ from './aig-stage1-dual-adult-runtime.mjs';
 import {installAIG31HeadBodyControls} from './aig-articulated-view-3-1-ui.mjs';
 import {installAIG32DigitControls} from './aig-20-digit-articulation-3-2-ui.mjs';
 import {installAIG34PhotoDigitPanel} from './aig-photo-digit-silhouette-3-4-ui.mjs';
@@ -27,6 +31,8 @@ let library=null,viewer=null,runtime=null,closed=false,loading=false;
 let worldRuntime=null,worldDoc=null,worldMetas=new Map(),worldSaved=[];
 let worldFrame=0,worldPlaying=false,worldPlaybackStart=0;
 let worldMapSnapshot=null;
+let aig313Classroom=null;
+let aigStage1BaseAdults=null;
 // Serialize async scene creation/add operations. UI clicks are not awaited
 // by browsers: two rapid actions must not commit documents from stale state.
 let worldBuildMutation=false;
@@ -59,6 +65,7 @@ async function init(){
   await refresh();
   await refreshWorldAssets();
   say('資產索引已就緒，尚未啟動 GPU。');
+  aig313Classroom?.refreshSources?.().catch(()=>{});
   const id=new URL(location.href).searchParams.get('asset');
   if(id&&id.length<=150&&[...$('scene-choice').options].some(x=>x.value===id))
    $('scene-choice').value=id;
@@ -1073,6 +1080,7 @@ $('world-pause').addEventListener('click',()=>{
  stopWorldPlayback();updateWorldStatus('已停止鏡頭轉場。來源與場景保留。');
 });
 window.addEventListener('pagehide',()=>{
+ aigStage1BaseAdults?.stop?.();
  if(movie25Session)void finishMovie25({cancel:true,reason:'PAGE_CLOSED'});
  if(movie25DownloadUrl){URL.revokeObjectURL(movie25DownloadUrl);movie25DownloadUrl=null}
  stopAIG22Storyboard('工作頁已關閉');
@@ -1097,15 +1105,25 @@ installAIG28BMultiSource({
  getSegmentation:()=>aig27Source,
  getLearner:()=>aig28Learner
 });
+let aig31Body=null;
 const aig30Scan=installAIG29ContinuousScan({
  getImage:()=>aig26Source,
  getSegmentation:()=>aig27Source,
- getSharedViewer:async()=>{await ensureWorldViewer();return viewer}
+ getSharedViewer:async()=>{await ensureWorldViewer();return viewer},
+ getBodyPose:()=>aig31Body?.pose??null
 });
 let aig32Digits=null;
-const aig31Body=installAIG31HeadBodyControls({
+aig31Body=installAIG31HeadBodyControls({
  getFusedScan:()=>aig30Scan,
- onPoseApplied:()=>aig32Digits?.refreshFromHeadBodyPose()
+ onPoseApplied:(actualPose)=>{
+  // The actual posed body drives attached garment mesh vertices.
+  // Garment sync failure must not stop the existing 3.1 joints or fingers.
+  try{aig30Scan.applyBodyPose(actualPose)}
+  catch(e){$('scan37-status').textContent=
+   '服裝跟隨骨架暫未通過：'+String(e?.message||e)+
+   '；人體模型與來源保留。'}
+  aig32Digits?.refreshFromHeadBodyPose();
+ }
 });
 const aig34Photo=installAIG34PhotoDigitPanel({
  getPhoto:()=>aig26Source,
@@ -1117,5 +1135,20 @@ aig32Digits=installAIG32DigitControls({
  getBodyPose:()=>aig31Body.pose,
  getOriginalPhoto:()=>aig26Source,
  getPhotoDigitConstraints:()=>aig34Photo.active
+});
+aigStage1BaseAdults=installAIGStage1DualAdultRuntime({
+ getSharedViewer:async()=>{
+  await ensureWorldViewer();
+  return viewer;
+ }
+});
+aig313Classroom=installAIG313ClassroomCapacity({
+ getFusedScan:()=>aig30Scan,
+ getViewer:()=>viewer,
+ getCharacterSourceAssets:async()=>library?
+  (await library.list({limit:1000})).filter(a=>
+   a.category==='character'&&a.mime==='model/gltf-binary'):[],
+ getLoadedWorldCharacterCount:()=>worldRuntime?.scene?
+  worldRuntime.scene.objects.filter(a=>a.category==='character').length:0
 });
 init();

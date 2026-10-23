@@ -50,6 +50,70 @@ button:disabled{opacity:.45;cursor:not-allowed}
 </section>
 <section class="panel" id="stage" aria-label="真正 WebGL 工作視窗">
 <canvas id="viewport" aria-label="可旋轉縮放的真實 GLB 3D 場景"></canvas>
+<section id="stage1-adult-baselines" style="padding:12px;margin:9px 0;border:1px solid #367c91;border-radius:10px;background:#071523">
+<strong>Stage 1｜中性完整人體：成人男生／女生（基礎幾何 Gate）</strong>
+<p class="hint">僅測試頭、頸、肩、雙臂、軀幹、骨盆、左右腿、腳及關節。男生穿貼身泳褲，女生穿貼身連身泳衣。不加入頭髮、制服、照片臉型或動畫。同一 WebGL 工作視窗使用獨立測試場景，不覆蓋已匯入 GLB。</p>
+<div class="world-grid">
+<label>基礎人體
+<select id="stage1-gender">
+<option value="male" selected>成人男生｜貼身泳褲</option>
+<option value="female">成人女生｜貼身連身泳衣</option>
+</select></label>
+</div>
+<button id="stage1-start" type="button">顯示真正 3D 基礎人體</button>
+<div class="world-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">
+<button id="stage1-front" type="button">正面</button>
+<button id="stage1-profile" type="button">側面</button>
+<button id="stage1-rear" type="button">背面</button>
+<button id="stage1-quarter45" type="button">45°</button>
+</div>
+<button id="stage1-capture" type="button">目前人體：真 WebGL 四視角快照</button>
+<button id="stage1-capture-both" type="button">男生＋女生：全部八張真 3D 快照</button>
+<section id="stage1-true-front-panel" style="padding:12px;margin:10px 0;background:#081c2b;border:1px solid #69b5d5;border-radius:10px">
+<strong>Stage 1｜正面照先行（真 3D、無 45° 旋轉）</strong>
+<p class="hint">先只拍男生／女生<strong>完整正面人體</strong>。使用固定 -Z 正交相機（無透視變形、無俯仰／偏航）；依實際頭頂、手臂及腳底外框自動置中。每張獨立 1080×1920 原生 WebGL PNG、SHA，人體外觀仍須目視驗收。</p>
+<button id="stage1-photo-front-current" type="button">拍攝目前人體｜正面照</button>
+<button id="stage1-photo-front-both" type="button">拍攝男生＋女生｜兩張正面照</button>
+<output id="stage1-photo-front-status" role="status" aria-live="polite" style="display:block;color:#b8e7fa;padding:7px 0">未拍攝：正面照目前為 BLOCK。</output>
+<div id="stage1-photo-front-gallery" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px"></div>
+</section>
+<div id="stage1-adaptive4k-controls" style="margin:9px 0;padding:9px;border:1px solid #3a5577;border-radius:8px">
+<strong>4K → 3K → 2K → 1080P｜向下相容、自適應鏡頭</strong>
+<p class="hint">自動輸出依 GPU 能力依序選擇 4K／3K／2K／1080P；手動指定解析度時不暗中降級。全部使用同一個 WebGL 渲染器直接生成目標像素，絕不把小圖片拉大。手機和 Windows 的人物尺度、0.001 mm 座標、四視角鏡頭構圖保持一致。</p>
+<label>預覽畫質
+<select id="stage1-4k-quality">
+<option value="adaptive" selected>自動適應（手機／電腦）</option>
+<option value="quality">優先畫質（依 GPU 限制）</option>
+<option value="economy">省資源（低功耗）</option>
+<option value="off">原始畫質</option>
+</select></label>
+<label>輸出原生解析度
+<select id="stage1-output-resolution">
+<option value="auto" selected>自動向下相容：4K → 3K → 2K → 1080P</option>
+<option value="4k">指定 4K｜3840×2160</option>
+<option value="3k">指定 3K｜3200×1800</option>
+<option value="2k">指定 2K｜2560×1440</option>
+<option value="1080p">指定 1080P｜1920×1080</option>
+</select></label>
+<label>PNG 方向
+<select id="stage1-4k-orientation">
+<option value="landscape" selected>3840×2160｜橫向 4K</option>
+<option value="portrait">2160×3840｜直向 4K</option>
+</select></label>
+<button id="stage1-4k-current" type="button">輸出目前鏡頭｜原生畫質 PNG</button>
+<button id="stage1-4k-four" type="button">輸出四視角｜向下相容 PNG</button>
+<output id="stage1-4k-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#a9dce5">等待啟動人體；自動模式會顯示實際輸出級別，手動模式不降級。</output>
+<div id="stage1-4k-gallery" aria-label="4K 3K 2K 1080P 真 WebGL 渲染的男女四視角 PNG"></div>
+</div>
+<button id="stage1-close" type="button">退出基礎人體，返回原工作場景</button>
+<output id="stage1-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#b7e7ed">Stage 1 人體外觀仍為 BLOCK。先顯示男、女技術人體，再逐張檢查。</output>
+<output id="stage1-ratio-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#c2dfff">統一核心 19,200 邏輯工作槽｜等待真實人體、畫布、骨架比例量測。即使數值測試通過，人物外觀仍須人工驗收。</output>
+<div id="stage1-snapshots" aria-label="男生與女生四視角實際三維快照"></div>
+<details><summary>真正座標／骨架／網格 Gate 資料</summary>
+<pre id="stage1-proof" style="max-height:300px;overflow:auto;white-space:pre-wrap;font-size:11px"></pre>
+</details>
+<p class="hint">共同尺寸規格：mm、精度 0.001 mm；+Y 向上、-Z 正面、地面兩腳中間為原點。渲染前明確使用 mm → m 對應（1 mm = 0.001 WebGL 單位），不更改人體尺寸。此版本為可旋轉的關節階層技術網格，尚未驗證連續蒙皮權重、真人解剖或照片身份。四視角不同並不等於外觀自動 PASS。</p>
+</section>
 <div id="real3d31-camera-bar" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:space-around;padding:7px;background:#071a27;border:1px solid #28596a;border-radius:8px">
 <button id="rig31-camera-front" type="button" style="flex:1;min-width:66px">正面</button>
 <button id="rig31-camera-left" type="button" style="flex:1;min-width:66px">左 90°</button>
@@ -206,7 +270,7 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <details><summary>真像素分割結果／未知遮擋／防假 AI 來源證據</summary><pre id="vision27-proof" style="max-height:330px;overflow:auto;white-space:pre-wrap;font:12px/1.55 ui-monospace,monospace">尚無真實分割結果。</pre></details>
 </section>
 <section class="panel" id="real3d29-surface" style="margin:14px 0;background:#081b2a;border:1px solid #4aaab9">
-<h2>Real3D 3.0｜單一融合封閉人體曲面／虛擬 CNC 五軸檢查</h2>
+<h2>Real3D 3.5｜單次照片輸入・整合輪廓、外型、色彩、比例的共用重建引擎</h2>
 <p>用原始照片可見輪廓和 2.7 的逐像素標籤，先形成頭、頸、肩、軀幹、四肢形體，再透過<strong>體積 SDF 平滑融合與共用索引曲面重建成單一連通封閉表面</strong>，送到原 WebGL 視窗。這才是改善圓管拼接的實際建模，不是只換材質。</p>
 <p>注意：單張 RGB 照片沒有實測的前後深度。背面橢圓厚度是<strong>明確標示的幾何推估</strong>；仿五軸掃描只是幾何法線的虛擬探頭，不是真實雷射、超聲波回波、量測儀或 Fanuc 真機加工指令。已量測的平面 mm 也不能直接假冒整個立體人體精度。</p>
 <div class="world-grid">
@@ -220,10 +284,158 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <label>幾何接縫融合程度（技術相對單位）<select id="scan30-blend"><option value="0.045">0.045（保留形狀）</option><option value="0.075" selected>0.075（平衡）</option><option value="0.105">0.105（強接合）</option></select></label>
 </div>
 <p class="hint">形體融合的封閉網格需通過「每條邊恰好 2 面」、「單一連通」、「非退化三角面」及「正向封閉體積」驗證。這仍是來源輪廓約束的幾何估計，未做實體厚度、碰撞、毫米 1:1 或可列印檔案認證。</p>
-<button type="button" id="scan29-build">01｜建立真正融合的單一 3D 人體曲面並顯示</button>
+<div class="world-grid" id="aig35-appearance-controls">
+<label>人物左右寬度（不改原照）<select id="aig35-width"><option value=".9">90%</option><option value="1" selected>100%</option><option value="1.1">110%</option></select></label>
+<label>人物高度（相對比例，不代表實測身高）<select id="aig35-height"><option value=".9">90%</option><option value="1" selected>100%</option><option value="1.1">110%</option></select></label>
+<label>前後厚度（推測深度）<select id="aig35-depth"><option value=".8">80%</option><option value="1" selected>100%</option><option value="1.2">120%</option></select></label>
+<label>預覽色彩亮度（只改顯示）<select id="aig35-colour"><option value=".85">85%</option><option value="1" selected>100% 原色</option><option value="1.15">115%</option></select></label>
+</div>
+<p class="hint">按一次完成來源照片 SHA → 像素標籤 → 多區截面 → 融合 SDF → 原輪廓與修正輪廓比較 → 擇優產生一份封閉 3D 候選。下面 3.1–3.4 關節與指尖模組仍接同一個共用模型，不會把原圖、已匯入 GLB 或 CNC 程式覆蓋。正面 XY 輪廓吻合，不代表背面、臉部與材質 100% 一致。</p>
+<button type="button" id="scan29-build">01｜一次掃描並建立／比較外型、比例、顏色的真 3D 模型</button>
+<div id="scan36-one-core" style="margin:10px 0;padding:9px;border:1px solid #437f94;border-radius:9px;background:#071925">
+<strong>Real3D 3.10｜單一人體核心 · 19,200 邏輯工作槽預設</strong>
+<p class="hint">同一個運算程式以 19,200 個邏輯工作槽為預設，但實際分塊不得超過有效頂點數；手機可向下調整。更多工作槽不等於更多硬體 CPU／GPU 核心，也不保證更快。人體素模與服裝分離，換衣服不用重新掃描。</p>
+<div class="world-grid">
+<label>同核心工作槽數量
+<select id="scan37-slot-count">
+<option value="120">120（輕量）</option>
+<option value="1200">1,200</option>
+<option value="2400">2,400（向下調整）</option>
+<option value="4800">4,800</option>
+<option value="9600">9,600</option>
+<option value="12000">12,000（穩定相容檔）</option>
+<option value="19200" selected>19,200（正式預設運算槽）</option>
+<option value="38400">38,400</option>
+<option value="76800">76,800</option>
+<option value="120000">120,000（邏輯上限；無實體加速保證）</option>
+</select></label>
+<label>每日更換服裝（不重掃人體）
+<select id="scan37-outfit">
+<option value="uniform" selected>校園制服（外套／裙子）</option>
+<option value="casual">休閒上衣／長褲</option>
+<option value="sport">運動上衣／長褲</option>
+<option value="body-proxy">中性人體素模（檢查比例）</option>
+</select></label>
+</div>
+<output id="scan37-status" role="status" aria-live="polite" style="display:block;padding:7px;color:#bfead6">尚未建立人體素模；服裝將作為獨立真 3D 網格附加。</output>
+<div class="world-grid" style="margin-top:8px">
+<label>3.10 可換髮型（技術版，非女主角正式髮模）
+<select id="scan310-hair">
+<option value="none" selected>保留來源髮型／不附加新髮模</option>
+<option value="short">短髮 3D 模組</option>
+<option value="long">長髮 3D 模組</option>
+<option value="ponytail">馬尾 3D 模組</option>
+<option value="twintails">雙馬尾 3D 模組</option>
+<option value="authority-long">女主角來源背面輪廓：長髮 3D 草模（尚未核准）</option>
+</select></label>
+</div>
+<output id="scan310-hair-status" role="status" aria-live="polite" style="display:block;color:#b6e8df;padding:7px">髮型模組尚未附加；不會改掉原照片、臉部與人體素模。</output>
+<output id="scan312-motion-status" role="status" aria-live="polite" style="display:block;padding:7px;color:#b2d7f7">3.12 髮束／裙擺次級動態：尚未執行；移動人體關節後才會產生真 3D 影格。</output>
+<details id="scan314-heroine-authority" style="margin:10px 0;padding:10px;border-radius:9px;border:1px solid #6c556e">
+<summary>Real3D 3.14｜正式女主角外觀對照（來源照片為準）</summary>
+<p class="hint">正式來源已對照：2026/10/21 校園制服 3D 展示板，正／側／背面、臉部、服裝與背包。保留來源 SHA，只儲存由真圖取得的顏色統計，不把原照片上傳到 GitHub。外觀驗收仍為 BLOCKED：尚未完成臉型、細節髮束、格紋 UV 與服裝裁縫 3D 重建。</p>
+<section id="scan316-snapshot-policy" style="margin:10px 0;padding:10px;border:1px solid #39556d;border-radius:8px">
+<strong>3.16｜每階段真 3D 快照（必看正面／側面／背面）</strong>
+<p class="hint">每次建立來源幾何、換裝／換髮與女主角草模後，自動在原本的 WebGL 渲染器拍三張不同視角。失敗會明示 FAIL，原快照仍保留。這裡的畫面來自真 3D 網格，不是示意圖片；核准女主角之前一律標記外觀待驗收。</p>
+<button id="scan316-capture" type="button">立即拍攝目前真 3D 三視角</button>
+<output id="scan316-status" role="status" aria-live="polite" style="display:block;padding:7px;color:#b6e8ee">尚未拍攝；必須先建立有效的真 3D 模型。</output>
+<div id="scan316-gallery" aria-label="真 WebGL 每階段正側背快照"></div>
+</section>
+<details id="scan315-source-first" style="padding:9px;margin:9px 0;border:1px solid #4d667f;border-radius:8px">
+<summary>Real3D 3.15｜外型幾何優先：女主角真 3D 草模與三視角</summary>
+<p class="hint">此功能讓右側真正換上獨立校園制服與依來源輪廓生成的長髮草模，並可從正面、側面、背面檢查真 3D 幾何。模型臉型、髮絲細節與格紋尚未核准；不把照片貼在平面上，也不宣稱完成同一人物。</p>
+<button id="scan315-preview" type="button">建立女主角來源風格的 3D 草模（真網格）</button>
+<div class="world-grid">
+<button id="scan315-front" type="button">正面真 3D</button>
+<button id="scan315-profile" type="button">側面真 3D</button>
+<button id="scan315-rear" type="button">背面真 3D</button>
+</div>
+<output id="scan315-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#b6def4">目前右側若仍為技術素模，請先建立來源真 3D 人物，再執行此草模檢查；外觀 Gate 維持 BLOCKED。</output>
+<details><summary>幾何來源與外觀缺口（真實證據，不以材質代替）</summary>
+<pre id="scan315-proof" style="max-height:340px;overflow:auto;white-space:pre-wrap;font-size:12px">尚無外觀診斷</pre>
+</details>
+</details>
+<button id="scan314-apply-reference" type="button">依核准女主角圖的實際取樣色彩更新真 3D 模型</button>
+<button id="scan314-audit-triangle" type="button">實查頭髮／裙子與人體的三角面交錯</button>
+<output id="scan314-contact-status" role="status" aria-live="polite" style="display:block;padding:7px;color:#d7dedc">尚未執行精確三角面相交檢測；粗略碰撞修正不代表零穿模。</output>
+<output id="scan314-authority-status" role="status" aria-live="polite" style="display:block;padding:7px;color:#e9c9b8">未執行參考色彩擬合；原素模與原照片不變。</output>
+</details>
+<details id="scan313-classroom" style="margin:10px 0;border:1px solid #28647c;border-radius:9px;padding:10px">
+<summary style="cursor:pointer;font-weight:600">Real3D 3.13｜女主角與同學多人場景：真 GLB 名冊／單畫面人數效能測試</summary>
+<p class="hint">正式同學必須有獨立角色 ID、已匯入的真 3D GLB、來源 SHA、服裝／髮型與骨架。下面顯示的人體副本只為測試同一張畫面能繪製多少個 3D 人形，<strong>不代表已生成不同同學或全部具有獨立動畫</strong>。正式多人 GLB 請使用上方 Real3D 2.0 世界編輯器。</p>
+<output id="scan313-roster" role="status" style="display:block;padding:7px;color:#b3f0e2">正在索引已匯入角色 GLB…</output>
+<div class="world-grid">
+<label>同時顯示多少個壓力測試替身（不含女主角）
+<select id="scan313-count">
+<option value="1">1 位</option><option value="2">2 位</option>
+<option value="4" selected>4 位</option><option value="8">8 位</option>
+<option value="12">12 位</option><option value="16">16 位</option>
+<option value="24">24 位</option><option value="32">32 位</option>
+<option value="48">48 位</option><option value="64">64 位</option>
+</select></label>
+</div>
+<button id="scan313-refresh" type="button">更新同學真 GLB 名冊</button>
+<button id="scan313-show" type="button">加入可見 3D 人數壓測模型</button>
+<button id="scan313-bench" type="button">實測本機 FPS／人數</button>
+<button id="scan313-sweep" type="button">循序評估 1、4、8、12、16、24、32 個顯示替身</button>
+<button id="scan313-clear" type="button">移除壓測副本，保留原女主角</button>
+<output id="scan313-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#b2f4db">尚未執行：先建立來源人體真 3D 模型，才能在相同 WebGL 畫面量測。</output>
+<details><summary>實際測量證據（P95 影格、Draw calls、來源限制）</summary>
+<pre id="scan313-proof" style="white-space:pre-wrap;overflow:auto;max-height:330px;font-size:12px">尚未量測</pre>
+</details>
+<p class="hint">本測試只量共享網格的可見人數；不包括每位同學獨立衣物、髮型、骨架、碰撞和動作開銷。GitHub 無頭 Chromium 若使用 SwiftShader，數字不等於 Windows 獨顯／Android 實機結果。19,200 邏輯工作槽是全引擎的任務池，不是 19,200 位角色。</p>
+</details>
+
+<p class="hint">19,200 為邏輯工作槽，不是實體核心。次級動態採有限影格彈性／阻尼與 3D 接觸代理體；會顯示實際更新次數與未清除的碰撞數，不冒充完整物理模擬。</p>
+<p class="hint">實作為獨立的真 3D 頭部附掛網格，跟隨 3.1 頭頸關節；未完成髮絲細節、自然碰撞或女主角正式髮型驗收。未附加時不額外載入髮型模型。</p>
+<details id="scan38-asset-manager" style="margin:10px 0">
+<summary>服裝／髮型／配件資產庫（按需載入，不把大量 3D 模型全部放進畫面）</summary>
+<p class="hint">只索引資產 ID、名稱、類別與版本。正式真 3D 模型必須實際存在且載入通過才可穿戴；目前僅有制服、日常服、運動服的技術幾何。髮型資產仍待製作，不能假裝有幾千套衣服。</p>
+<div class="world-grid">
+<label>查找資產 <input id="scan38-query" type="search" placeholder="搜尋服裝、髮型、ID" style="min-height:42px;max-width:100%;background:#041322;color:#e8f9fc;border:1px solid #37687e;border-radius:7px;padding:8px"></label>
+<label>分類 <select id="scan38-slot">
+<option value="all" selected>全部</option>
+<option value="outfit">整套服裝</option>
+<option value="hair">髮型</option>
+<option value="upper">上衣</option>
+<option value="lower">下身</option>
+<option value="footwear">鞋子</option>
+<option value="bag">背包</option>
+<option value="hat">帽子</option>
+<option value="eyewear">眼鏡</option>
+<option value="neckwear">領帶／項鍊</option>
+<option value="handheld">手持配件</option>
+</select></label>
+</div>
+<div id="scan38-items" role="list" style="padding:8px;color:#d3eeed">尚未建立索引</div>
+<button id="scan38-prev" type="button">上一頁</button>
+<button id="scan38-next" type="button">下一頁</button>
+<output id="scan38-status" role="status" aria-live="polite" style="display:block;padding:6px;color:#a7ded5">資產只按需建立，不預載全部服裝與髮型。</output>
+</details>
+<p class="hint">人體素模不嵌入制服或衣物顏色；模型來源有衣服遮擋處只能估計人體比例，不假裝量測到衣服底下的真實形狀。程序化服裝是真 3D 幾何，尚非完成的布料縫製、蒙皮與碰撞模擬。</p>
+<div class="world-grid">
+<label>實際渲染品質
+<select id="scan36-light">
+<option value="balanced" selected>標準 PBR（手機預設）</option>
+<option value="soft">柔和 PBR（低反光）</option>
+<option value="quality">高品質 PBR + 陰影貼圖（較耗效能）</option>
+<option value="raytrace">要求光追（目前安全退回高品質 PBR）</option>
+</select>
+</label>
+<button id="scan36-fit" type="button" style="align-self:end">模型完整置中／還原視野</button>
+</div>
+<output id="scan36-visible" role="status" aria-live="polite" style="display:block;padding:8px;color:#b7e5d5">尚未建立 3D 模型；真實畫面會顯示在上方工作視窗。</output>
+<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start">
+<figure style="margin:0;max-width:220px">
+<canvas id="scan36-source-preview" width="220" height="260" aria-label="唯一來源照片原始像素對照" style="width:100%;height:auto;border:1px solid #375975;background:#02070e"></canvas>
+<figcaption style="font-size:12px;color:#bbdded">來源照片（實際原始 RGB，不是 3D 渲染）</figcaption>
+</figure>
+<p class="hint" style="flex:1;min-width:190px">上方是真 3D 模型，下方是來源照。3.5 XY 邊緣誤差可檢查輪廓，但還不能認證五官、髮絲、服裝、隱藏背面或 100% 相似。完整硬體光線追蹤尚未接入。</p>
+</div>
+</div>
 <button type="button" id="scan29-probe">02｜顯示五軸 A/B 法線掃描路徑</button>
 <button type="button" id="scan29-hide">只移除這次曲面預覽（保留原 GLB 與場景）</button>
-<output id="scan29-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#adefe7">目前尚未建立單一封閉 3D 曲面。先完成原照片 SHA 和身體部位可見像素標籤。</output>
+<output id="scan29-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#adefe7">尚未建立 3.5 統一外型。先載入原始照片並完成來源像素分割，再一次掃描。</output>
 <details><summary>查看真正 3D 曲面三角形、XYZ 法線、A/B 虛擬探頭、深度推估標記與 GPU 繪製證據</summary>
 <pre id="scan29-proof" style="white-space:pre-wrap;max-height:340px;overflow:auto;font:12px/1.5 ui-monospace,monospace">尚未掃描。</pre>
 </details>

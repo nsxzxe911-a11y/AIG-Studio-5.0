@@ -1,0 +1,58 @@
+name: AIG Real3D 3.16 Mandatory True Canvas Stage Snapshots (synthetic fixture only)
+on:
+  push:
+    branches:
+      - verify/real3d-unified-appearance-3-5-20261023
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-appearance-3-5.real-browser.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage-snapshot-gate-3-16.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage-snapshot-3-16-ui.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-continuous-surface-scan-2-9-ui.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.html'
+      - '.github/workflows/aig-real3d-stage-snapshots-3-16.yml'
+  workflow_dispatch:
+jobs:
+  real-stage-png-evidence:
+    name: Independent PHONE and DESKTOP real WebGL six-stage screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Validate source-safe image proof
+        run: |
+          node --test tests/aig-stage-snapshot-gate-3-16.test.mjs
+          node --check aig-stage-snapshot-3-16-ui.mjs
+          node --check aig-continuous-surface-scan-2-9-ui.mjs
+      - run: npm run build
+      - name: Install Chromium actual GL headless renderer
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Render and compare SIX actual canvas stages on PHONE and DESKTOP
+        env:
+          AIG_SNAPSHOT_ONLY: '1'
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig316-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-unified-appearance-3-5.real-browser.mjs
+          for device in phone desktop; do
+            base="artifacts/aig-real3d-3-5-unified-appearance"
+            test -s "$base/$device-stage-snapshots-MANIFEST.json"
+            for step in 01-source-anatomical-fixture 02-approved-palette-on-test-fixture 03-separate-outfit-and-long-hair heroine-front heroine-profile heroine-rear; do
+              test -s "$base/$device-stage-$step-ACTUAL-WEBGL-CANVAS.png"
+            done
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-3-16-Source-Fixture-6-Stage-Phone-Desktop-Actual-Canvas-PNGs
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-3-5-unified-appearance/
+          if-no-files-found: error

@@ -10,6 +10,8 @@ import {StoryPlayback} from './story-to-animation.mjs';
 import {Aig42GpuTimer} from './aig-performance-4-2.mjs';
 import {Aig17GLBGpuGovernor} from './aig-glb-gpu-adaptive-1-7.mjs';
 import {prepareAIG18StaticInstancing,activateAIG18StaticInstancing} from './aig-static-instancing-1-8.mjs';
+import {planAIGStage1AdaptivePreview}
+ from './aig-stage1-4k-adaptive-render.mjs';
 
 export async function parseRiggedGLB(buffer){
  if(!(buffer instanceof ArrayBuffer)||buffer.byteLength>200*1024*1024)throw Error('GLB_SIZE_LIMIT');
@@ -56,6 +58,7 @@ export class PhotoViewer{
   this.canvas=canvas;this.onError=onError;this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
   this.originalPreviewPixelRatio=Math.min(devicePixelRatio||1,1.5);
   this.renderer.setPixelRatio(this.originalPreviewPixelRatio);
+  this.adaptive4KMode='off';this.adaptive4KLastPlan=null;
   // Explicit IEC sRGB output while glTF PBR lighting remains in linear space.
   // Neither a grey card nor ACES alone proves physical colour accuracy.
   this.renderer.outputColorSpace=THREE.SRGBColorSpace;
@@ -198,7 +201,78 @@ export class PhotoViewer{
    nativeAndroidWindows60FPSVerified:false
   });
  }
- fitCanvas(){if(this.movieMode)return;const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);this.camera.aspect=Math.max(1,r.width)/Math.max(1,r.height);this.camera.updateProjectionMatrix();}
+ setAdaptive4KQuality(mode='adaptive'){
+  if(!['off','adaptive','quality','economy'].includes(mode))
+   throw Error('AIG_STAGE1_4K_QUALITY_MODE_INVALID');
+  if(this.movieMode||this.reviewBusy||this.actionImportBusy||
+   this.gpu17Enabled)
+   throw Error('AIG_STAGE1_4K_BUSY_OR_GOVERNOR_CONFLICT');
+  const previous=this.adaptive4KMode;
+  try{
+   this.adaptive4KMode=mode;
+   if(mode==='off'){
+    this.renderer.setPixelRatio(this.originalPreviewPixelRatio);
+    this.adaptive4KLastPlan=null;
+   }
+   this.fitCanvas();
+   return this.getAdaptive4KReport();
+  }catch(e){
+   this.adaptive4KMode=previous;
+   if(previous==='off'){
+    this.renderer.setPixelRatio(this.originalPreviewPixelRatio);
+    this.adaptive4KLastPlan=null;
+   }
+   this.fitCanvas();
+   throw e;
+  }
+ }
+ getAdaptive4KReport(){
+  return Object.freeze({
+   schema:'AIG_STAGE1_SINGLE_WEBGL_ADAPTIVE_TRUE_4K',
+   activeMode:this.adaptive4KMode,
+   previewPlan:this.adaptive4KLastPlan,
+   actualCanvasWidth:this.canvas.width,
+   actualCanvasHeight:this.canvas.height,
+   outputRendererPixelRatio:this.renderer.getPixelRatio(),
+   originalGLBSourceUnchanged:true,
+   oneSharedRenderer:true,
+   actualUHDVideoPerformanceProven:false,
+   nativeAndroidGPU4KCertified:false
+  });
+ }
+ fitCanvas(){
+  if(this.movieMode)return;
+  // The actual canvas CSS box is the ONLY correct camera/render aspect.
+  // Using the entire parent PANEL height squashes people when more tool
+  // panels, stage gates or validation snapshots are expanded below canvas.
+  const rect=this.canvas.getBoundingClientRect();
+  const parent=this.canvas.parentElement.getBoundingClientRect();
+  const width=Math.max(1,rect.width||parent.width);
+  const height=Math.max(1,rect.height||parent.height);
+  if(this.adaptive4KMode!=='off'){
+   const gl=this.renderer.getContext();
+   if(gl.isContextLost?.())throw Error('AIG_STAGE1_4K_WEBGL_CONTEXT_LOST');
+   const mobile=matchMedia('(pointer: coarse)').matches;
+   const plan=planAIGStage1AdaptivePreview({
+    cssWidth:width,cssHeight:height,
+    devicePixelRatio:devicePixelRatio||1,
+    maxTextureSize:gl.getParameter(gl.MAX_TEXTURE_SIZE),
+    maxRenderbufferSize:gl.getParameter(gl.MAX_RENDERBUFFER_SIZE),
+    deviceMemoryGB:navigator.deviceMemory||8,
+    mobile,mode:this.adaptive4KMode
+   });
+   if(!plan.gpuLimitsRespected)
+    throw Error('AIG_STAGE1_4K_PREVIEW_GPU_BUDGET_BLOCKED');
+   if(Math.abs(this.renderer.getPixelRatio()-plan.plannedPixelRatio)>.005)
+    this.renderer.setPixelRatio(plan.plannedPixelRatio);
+   this.adaptive4KLastPlan=plan;
+  }
+  const size=this.renderer.getSize(new THREE.Vector2());
+  if(Math.abs(size.x-width)>.5||Math.abs(size.y-height)>.5)
+   this.renderer.setSize(width,height,false);
+  this.camera.aspect=width/height;
+  this.camera.updateProjectionMatrix();
+}
  beginMovie1080p(){
   if(this.gpu17Enabled)this.setGpuAccelerationEnabled(false);
   if(this.movieMode||this.reviewBusy||this.actionImportBusy||!this.model||!this.animation)
