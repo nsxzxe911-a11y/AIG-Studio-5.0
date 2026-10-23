@@ -75,6 +75,8 @@ export function installAIG29ContinuousScan({
   if(restore36Lighting){restore36Lighting();restore36Lighting=null}
   const label=$('scan36-visible');
   if(label)label.textContent='尚未建立 3D 曲面；原照片與其他 GLB 保留。';
+  if($('scan312-motion-status'))
+   $('scan312-motion-status').textContent='3.12 動態已結束；原人物來源與其他 GLB 保留。';
  };
  const proof=()=>{
   $('scan29-proof').textContent=JSON.stringify({
@@ -447,6 +449,13 @@ export function installAIG29ContinuousScan({
    sourceSha256:scan.sourceSha256,
    bodyRestGeometryIdentityPreserved:true
   };
+  if($('scan312-motion-status'))
+   $('scan312-motion-status').textContent='3.12 真 3D 次級動態：'+
+    motion312Proof.simulatedFrames+' 個運算影格，'+
+    motion312Proof.actualSecondaryVertices+' 個髮型／裙擺頂點具有彈性位移；'+
+    '粗略接觸修正 '+contact311Proof.actualCorrected3DVertices+
+    ' 點，未解決 '+contact311Proof.remainingCoarseProxyPenetrations+
+    ' 點。尚未通過完整布料物理驗收。';
   $('scan37-status').textContent='3.9 真骨架同步：'+
    motion39Proof.actualGarmentMeshesFollowingRig+' 件獨立 3D 衣物；'+
    motion39Proof.realGarmentVerticesMoved+' 個衣物頂點、'+
