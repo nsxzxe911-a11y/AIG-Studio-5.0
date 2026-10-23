@@ -217,6 +217,9 @@ try{
    const continuous=JSON.parse(await page.locator('#scan29-proof').textContent());
    assert.ok(continuous.real312ContinuousSecondaryMovement.simulatedFrames>=12);
    assert.equal(continuous.real312ContinuousSecondaryMovement.fullHairStrandAndFabricPhysicsCertified,false);
+   await page.locator('#viewport').screenshot({
+    path:out+'/'+device.name+'-real3d-3-12-hair-skirt-dynamic-settle.png'
+   });
 
    assert.ok(contacts.actualContactCandidates>=contacts.actualCorrected3DVertices);
 
@@ -239,6 +242,9 @@ try{
    assert.equal(secondaryRest.simulatedFrames,0);
    assert.equal(secondaryRest.actualSecondaryVertices,0);
    assert.equal(secondaryRest.underlyingPoseHasMovedVertices,false);
+   await page.locator('#viewport').screenshot({
+    path:out+'/'+device.name+'-real3d-3-12-rest-pose-recovery.png'
+   });
 
 
    await page.locator('#scan310-hair').selectOption('short');
