@@ -333,6 +333,22 @@ try{
      .real310RemovableHair;
     return h?.style==='short'&&h?.actualIndependentHairMeshes===1;
    },null,{timeout:20000});
+   await page.locator('#scan310-hair').selectOption('authority-long');
+   await page.waitForFunction(()=>{
+    const h=JSON.parse(document.getElementById('scan29-proof').textContent)
+     .real310RemovableHair;
+    return h?.style==='authority-long'&&
+     h?.actualIndependentHairMeshes===1&&
+     h.realIndependent3DTriangles>700;
+   },null,{timeout:20000});
+   const authorityHair=JSON.parse(
+    await page.locator('#scan29-proof').textContent()).real310RemovableHair;
+   assert.equal(authorityHair.technicalGeometryNotHeroineApproved,true);
+   assert.equal(authorityHair.physicallyAccurateStrandsAndCollisions,false);
+   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+   await page.screenshot({animations:'disabled',timeout:15000,
+    path:out+'/'+device.name+'-real3d-3-14-source-derived-3d-long-hair.png'
+   });
    await page.locator('#scan310-hair').selectOption('none');
    await page.waitForFunction(()=>{
     const h=JSON.parse(document.getElementById('scan29-proof').textContent)
