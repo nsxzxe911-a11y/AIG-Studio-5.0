@@ -121,6 +121,56 @@ try{
    assert.equal(proof.real38LazyAssetIndex.indexedAssetsAreMetadataNotLoadedMeshes,true);
    assert.equal(proof.real37ScalableCoreAndWardrobe.wardrobe.garmentMeshCount,2);
    assert.equal(proof.real37ScalableCoreAndWardrobe.wardrobe.bodyGeometryIdentityPreserved,true);
+   // 3.13: the hero remains source-bound. Additional crowd bodies are
+   // explicitly SAME-mesh technical test instances, NOT distinct classmates.
+   await page.locator('#scan313-count').selectOption('4');
+   await page.locator('#scan313-show').click();
+   await page.waitForFunction(()=>{
+    const x=JSON.parse(document.getElementById('scan313-proof').textContent);
+    return x.crowdTechnicalPreviewClones===4&&
+     x.technicalClonesHaveRealSourceVertices===true;
+   },null,{timeout:20000});
+   let crowd=JSON.parse(await page.locator('#scan313-proof').textContent());
+   assert.equal(crowd.sourceRoster.verifiedIndependent3DPeopleRendered,0);
+   assert.equal(crowd.crowdRealIndividualIdentitiesShown,0);
+   assert.equal(crowd.oneSharedWebGLContext,true);
+   assert.equal(crowd.technicalClonesDoNotCountAsIndependentClassmates,true);
+   assert.equal(crowd.originalActive3DSourceSHA,proof.originalSourcePhotoSHA);
+   await page.locator('#viewport').screenshot({
+    path:out+'/'+device.name+'-real3d-3-13-four-technical-crowd-people.png'
+   });
+   await page.locator('#scan313-bench').click();
+   await page.waitForFunction(()=>{
+    const x=JSON.parse(document.getElementById('scan313-proof').textContent);
+    return x.latestBenchmark?.visiblePeople===4&&
+     x.latestBenchmark.actualSamples>=24;
+   },null,{timeout:28000});
+   crowd=JSON.parse(await page.locator('#scan313-proof').textContent());
+   assert.ok(crowd.latestBenchmark.medianObservedFps>0);
+   assert.ok(crowd.latestBenchmark.p95FrameIntervalMs>0);
+   assert.equal(crowd.latestBenchmark.fullCharacterRigMotionIncluded,false);
+   assert.equal(crowd.latestBenchmark.actualGpuTimeMeasured,false);
+   assert.equal(crowd.latestBenchmark.classmateIndependentAssetsIncluded,false);
+   await page.locator('#scan313-count').selectOption('16');
+   await page.locator('#scan313-show').click();
+   await page.waitForFunction(()=>JSON.parse(
+    document.getElementById('scan313-proof').textContent
+   ).crowdTechnicalPreviewClones===16);
+   await page.locator('#viewport').screenshot({
+    path:out+'/'+device.name+'-real3d-3-13-sixteen-technical-crowd-people.png'
+   });
+   crowd=JSON.parse(await page.locator('#scan313-proof').textContent());
+   assert.equal(crowd.crowdRealIndividualIdentitiesShown,0);
+   assert.equal(crowd.sceneWorldExistingGLBObjectCap,12);
+   await page.locator('#scan313-clear').click();
+   await page.waitForFunction(()=>{
+    const x=JSON.parse(document.getElementById('scan313-proof').textContent);
+    return x.crowdTechnicalPreviewClones===0&&
+     x.technicalClonesHaveRealSourceVertices===false;
+   });
+   assert.equal(JSON.parse(await page.locator('#scan29-proof').textContent())
+    .actualWebGLSceneObjectActive,true);
+
 
    assert.ok((await page.locator('#scan36-visible').textContent()).includes('19200 個已配置邏輯工作槽'));
    await page.locator('#scan36-fit').click();
