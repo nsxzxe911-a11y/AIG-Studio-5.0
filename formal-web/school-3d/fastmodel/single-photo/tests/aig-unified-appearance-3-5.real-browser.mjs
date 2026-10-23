@@ -5,6 +5,8 @@
  */
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+import {takeAIG316WebGLCanvasStage,publishAIG316SnapshotManifest}
+ from './aig-stage-snapshot-gate-3-16.mjs';
 import {mkdir,writeFile} from 'node:fs/promises';
 const out='artifacts/aig-real3d-3-5-unified-appearance';
 await mkdir(out,{recursive:true});
@@ -21,6 +23,14 @@ try{
   const page=await context.newPage();page.setDefaultTimeout(22000);
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   try{
+   const snapshots316=[];
+   const snap=async(stage,view=null)=>snapshots316.push(
+    await takeAIG316WebGLCanvasStage(page,{
+     device:device.name,stage,out,view,
+     sourceKind:'SYNTHETIC_ANATOMICAL_FIXTURE',
+     appearanceApproved:false
+    })
+   );
    await page.goto('http://127.0.0.1:8765/scene-runtime-studio.html');
    await page.waitForFunction(()=>document.getElementById('status')
     ?.textContent.includes('資產索引已就緒'));
@@ -121,6 +131,7 @@ try{
    assert.equal(proof.real38LazyAssetIndex.indexedAssetsAreMetadataNotLoadedMeshes,true);
    assert.equal(proof.real37ScalableCoreAndWardrobe.wardrobe.garmentMeshCount,2);
    assert.equal(proof.real37ScalableCoreAndWardrobe.wardrobe.bodyGeometryIdentityPreserved,true);
+   await snap('01-source-anatomical-fixture');
    // User-approved heroine reference sheet is REAL source evidence, not
    // synthetic classmate silhouette. RGB refit changes actual 3D colours
    // but may NEVER claim real facial likeness completed.
@@ -136,6 +147,7 @@ try{
     .realUserApprovedHeroineAppearancePASS,false);
    assert.equal(heroineRefit.real314HeroineApprovedVisualReferenceFit
     .actualFaceEyeNoseMouth3DShapeMatched,false);
+   await snap('02-approved-palette-on-test-fixture');
    // Source-first 3.15 creates an independently shaded heroine *draft*
    // with real source-constrained long-hair XYZ geometry, then checks
    // front/side/back without using photo billboard or new WebGL renderer.
@@ -154,6 +166,7 @@ try{
    assert.equal(draft.sameWebGLRendererStillActive,true);
    assert.equal(draft.verifiedUserFacialLandmarkMeshTriangles,0);
    assert.equal(draft.finalAppearanceReleasePASS,false);
+   await snap('03-separate-outfit-and-long-hair');
    for(const [view,click] of [['front','scan315-front'],
     ['profile','scan315-profile'],['rear','scan315-rear']]){
     await page.locator('#'+click).dispatchEvent('click');
@@ -161,12 +174,11 @@ try{
      const p=JSON.parse(document.getElementById('scan29-proof').textContent);
      return p.real315GeometryFirstHeroineViewReview?.activeView===v;
     },view,{timeout:12000});
-    await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
-    await page.screenshot({animations:'disabled',timeout:15000,
-     path:out+'/'+device.name+'-real3d-3-15-actual-'+view+'-geometry-draft.png'
-    });
+    await snap('heroine-'+view,view);
    }
-
+   await publishAIG316SnapshotManifest({
+    out,device:device.name,stages:snapshots316
+   });
 
    // 3.13: the hero remains source-bound. Additional crowd bodies are
    // explicitly SAME-mesh technical test instances, NOT distinct classmates.
