@@ -1,0 +1,53 @@
+name: AIG Real3D 2.6 Measured Vision Colour Source Gate
+on:
+  push:
+    branches:
+      - verify/real3d-true-world-movie-2-5-20261023
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-vision-metric-color-2-6*'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.*'
+      - 'formal-web/school-3d/fastmodel/single-photo/viewer.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-vision-metric-color-2-6*'
+      - '.github/workflows/aig-real3d-2-6-measured-vision-gate.yml'
+  workflow_dispatch:
+jobs:
+  source-verified-real-plane-colour:
+    name: Independent 2.6 measured planar-mm and photo colour phone desktop evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Exact source module and numerical proof, no false 3D one-to-one
+        run: |
+          node --check aig-vision-metric-color-2-6.mjs
+          node --check aig-vision-metric-color-2-6-ui.mjs
+          node --check scene-runtime-studio.mjs
+          node --check viewer.mjs
+          node --test tests/aig-vision-metric-color-2-6.test.mjs
+      - name: Build actual AIG full shared web app; retain existing 3D core
+        run: |
+          npm run build
+          test -s dist/scene-runtime-studio.html
+          test -s dist/scene-runtime-studio.js
+          node --check dist/scene-runtime-studio.js
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Validate actual phone and desktop clicked mm, grey card, semantic RLE and local asset vault
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig26-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-vision-metric-color-2-6.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-2-6-Only-Source-Measured-mm-Colour-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-2-6-measure-colour-semantic/
+          if-no-files-found: warn
