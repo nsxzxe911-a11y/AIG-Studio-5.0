@@ -23,17 +23,17 @@ export async function decodeAIGCinemaStem(ctx,file){
  return b;
 }
 export function prepareAIGCinemaAudioMix(ctx,{
- music=null,sfx=null,musicGain=.65,sfxGain=.75
+ music=null,sfx=null,voice=null,musicGain=.65,sfxGain=.75,voiceGain=.95
 }={}){
  if(!ctx||typeof ctx.createMediaStreamDestination!=='function')
  throw Error('CINEMA_WEB_AUDIO_MIXER_UNSUPPORTED');
- if(![musicGain,sfxGain].every(n=>finite(n)&&n>=0&&n<=1))
+ if(![musicGain,sfxGain,voiceGain].every(n=>finite(n)&&n>=0&&n<=1))
  throw Error('CINEMA_GAIN_RANGE');
- if(!music&&!sfx)return null;
+ if(!music&&!sfx&&!voice)return null;
  const destination=ctx.createMediaStreamDestination();
  const sources=[],connections=[];
  for(const [kind,buffer,volume]of [
-  ['music',music,musicGain],['sfx',sfx,sfxGain]
+  ['music',music,musicGain],['sfx',sfx,sfxGain],['voice',voice,voiceGain]
  ]){
   if(!buffer)continue;
   const source=ctx.createBufferSource(),gain=ctx.createGain();
@@ -63,6 +63,7 @@ export function prepareAIGCinemaAudioMix(ctx,{
    }
   },
   verifiedMediaStreamAudioTrackCreated:track.kind==='audio',
+  importedVoiceRecordingIncluded:Boolean(voice),
   voiceSynthesisIncluded:false,
   sourceVideoAudioIncluded:false
  };
