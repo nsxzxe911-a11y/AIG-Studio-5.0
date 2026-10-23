@@ -45,6 +45,9 @@ jobs:
           node --test tests/aig-motion-integrity-2-4.test.mjs
           node --check aig-true-world-movie-2-5.mjs
           node --test tests/aig-true-world-movie-2-5.test.mjs
+          node --check aig-vision-metric-color-2-6.mjs
+          node --check aig-vision-metric-color-2-6-ui.mjs
+          node --test tests/aig-vision-metric-color-2-6.test.mjs
           node --check aig-map-model-alignment-2-1.mjs
           node --check tests/aig-map-actor-2-1.real-browser.mjs
           node --test tests/aig-map-model-alignment-2-1.test.mjs
