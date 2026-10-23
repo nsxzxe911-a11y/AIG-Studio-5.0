@@ -57,6 +57,10 @@ jobs:
           node --check aig-local-learner-2-8-ui.mjs
           node --check tests/aig-local-learner-2-8.real-browser.mjs
           node --test tests/aig-local-learner-2-8.test.mjs
+          node --check aig-multisource-occlusion-2-8b.mjs
+          node --check aig-multisource-occlusion-2-8b-ui.mjs
+          node --check tests/aig-multisource-occlusion-2-8b.real-browser.mjs
+          node --test tests/aig-multisource-occlusion-2-8b.test.mjs
           node --check aig-map-model-alignment-2-1.mjs
           node --check tests/aig-map-actor-2-1.real-browser.mjs
           node --test tests/aig-map-model-alignment-2-1.test.mjs
@@ -146,6 +150,7 @@ jobs:
           node tests/aig-vision-metric-color-2-6.real-browser.mjs
           node tests/aig-seeded-segmentation-2-7.real-browser.mjs
           node tests/aig-local-learner-2-8.real-browser.mjs
+          node tests/aig-multisource-occlusion-2-8b.real-browser.mjs
           node tests/aig-map-actor-2-1.real-browser.mjs
           node tests/aig-world-scene-2-0.real-browser.mjs
           node tests/aig-scene-lifecycle-1-9.real-browser.mjs
@@ -155,6 +160,12 @@ jobs:
           node tests/aig-glb-gpu-v1-7.real-browser.mjs
           node tests/aig-metric-stereo-7-13.real-browser.mjs
           node tests/aig-heroine-scan-7-14.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-2-8B-Reviewed-2Photo-Training-3rdPhoto-Holdout-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-2-8b-multisource-visible-occlusion/
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always()
         with:
