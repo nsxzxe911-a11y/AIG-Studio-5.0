@@ -450,9 +450,17 @@ export function installAIGStage1DualAdultRuntime({
  };
  const fourKAllViews=async()=>{
   const entries=[];
+  const requested=el('stage1-output-resolution').value;
+  let lockedLevel=requested==='auto'?null:requested;
   for(const view of views){
-   entries.push(await captureResolution(view));
-   // Yield between independent GPU captures, not overlapping framebuffers.
+   // Auto selects ONE actually supported native tier on the first frame.
+   // Other three views must share that tier for comparable evidence;
+   // never silently mix 4K and 1080p in a four-view proof.
+   const result=await captureResolution(view,lockedLevel??requested);
+   if(!lockedLevel)lockedLevel=result.selectedResolution;
+   if(result.selectedResolution!==lockedLevel)
+    error('FOUR_CAMERA_RESOLUTION_LEVEL_MISMATCH');
+   entries.push(result);
    await new Promise(resolve=>requestAnimationFrame(resolve));
   }
   if(new Set(entries.map(x=>x.sha256)).size!==4)
