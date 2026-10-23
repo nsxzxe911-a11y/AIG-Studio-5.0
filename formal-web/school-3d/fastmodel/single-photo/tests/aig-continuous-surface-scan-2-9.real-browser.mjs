@@ -65,7 +65,7 @@ try{
    for(const args of [
     [15,70,0],[237,90,0],[128,40,2],
     [126,92,4],[126,180,14],[68,160,6],
-    [188,165,7],[110,311,10],[144,310,12]
+    [188,165,7],[110,311,10],[144,310,11]
    ])await seed(...args);
    await page.locator('#vision27-resolution').selectOption('320');
    await page.locator('#vision27-run').click();
