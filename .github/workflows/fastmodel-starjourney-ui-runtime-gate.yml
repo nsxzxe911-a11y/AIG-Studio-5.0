@@ -23,6 +23,10 @@ jobs:
         run: |
           node --check formal-web/fastmodel/cinema-engine/app.mjs
           node --check formal-web/fastmodel/cinema-engine/audio-mixer.mjs
+          node --check formal-web/fastmodel/cinema-engine/storyboard-engine.mjs
+          node --check formal-web/fastmodel/cinema-engine/cinematic-scene-renderer.mjs
+          node --check formal-web/fastmodel/cinema-engine/tests/starjourney-storyboard.real-browser.mjs
+          node --test formal-web/fastmodel/cinema-engine/tests/storyboard-engine.test.mjs
           node --check formal-web/fastmodel/cinema-engine/tests/starjourney-real-runtime.real-browser.mjs
           node -e "const x=require('./formal-web/fastmodel/cinema-engine/authority/starjourney-desktop-v1.json'); if(!x.approval.desktop_visual_authority||x.image.sha256!=='77611d97db45772f14a403331d4d044b773f132bc2a78c99222262a4e4a046e6'||x.image.binary_in_repo||x.runtime_gate.deployment!=='DRAFT_ONLY_NOT_RENDER_LIVE')process.exit(1);"
           node -e "const x=require('./formal-web/fastmodel/cinema-engine/authority/starjourney-mobile-v1.json');if(!x.approval.mobile_visual_authority||x.image.sha256!=='771e25505942b9ae9424ac8a8329f40bd706063c6f1eded81b53e05daff69d35'||x.image.binary_in_repository)process.exit(1);"
@@ -32,7 +36,7 @@ jobs:
   browser:
     needs: source
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 24
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -52,9 +56,12 @@ jobs:
             sleep 1
           done
           node formal-web/fastmodel/cinema-engine/tests/starjourney-real-runtime.real-browser.mjs
+          node formal-web/fastmodel/cinema-engine/tests/starjourney-storyboard.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: AIG-FastModel-StarJourney-RGB-Glass-REAL-Preview-QA-NOT-FORMAL-RELEASE
-          path: artifacts/aig-fastmodel-starjourney-ui-runtime-v1/
+          path: |
+            artifacts/aig-fastmodel-starjourney-ui-runtime-v1/
+            artifacts/aig-starjourney-local-storyboard-cinema-v2/
           if-no-files-found: warn
