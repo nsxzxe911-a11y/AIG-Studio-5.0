@@ -63,7 +63,7 @@ function boundsOf(shell){
 }
 function sampleActualShell(shell,bounds,role,offsetScale){
  const p=shell.positions,n=shell.normals,idx=shell.indices;
- const vertices=[],normals=[],indices=[];
+ const vertices=[],normals=[],indices=[],attachmentIndices=[];
  const t=(i)=>((p[i*3+1]-bounds.min[1])/bounds.height);
  const clothing=(i)=>[5,14,10,11].includes(shell.vertexSourceLabelIds?.[i]);
  let used=0;
@@ -75,6 +75,7 @@ function sampleActualShell(shell,bounds,role,offsetScale){
   const classEvidence=[a,b,c].filter(clothing).length>=2;
   if(!inBand||!classEvidence)continue;
   for(const i of [a,b,c]){
+   attachmentIndices.push(i);
    const k=i*3,at=vertices.length/3;
    for(let d=0;d<3;d++){
     vertices.push(p[k+d]+n[k+d]*bounds.height*offsetScale);
@@ -87,7 +88,8 @@ function sampleActualShell(shell,bounds,role,offsetScale){
  if(used<8)fail('NOT_ENOUGH_SOURCE_BOUND_CLOTH_FACES');
  return {positions:new Float32Array(vertices),
   normals:new Float32Array(normals),indices:new Uint32Array(indices),
-  triangleCount:used,sourceMeshSurfaceDerived:true,
+  triangleCount:used,sourceVertexIndices:new Uint32Array(attachmentIndices),
+  sourceMeshSurfaceDerived:true,
   garmentIsIndependent3DGeometry:true,
   sealedFabricPatternCertified:false};
 }
@@ -109,7 +111,20 @@ function loftPleatedSkirt(shell,bounds){
  }
  rx=clamp(rx*1.09,bounds.height*.07,bounds.height*.3);
  rz=clamp(rz*1.14,bounds.height*.05,bounds.height*.24);
- const N=64,rows=5,pos=[],indices=[];
+ const N=64,rows=5,pos=[],indices=[],sourceVertexIndices=[];
+ // The procedural skirt follows observed waist anchors only. This does NOT
+ // simulate realistic cloth contact, gravity or hem motion.
+ const anchors=Array.from({length:N},(_,k)=>{
+  const theta=k*2*Math.PI/N;
+  const targetX=xc+Math.cos(theta)*rx,targetZ=zc+Math.sin(theta)*rz;
+  let best=at[0],distance=Infinity;
+  for(const i of at){
+   const dx=p[i*3]-targetX,dz=p[i*3+2]-targetZ;
+   const d=dx*dx+dz*dz;
+   if(d<distance){distance=d;best=i}
+  }
+  return best;
+ });
  const waist=bounds.min[1]+bounds.height*.55;
  for(let r=0;r<rows;r++){
   const v=r/(rows-1),flare=1+.25*v;
@@ -119,6 +134,7 @@ function loftPleatedSkirt(shell,bounds){
    pos.push(xc+Math.cos(ang)*rx*ratio,
     waist-v*bounds.height*.19,
     zc+Math.sin(ang)*rz*ratio);
+   sourceVertexIndices.push(anchors[k]);
   }
  }
  for(let r=0;r<rows-1;r++)for(let k=0;k<N;k++){
@@ -142,6 +158,7 @@ function loftPleatedSkirt(shell,bounds){
  }
  return {positions:new Float32Array(pos),normals,
   indices:new Uint32Array(indices),triangleCount:indices.length/3,
+  sourceVertexIndices:new Uint32Array(sourceVertexIndices),
   sourceMeshSurfaceDerived:false,garmentIsIndependent3DGeometry:true,
   proceduralWaistEstimate:true,clothSimulationVerified:false};
 }
