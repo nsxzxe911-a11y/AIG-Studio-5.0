@@ -1,0 +1,434 @@
+{
+  "schema": "AIG_FASTMODEL_STARJOURNEY_AUTHORITY_CONTRACT_V1",
+  "version": "1.0.0",
+  "created": "2026-10-24",
+  "project": "AIG FastModel Cinema Engine",
+  "approval": {
+    "desktop_visual_authority": true,
+    "approved_by": "user",
+    "approved_on": "2026-10-24",
+    "desktop_live_runtime_approved": false,
+    "mobile_visual_approved": false
+  },
+  "image": {
+    "image_id": "IMG.FM.CINEMA.STAR_JOURNEY.DESKTOP.AUTHORITY.V1",
+    "authority_role": "DESKTOP_VISUAL_REFERENCE",
+    "library_path": "/AIG-II/FastModel/Approved-Authority/Desktop/AIG-FastModel-StarJourney-RGBGlass-Desktop-Authority-V1.png",
+    "library_file_id": "libfile_d8473697a2e48191be618135a8148f2e",
+    "source_file": "星際之旅科幻電影製作介面.png",
+    "width": 1672,
+    "height": 941,
+    "bytes": 2722861,
+    "sha256": "77611d97db45772f14a403331d4d044b773f132bc2a78c99222262a4e4a046e6",
+    "binary_in_repo": false,
+    "authority_background_must_not_impersonate_controls": true,
+    "decorative_preview_not_real_film": true,
+    "ui_text_from_real_dom_not_embedded_pixels": true
+  },
+  "appearance": {
+    "bg": "#020407",
+    "panel": "#07111B",
+    "rgbGlassOutlineOpacity": {
+      "normal": 0.25,
+      "hover": 0.5,
+      "selected": 0.85,
+      "disabled": 0.12,
+      "alarm": 1
+    },
+    "accent": [
+      "#22DAF2",
+      "#7679FF",
+      "#EB4DFB"
+    ],
+    "states": [
+      "NORMAL",
+      "PRESSED",
+      "SELECTED",
+      "DISABLED",
+      "ALARM"
+    ]
+  },
+  "pages": [
+    {
+      "page_id": "FM.PAGE.HOME"
+    },
+    {
+      "page_id": "FM.PAGE.ASSETS"
+    },
+    {
+      "page_id": "FM.PAGE.AI"
+    },
+    {
+      "page_id": "FM.PAGE.2D"
+    },
+    {
+      "page_id": "FM.PAGE.2_5D"
+    },
+    {
+      "page_id": "FM.PAGE.3D"
+    },
+    {
+      "page_id": "FM.PAGE.CINEMA"
+    },
+    {
+      "page_id": "FM.PAGE.VFX"
+    },
+    {
+      "page_id": "FM.PAGE.SFX"
+    },
+    {
+      "page_id": "FM.PAGE.DIALOGUE"
+    },
+    {
+      "page_id": "FM.PAGE.MUSIC"
+    },
+    {
+      "page_id": "FM.PAGE.EXPORT"
+    }
+  ],
+  "desktop_regions": [
+    {
+      "id": "REGION.FM.HEADER",
+      "xywh": [
+        0,
+        0,
+        1,
+        0.062
+      ]
+    },
+    {
+      "id": "REGION.FM.NAV",
+      "xywh": [
+        0,
+        0.064,
+        0.103,
+        0.936
+      ]
+    },
+    {
+      "id": "REGION.FM.SOURCE_THUMBS",
+      "xywh": [
+        0.107,
+        0.064,
+        0.105,
+        0.439
+      ]
+    },
+    {
+      "id": "REGION.FM.STAGE",
+      "xywh": [
+        0.217,
+        0.064,
+        0.561,
+        0.441
+      ]
+    },
+    {
+      "id": "REGION.FM.PRIMARY_ACTIONS",
+      "xywh": [
+        0.217,
+        0.51,
+        0.561,
+        0.065
+      ]
+    },
+    {
+      "id": "REGION.FM.MODES",
+      "xywh": [
+        0.108,
+        0.584,
+        0.67,
+        0.15
+      ]
+    },
+    {
+      "id": "REGION.FM.TIMELINE",
+      "xywh": [
+        0.108,
+        0.787,
+        0.67,
+        0.208
+      ]
+    },
+    {
+      "id": "REGION.FM.INSPECTOR",
+      "xywh": [
+        0.784,
+        0.064,
+        0.212,
+        0.931
+      ]
+    }
+  ],
+  "mobile": {
+    "mode": "INDEPENDENT_SKIN",
+    "page_tabs": [
+      "STAGE",
+      "CONTROL",
+      "TIMELINE"
+    ],
+    "preview_priority": true,
+    "drawer_inspector": true,
+    "hit_target_px": 44,
+    "desktop_screenshot_must_not_be_scaled_as_ui": true,
+    "layout_authority_status": "PENDING_MOBILE_IMAGE_APPROVAL"
+  },
+  "buttons": [
+    {
+      "id": "FM.NAV.HOME",
+      "label": "首頁",
+      "command": "NAVIGATE",
+      "args": "HOME",
+      "index": 1
+    },
+    {
+      "id": "FM.NAV.ASSETS",
+      "label": "素材",
+      "command": "NAVIGATE",
+      "args": "ASSETS",
+      "index": 2
+    },
+    {
+      "id": "FM.NAV.AI",
+      "label": "AI生成",
+      "command": "NAVIGATE",
+      "args": "AI",
+      "index": 3
+    },
+    {
+      "id": "FM.NAV.2D",
+      "label": "2D動畫",
+      "command": "NAVIGATE",
+      "args": "2D",
+      "index": 4
+    },
+    {
+      "id": "FM.NAV.2_5D",
+      "label": "2.5D動畫",
+      "command": "NAVIGATE",
+      "args": "2_5D",
+      "index": 5
+    },
+    {
+      "id": "FM.NAV.3D",
+      "label": "3D動畫",
+      "command": "NAVIGATE",
+      "args": "3D",
+      "index": 6
+    },
+    {
+      "id": "FM.NAV.CINEMA",
+      "label": "電影模式",
+      "command": "NAVIGATE",
+      "args": "CINEMA",
+      "index": 7
+    },
+    {
+      "id": "FM.NAV.VFX",
+      "label": "特效",
+      "command": "NAVIGATE",
+      "args": "VFX",
+      "index": 8
+    },
+    {
+      "id": "FM.NAV.SFX",
+      "label": "音效",
+      "command": "NAVIGATE",
+      "args": "SFX",
+      "index": 9
+    },
+    {
+      "id": "FM.NAV.DIALOGUE",
+      "label": "對話",
+      "command": "NAVIGATE",
+      "args": "DIALOGUE",
+      "index": 10
+    },
+    {
+      "id": "FM.NAV.MUSIC",
+      "label": "音樂",
+      "command": "NAVIGATE",
+      "args": "MUSIC",
+      "index": 11
+    },
+    {
+      "id": "FM.NAV.EXPORT",
+      "label": "輸出",
+      "command": "NAVIGATE",
+      "args": "EXPORT",
+      "index": 12
+    },
+    {
+      "id": "FM.IMPORT.IMAGE",
+      "label": "放入圖片",
+      "command": "IMPORT",
+      "args": "IMAGE",
+      "index": 13
+    },
+    {
+      "id": "FM.IMPORT.VIDEO",
+      "label": "放入影片",
+      "command": "IMPORT",
+      "args": "VIDEO",
+      "index": 14
+    },
+    {
+      "id": "FM.IMPORT.GLB",
+      "label": "匯入3D模型",
+      "command": "IMPORT",
+      "args": "GLB",
+      "index": 15
+    },
+    {
+      "id": "FM.AI.CHARACTER",
+      "label": "AI生成角色",
+      "command": "GENERATE",
+      "args": "CHARACTER",
+      "index": 16
+    },
+    {
+      "id": "FM.MODE.2D",
+      "label": "2D",
+      "command": "SET_MODE",
+      "args": "2D",
+      "index": 17
+    },
+    {
+      "id": "FM.MODE.2_5D",
+      "label": "2.5D",
+      "command": "SET_MODE",
+      "args": "2_5D",
+      "index": 18
+    },
+    {
+      "id": "FM.MODE.3D",
+      "label": "3D",
+      "command": "SET_MODE",
+      "args": "3D",
+      "index": 19
+    },
+    {
+      "id": "FM.MODE.CINEMA",
+      "label": "電影",
+      "command": "SET_MODE",
+      "args": "CINEMA",
+      "index": 20
+    },
+    {
+      "id": "FM.PREVIEW.PLAY",
+      "label": "播放",
+      "command": "PLAY",
+      "args": "PREVIEW",
+      "index": 21
+    },
+    {
+      "id": "FM.PREVIEW.PAUSE",
+      "label": "暫停",
+      "command": "PAUSE",
+      "args": "PREVIEW",
+      "index": 22
+    },
+    {
+      "id": "FM.PREVIEW.SEEK",
+      "label": "進度定位",
+      "command": "SEEK",
+      "args": "TIMELINE",
+      "index": 23
+    },
+    {
+      "id": "FM.PRODUCE.START",
+      "label": "開始製作動畫",
+      "command": "START",
+      "args": "PREVIEW",
+      "index": 24
+    },
+    {
+      "id": "FM.TIMELINE.SELECT",
+      "label": "選擇片段",
+      "command": "SELECT",
+      "args": "CLIP",
+      "index": 25
+    },
+    {
+      "id": "FM.TIMELINE.REMOVE",
+      "label": "移除片段",
+      "command": "REMOVE",
+      "args": "CLIP",
+      "index": 26
+    },
+    {
+      "id": "FM.AUDIO.IMPORT",
+      "label": "放入音樂",
+      "command": "IMPORT",
+      "args": "AUDIO",
+      "index": 27
+    },
+    {
+      "id": "FM.VFX.GLOW",
+      "label": "光暈強度",
+      "command": "SET_FX",
+      "args": "GLOW",
+      "index": 28
+    },
+    {
+      "id": "FM.DIALOGUE.TEXT",
+      "label": "字幕／對話",
+      "command": "SET_TEXT",
+      "args": "DIALOGUE",
+      "index": 29
+    },
+    {
+      "id": "FM.RENDER.EXPORT",
+      "label": "輸出WebM",
+      "command": "EXPORT",
+      "args": "WEBM",
+      "index": 30
+    },
+    {
+      "id": "FM.RENDER.STILL",
+      "label": "擷取PNG",
+      "command": "EXPORT",
+      "args": "PNG",
+      "index": 31
+    },
+    {
+      "id": "FM.MOBILE.TAB.STAGE",
+      "label": "畫面",
+      "command": "SET_TAB",
+      "args": "STAGE",
+      "index": 32
+    },
+    {
+      "id": "FM.MOBILE.TAB.CONTROL",
+      "label": "控制",
+      "command": "SET_TAB",
+      "args": "CONTROL",
+      "index": 33
+    },
+    {
+      "id": "FM.MOBILE.TAB.TIMELINE",
+      "label": "時間軸",
+      "command": "SET_TAB",
+      "args": "TIMELINE",
+      "index": 34
+    }
+  ],
+  "contracts": {
+    "id_binding": "IMAGE_ID→REGION_ID→BUTTON_ID→COMMAND→LIVE_CALLBACK→STATE→VISUAL_CAPTURE",
+    "no_fake_buttons": true,
+    "disabled_controls_require_reason": true
+  },
+  "runtime_gate": {
+    "css_glass_only": "CAN_IMPLEMENT_SEPARATELY",
+    "image_video_import": "REQUIRES_REAL_PICKERS",
+    "two_d_frame_animation": "STANDALONE_MVP",
+    "two_point_five_d_parallax": "STANDALONE_MVP_NO_HIDDEN_GEOMETRY",
+    "three_d_glb": "STATIC_MESH_ONLY_NO_HUMAN_SHAPE_CLAIM",
+    "ai_generation": "BLOCK_NO_GENERATOR_BACKEND",
+    "audio_mixing_export": "BLOCK_UNTIL_PROVED",
+    "human_photo_to3d": "BLOCK_VISUAL_FAIL",
+    "video_export": "BROWSER_MEDIA_RECORDER_SUPPORT_REQUIRED",
+    "mobile_final_authority": "BLOCK_PENDING_USER_APPROVAL",
+    "deployment": "DRAFT_ONLY_NOT_RENDER_LIVE"
+  }
+}
