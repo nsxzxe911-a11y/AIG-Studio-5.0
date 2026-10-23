@@ -37,6 +37,9 @@ on:
       - 'formal-web/shared-3d/tests/aig-real3d-render-inspection*'
       - '.github/workflows/aig-real3d-neutral-render-inspection-gate.yml'
   workflow_dispatch:
+concurrency:
+  group: real3d-native-source-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   source:
     runs-on: ubuntu-latest
