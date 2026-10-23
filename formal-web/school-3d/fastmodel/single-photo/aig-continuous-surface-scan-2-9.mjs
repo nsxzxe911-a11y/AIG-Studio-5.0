@@ -122,7 +122,7 @@ function makeSurface(profile,width,height,{bodyHeightUnits,depthRatio,radialSegm
     b=ringPoints[row][n],c=ringPoints[row+1][k],
     d=ringPoints[row+1][n];
    // outward facing triangle orientation
-   indices.push(a,c,b,b,c,d);
+   indices.push(a,b,c,b,d,c);
   }
  const {normals,zeroArea}=verticesAndNormals(positions,indices);
  const result={
