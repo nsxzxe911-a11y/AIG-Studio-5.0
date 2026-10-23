@@ -197,7 +197,8 @@ function makeAdult(gender){
    [.050,ankle,-.046,.043,.075],
    [.029,ankle,-.060,.040,.076],
    [.019,ankle,-.060,.035,.058],
-   [.015,ankle,-.060,.012,.025]
+   [.008,ankle,-.060,.019,.039],
+   [.000,ankle,-.060,.009,.015]
   ],'body',side+'Ankle');
  }
  // Both garments are tight, opaque, close to anatomically correct profiles.
@@ -310,6 +311,12 @@ export function auditAIGStage1BodySurface(model){
  const leftOverlap=leftShoulder.max-torso.min;
  const rightOverlap=torso.max-rightShoulder.min;
  const headAspect=(maxY-minY)/(maxX-minX);
+ const minFootY=Math.min(...['leftFoot','rightFoot'].map(id=>{
+  const pts=part(id).geometry.positions;
+  let lo=Infinity;
+  for(let k=1;k<pts.length;k+=3)lo=Math.min(lo,pts[k]);
+  return lo;
+ }));
  const errors=[];
  if(!(gap/H>=.012&&gap/H<=.09))
   errors.push('UPPER_THIGHS_MERGED_OR_TOO_FAR');
@@ -317,6 +324,8 @@ export function auditAIGStage1BodySurface(model){
   errors.push('HEAD_ASPECT_FLATTENED');
  if(!(leftOverlap/H>=.008&&rightOverlap/H>=.008))
   errors.push('SHOULDER_ARM_FLOATING');
+ if(Math.abs(minFootY)>0.001)
+  errors.push('FEET_NOT_GROUNDED_AT_MM_ZERO');
  if(![gap,headAspect,leftOverlap,rightOverlap].every(Number.isFinite))
   errors.push('INVALID_BODY_SURFACE_MEASUREMENT');
  return Object.freeze({
@@ -326,6 +335,7 @@ export function auditAIGStage1BodySurface(model){
   actualHeadWidthMm:+((maxX-minX)*1000).toFixed(3),
   actualHeadHeightToWidth:+headAspect.toFixed(4),
   upperThighInnerGapMm:+(gap*1000).toFixed(3),
+  footGroundContactMm:+(minFootY*1000).toFixed(3),
   upperThighGapNormalized:+(gap/H).toFixed(5),
   shoulderTorsoLeftOverlapMm:+(leftOverlap*1000).toFixed(3),
   shoulderTorsoRightOverlapMm:+(rightOverlap*1000).toFixed(3),
