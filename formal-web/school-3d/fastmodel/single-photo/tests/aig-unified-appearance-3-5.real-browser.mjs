@@ -113,7 +113,7 @@ try{
    assert.equal(proof.real37ScalableCoreAndWardrobe.wardrobe.garmentMeshCount,2);
    assert.equal(proof.real37ScalableCoreAndWardrobe.wardrobe.bodyGeometryIdentityPreserved,true);
 
-   assert.ok((await page.locator('#scan36-visible').textContent()).includes('120 邏輯工作槽'));
+   assert.ok((await page.locator('#scan36-visible').textContent()).includes('12000 個已配置邏輯工作槽'));
    await page.locator('#scan36-fit').click();
    assert.ok((await page.locator('#scan29-status').textContent()).includes('重新置中'));
    await page.locator('#scan36-light').selectOption('raytrace');
