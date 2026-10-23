@@ -8,6 +8,8 @@
 import {buildAIGReal3DGLBStatic} from '../../shared-3d/aig-real3d-glb-native-mesh.mjs';
 import {createAIG3DRenderer} from '../../shared-3d/aig-real3d-webgl.mjs';
 import {decodeAIGCinemaStem,prepareAIGCinemaAudioMix} from './audio-mixer.mjs';
+import {planAIGStarJourneyStoryboard,AIG_STARJOURNEY_SAMPLE_SCRIPT} from './storyboard-engine.mjs';
+import {renderAIGStarJourneyShot} from './cinematic-scene-renderer.mjs';
 
 const $=id=>document.getElementById(id);
 const stage=$('screen'),ctx=stage.getContext('2d',{alpha:false});
@@ -17,7 +19,7 @@ const state={
  glb:null,renderer:null,glbSourceName:null,glbOrbit:0,glow:15,motion:25,
  subtitle:'',audioObjectURL:null,sfxObjectURL:null,voiceObjectURL:null,recording:null,busy:false,
  musicBuffer:null,sfxBuffer:null,voiceBuffer:null,audioContext:null,musicGain:.65,sfxGain:.75,voiceGain:.95,
- activeVideo:null
+ activeVideo:null,storyboard:null
 };
 const ownUrls=new Set();
 const releaseURL=u=>{if(!u)return;URL.revokeObjectURL(u);ownUrls.delete(u);};
@@ -106,8 +108,8 @@ function introCanvas(){
  ctx.font=Math.round(w/66)+'px system-ui';
  ctx.fillText('此畫面是工作區起始背景，不是已製作完成的電影',w/2,h*.69);
 }
-function drawSubtitle(){
- const line=state.subtitle.trim();if(!line)return;
+function drawSubtitle(text=state.subtitle){
+ const line=String(text||'').trim();if(!line)return;
  const w=stage.width,h=stage.height,fontsize=Math.max(18,Math.round(w*.025));
  const lines=line.split(/\n+/).slice(0,3);
  const rowH=fontsize*1.35,boxH=lines.length*rowH+fontsize*.7;
@@ -137,10 +139,14 @@ function drawFrame(){
   state.active=at.index;
   ctx.fillStyle='#010612';ctx.fillRect(0,0,w,h);
   synchronizeVideo(at);
-  const source=at.clip.type==='image'?at.clip.image:at.clip.video;
-  if(at.clip.type==='image'||source.readyState>=2)
-   drawCover(source,w,h,at.clip.duration>0?at.offset/at.clip.duration:0);
-  else{ctx.fillStyle='#b6cfe0';ctx.fillText('影片首幀載入中',w/2,h/2);}
+  if(at.clip.type==='script'){
+   renderAIGStarJourneyShot(ctx,at.clip.shot,at.offset,w,h);
+  }else{
+   const source=at.clip.type==='image'?at.clip.image:at.clip.video;
+   if(at.clip.type==='image'||source.readyState>=2)
+    drawCover(source,w,h,at.clip.duration>0?at.offset/at.clip.duration:0);
+   else{ctx.fillStyle='#b6cfe0';ctx.fillText('影片首幀載入中',w/2,h/2);}
+  }
   if(state.glow>0){
    const a=state.glow/100;
    const g=ctx.createRadialGradient(w*.52,h*.46,0,w*.52,h*.46,w*.75);
@@ -148,7 +154,7 @@ function drawFrame(){
    g.addColorStop(1,'rgba(3,5,21,'+(.57*a)+')');
    ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
   }
-  drawSubtitle();
+  drawSubtitle(at.clip.type==='script'?at.clip.shot.subtitle:state.subtitle);
  }else{introCanvas();}
  ctx.restore();
  $('time').textContent=format(state.time)+' / '+format(duration());
@@ -168,7 +174,7 @@ function updateTimeline(){
   const c=state.clips[i];
   const b=document.createElement('button');b.className='clip';
   b.dataset.index=i;
-  const t=document.createElement('span');t.textContent=(i+1)+' · '+c.type.toUpperCase();
+  const t=document.createElement('span');t.textContent=c.type==='script'?c.shot.id+' · '+c.shot.title:(i+1)+' · '+c.type.toUpperCase();
   const name=document.createElement('small');name.textContent=c.name;
   const dur=document.createElement('small');dur.textContent=format(c.duration)+' 秒段';
   b.append(t,name,dur);
@@ -180,7 +186,7 @@ function updateTimeline(){
   timeline.append(b);
   const thumb=document.createElement('button');thumb.className='asset-card';
   if(c.thumbnail){const img=document.createElement('img');img.src=c.thumbnail;img.alt=c.name;thumb.append(img);}
-  else{const txt=document.createElement('div');txt.style.cssText='padding:12px;font-size:11px';txt.textContent=c.type==='video'?'▣ 影片':'▧ 素材';thumb.append(txt);}
+  else{const txt=document.createElement('div');txt.style.cssText='padding:12px;font-size:11px';txt.textContent=c.type==='script'?'✧ '+c.shot.title:c.type==='video'?'▣ 影片':'▧ 素材';thumb.append(txt);}
   const n=document.createElement('span');n.className='name';n.textContent=c.name;thumb.append(n);
   thumb.addEventListener('click',()=>b.click());thumbs.append(thumb);
  }
@@ -397,6 +403,38 @@ async function record(){
  requestAnimationFrame(check);
 }
 function wireControls(){
+ $('story-sample').addEventListener('click',()=>{
+  $('story-script').value=AIG_STARJOURNEY_SAMPLE_SCRIPT;
+  setStatus('已載入星際之旅示範劇情。按「建立分鏡與真動畫」才會新增片段。',true);
+ });
+ $('story-plan').addEventListener('click',()=>{
+  if(state.recording){setStatus('正在錄製，禁止變更片段。');return;}
+  try{
+   const plan=planAIGStarJourneyStoryboard($('story-script').value,{maxShots:12});
+   const scripted=plan.shots.map(shot=>({
+    type:'script',name:shot.title,duration:shot.durationSec,
+    shot,thumbnail:null
+   }));
+   // Keep user-supplied media without leaking/revoking its original file.
+   state.clips=[...scripted,...state.clips.filter(c=>c.type!=='script')];
+   state.storyboard=plan;state.time=0;state.playing=false;
+   state.activeVideo?.pause();state.activeVideo=null;
+   $('story-export').disabled=false;
+   $('story-stats').textContent=plan.shots.length+' 幕／'+
+    plan.totalDurationSec+' 秒（程式繪製 2D 動畫，非 AI 影像）';
+   $('preview-flag').textContent='本機 Canvas 分鏡動畫 · 非 AI 電影成品';
+   changeMode('CINEMA',true);updateTimeline();
+   $('subtitle-short').textContent='分鏡字幕 '+plan.shots.length+' 段';
+   setStatus('已生成 '+plan.shots.length+
+    ' 幕原創 Canvas 2D 動態分鏡，可播放、定位、匯出真 WebM；未生成真人或 AI 配音。',true);
+  }catch(e){setStatus('分鏡規劃 BLOCK：'+e.message);}
+ });
+ $('story-export').addEventListener('click',()=>{
+  if(!state.storyboard){setStatus('尚無分鏡可匯出。');return;}
+  download(new Blob([JSON.stringify(state.storyboard,null,2)],{type:'application/json'}),
+   'AIG-StarJourney-Storyboard.json');
+  setStatus('已下載真正 JSON 分鏡：含場景、字幕、時間、鏡頭參數。',true);
+ });
  document.querySelectorAll('[data-command]').forEach(b=>b.addEventListener('click',()=>{
   const action=b.dataset.command;
   if(action==='FM.IMPORT.IMAGE')$('image-file').click();
@@ -510,7 +548,7 @@ function wireControls(){
   else if(action==='AI')setStatus('AI 生成人物後端未接通，入口只保留明確 BLOCK，不會製造假動畫。');
   else if(action==='VFX')openControl('visual-options');
   else if(action==='SFX'||action==='MUSIC')openControl('audio-options');
-  else if(action==='DIALOGUE'){openControl('dialogue-options');$('subtitle').focus();}
+  else if(action==='DIALOGUE'){openControl('story-options');$('story-script').focus();}
   else if(action==='EXPORT')openControl('render-options');
   else if(action==='HOME'){document.querySelector('[data-mobile-tab="STAGE"]').click();
    window.scrollTo({top:0,behavior:'smooth'});}
