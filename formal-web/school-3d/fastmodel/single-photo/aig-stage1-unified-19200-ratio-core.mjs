@@ -7,6 +7,8 @@
  * It never mutates source anatomy or permits automatic appearance approval.
  */
 import {AIG_STAGE1_SCHEMA} from './aig-stage1-dual-adult-anatomy.mjs';
+import {planAIG36UnifiedCore}
+ from './aig-unified-120-core-3-6.mjs';
 export const AIG_STAGE1_RATIO_SCHEMA='AIG_STAGE1_ONE_CORE_19200_PROPORTION_GATE';
 export const AIG_STAGE1_LOGICAL_SLOTS=19200;
 export const AIG_STAGE1_SLOT_BUDGET=Object.freeze({
@@ -39,6 +41,15 @@ export function planAIGStage1OneCore19200({
 }={}){
  if(requestedLogicalSlots!==AIG_STAGE1_LOGICAL_SLOTS)
   fail('FIXED_19200_LOGICAL_SLOTS_REQUIRED');
+ const existing=planAIG36UnifiedCore({
+  requestedLogicalSlots:AIG_STAGE1_LOGICAL_SLOTS,
+  hardwareConcurrency:2,mobile:false,
+  gpuContextAvailable:true
+ });
+ if(existing.kernelImplementationCount!==1||
+  existing.logicalSlotsConfigured!==AIG_STAGE1_LOGICAL_SLOTS||
+  existing.sharedWebGLContextCount!==1)
+  fail('PRIMARY_SHARED_REAL3D_CORE_CONTRACT_MISMATCH');
  const ranges={};let cursor=0;
  for(const [name,budget] of Object.entries(AIG_STAGE1_SLOT_BUDGET)){
   ranges[name]=Object.freeze({start:cursor,endExclusive:cursor+budget,
@@ -48,8 +59,12 @@ export function planAIGStage1OneCore19200({
  if(cursor!==requestedLogicalSlots)fail('SLOT_BUDGET_SUM_MISMATCH');
  return Object.freeze({
   schema:AIG_STAGE1_RATIO_SCHEMA,
-  rendererImplementationCount:1,sharedWebGLRendererCount:1,
-  logicalSlotsConfigured:cursor,
+  rendererImplementationCount:existing.kernelImplementationCount,
+  sharedWebGLRendererCount:existing.sharedWebGLContextCount,
+  logicalSlotsConfigured:existing.logicalSlotsConfigured,
+  reusedExistingAIG36UnifiedCore:true,
+  existingSharedCoreSchema:existing.schema,
+  existingCoreWorkProfile:existing.activeProfile,
   logicalSlotRanges:Object.freeze(ranges),
   actualCpuHardwareCoresCreated:0,extraWebGLContextsCreated:0,
   actualWorkersSpawned:0,oneJsExecutionQueue:true,
