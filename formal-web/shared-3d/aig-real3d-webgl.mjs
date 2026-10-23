@@ -295,7 +295,20 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
     const i=(y*width+x)*4;
     unique.add(raw[i]+','+raw[i+1]+','+raw[i+2]);
    }
-  if(unique.size<8)throw Error('AIG3D_GPU_SNAPSHOT_BLANK');
+  // A genuine flat silhouette/albedo can have only two colors.
+  // Diagnose its nonblank foreground pixels instead of incorrectly
+  // demanding 8 palette colors. Keep original LIT proof unchanged.
+  let diagnosticForegroundPixels=0;
+  if(inspectionMode!=='LIT'){
+   const bg=background.slice(0,3).map(x=>x*255);
+   for(let i=0;i<raw.length;i+=28){
+    const distance=Math.abs(raw[i]-bg[0])+
+      Math.abs(raw[i+1]-bg[1])+Math.abs(raw[i+2]-bg[2]);
+    if(distance>75)diagnosticForegroundPixels++;
+   }
+   if(diagnosticForegroundPixels<70)
+    throw Error('AIG3D_GPU_INSPECTION_NO_VISIBLE_GEOMETRY');
+  }else if(unique.size<8)throw Error('AIG3D_GPU_SNAPSHOT_BLANK');
   const temp=document.createElement('canvas');
   temp.width=width;temp.height=height;
   const ctx=temp.getContext('2d');
