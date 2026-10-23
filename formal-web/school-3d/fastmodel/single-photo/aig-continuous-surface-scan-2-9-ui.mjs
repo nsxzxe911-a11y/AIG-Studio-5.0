@@ -40,6 +40,9 @@ export function installAIG29ContinuousScan({
    original2DImageSize:scan?.sourceSize??null,
    genuine3DMeshes:scan?.surfaces.length??0,
    realFusedSingleManifold:scan?.manifoldAudit?.closedManifold??false,
+   visualAppearanceReleasePassed:scan?.aestheticHumanReviewPassed??false,
+   visualReleaseBlocker:scan?.visualReleaseGate??'NOT_EVALUATED',
+   3DPrintPhysicalScaleCertified:scan?.production3DPrintApproved??false,
    actualSourceManifoldAudit:scan?.manifoldAudit??null,
    unifiedSDFGridCells:scan?.gridCellCount??null,
    userSelectedSmoothFusionWidth:scan?.signedDistanceFusionWidth??null,
@@ -163,10 +166,10 @@ export function installAIG29ContinuousScan({
     compositorNotBillboard:true
    };
    proof();
-   status('3.0 單一連通封閉曲面成功：'+
-    reconstruction.continuousTriangleCount+' 個真 XYZ 三角面；'+
-    '每條邊 2 面、無退化面、正向封閉體積 Gate 全 PASS。'+
-    '背面厚度仍為估計，不是實測 1:1／可列印尺度認證。');
+   status('3.0 網格連通／封閉驗收 PASS：'+
+    reconstruction.continuousTriangleCount+' 個真正 XYZ 三角面。'+
+    '但人體擬真外觀 Gate 仍 BLOCKED：臉、雙手、雙腳及背面深度未經實測與人工核准；'+
+    '不可當作真實人體掃描、3D 列印成品或 1:1 模型。');
   }catch(e){
    if(overlay!==group)disposeGroup(group);
    throw e;
