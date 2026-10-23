@@ -10,6 +10,26 @@
 import {aig26SRGBToLinear} from './aig-vision-metric-color-2-6.mjs';
 export const AIG36_SCHEMA='AIG_REAL3D_3_6_ONE_KERNEL_120_LOGICAL_SLOTS';
 export const AIG36_SLOT_LIMIT=120;
+/** Explicitly separate installed algorithms from requested future features. */
+export const AIG36_CAPABILITY_STATUS=Object.freeze({
+ oneSharedPBRRenderer:'IMPLEMENTED_EXISTING_VIEWER',
+ cameraAutofit:'IMPLEMENTED',
+ sourceRGBVertexProjection:'IMPLEMENTED_120_LOGICAL_SHARDS',
+ syntheticSourceXYContourGate:'IMPLEMENTED_SOURCE_CONSTRAINED',
+ sourcePhotoPreview:'IMPLEMENTED',
+ webglShadowMap:'IMPLEMENTED_OPTIONAL',
+ nativeRayTracing:'NOT_IMPLEMENTED_FALLS_BACK_TO_PBR',
+ actual120ParallelPhysicalProcessors:'NOT_IMPLEMENTED',
+ parallelBrowserWebWorkers:'NOT_IMPLEMENTED',
+ automaticArbitraryPhotoSegmentation:'NOT_IMPLEMENTED_REQUIRES_2_7_MASK',
+ realFaceHairClothesLikeness:'NOT_VALIDATED',
+ sourceBackDepthMeasurement:'NOT_AVAILABLE_FROM_ONE_PHOTO',
+ autoLODForGeneratedMesh:'NOT_IMPLEMENTED',
+ realWorldOneToOneSize:'NOT_CERTIFIED',
+ nativeAndroidWindows60Fps:'NOT_CERTIFIED',
+ articulation:'EXISTING_3_1_3_4_GATED_BY_APPEARANCE',
+ productionDeployment:'NOT_DEPLOYED'
+});
 export const AIG36_STAGES=Object.freeze([
  'SOURCE_RGBA_SHA','SEGMENTATION_MASK','SDF_SURFACE','SOURCE_XY_FIT',
  'APPEARANCE_SCALE_COLOUR','PBR_SHADING','VISIBLE_CAMERA_FRAMING',
@@ -46,7 +66,8 @@ export function planAIG36UnifiedCore({
   actualHardwareRayTracingEnabled:false,
   gpuContextAvailable:!!gpuContextAvailable,
   physicalMeasurementsCertified:false,
-  stages:AIG36_STAGES
+  stages:AIG36_STAGES,
+  capabilityStatus:AIG36_CAPABILITY_STATUS
  });
 }
 export function selectAIG36Lighting(mode,plan){
