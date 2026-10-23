@@ -16,7 +16,7 @@ export function installAIG32DigitControls({
  if(typeof getFusedScan!=='function'||typeof getBodyPose!=='function'||
   !$('digits32-build')||!$('digits32-proof'))
   throw Error('AIG32_SHARED_3D_DIGIT_UI_CONTRACT_REQUIRED');
- let rig=null,group=null,sourceSha=null,generated=null;
+ let rig=null,group=null,sourceSha=null,generated=null,focusProof=null;
  const poses={},meshes=new Map();
  const status=(msg,bad=false)=>{
   $('digits32-status').textContent=(bad?'BLOCKED：':'')+msg;
@@ -31,7 +31,7 @@ export function installAIG32DigitControls({
   meshes.clear();group=null;
  };
  const reset=()=>{
-  disposeGeometry();rig=null;sourceSha=null;generated=null;
+  disposeGeometry();rig=null;sourceSha=null;generated=null;focusProof=null;
   for(const k of Object.keys(poses))delete poses[k];
   for(const d of AIG32_DIGITS){
    const slider=$('digits32-curl-'+d.id);
@@ -50,6 +50,7 @@ export function installAIG32DigitControls({
    actual3DRenderedPhalanges:generated?.generatedActual3DPhalanges??0,
    actual3DIndexedTriangles:generated?.actualCurved3DTriangleCount??0,
    livingWebGLSceneShared:!!group?.parent,
+   actualSharedCameraFocus:focusProof,
    sourceVisiblePalmsFeet:rig?Object.fromEntries(Object.entries(
     rig.sourceAnchors).map(([k,v])=>[k,v?.observedPartLabel??false])):null,
    realIndividualFingerScanMeasurements:0,
@@ -178,6 +179,54 @@ export function installAIG32DigitControls({
   if(!group?.parent){status('請先按 01 產生真正的指趾曲面');return}
   try{commit()}catch(e){status(String(e.message||e),true)}
  };
+ const focusPart=key=>{
+  if(!group?.parent||!rig||!generated)
+   throw Error('請先建立有來源 SHA 的實際 3D 指趾');
+  const {s}=bodySource();
+  const v=s.viewer;
+  let target,position;
+  if(key==='body'){
+   const src=s.report.fusedOnePieceMesh.positions;
+   const bbox=new THREE.Box3().setFromArray(src);
+   const center=bbox.getCenter(new THREE.Vector3());
+   const height=bbox.getSize(new THREE.Vector3()).y;
+   target=[center.x,center.y,center.z];
+   position=[center.x,center.y,center.z+Math.max(1.45,height*1.28)];
+  }else{
+   const anchor=rig.sourceAnchors[key];
+   if(!anchor)throw Error('此手腳缺少可見來源錨點，禁止假造特寫');
+   const h=rig.anchoredBodyHeightRelativeUnits;
+   target=anchor.xyz.map((v,i)=>v+(
+    i===1&&key.includes('Hand')?-.045*h:
+     i===2&&key.includes('Foot')?.04*h:0));
+   position=[target[0]+.01*h,target[1]+
+    (key.includes('Foot')?.12*h:.02*h),
+    target[2]+(key.includes('Foot')?.32*h:.27*h)];
+  }
+  v.orbit=false;
+  v.controls.autoRotate=false;
+  v.controls.target.set(...target);
+  v.camera.position.set(...position);
+  v.camera.up.set(0,1,0);
+  v.camera.lookAt(v.controls.target);
+  v.controls.update();
+  focusProof={
+   requestedSourcePart:key,
+   exactRealCameraPosition:position,
+   exactRealCameraTarget:target,
+   singleExistingWebGLRenderer:true,
+   originalPhotoGLBNCUntouched:true,
+   detailIsInferredUnlessPerDigitDepthMeasured:true
+  };
+  reportProof();
+  status(key==='body'?'已恢復正面全身 3D 工作視角。':
+   '已在原 WebGL 相機放大 '+key+
+   ' 實際獨立指趾曲面；尚未證明是實測皮膚與指甲。');
+ };
+ for(const key of ['leftHand','rightHand','leftFoot','rightFoot','body'])
+  $('digits32-focus-'+key).addEventListener('click',()=>{
+   try{focusPart(key)}catch(e){status(String(e.message||e),true)}
+  });
  $('digits32-build').addEventListener('click',()=>{
   try{commit({reanchor:true})}catch(e){status(String(e.message||e),true)}
  });
