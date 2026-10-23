@@ -59,6 +59,13 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <button id="rig31-camera-underside" type="button" style="flex:1;min-width:66px">腳底往上</button>
 </div>
 <output id="rig31-camera-status" role="status" aria-live="polite" style="display:block;font-size:12px;color:#b6e4e8">Real3D 3.1｜左右 180° 是相機繞頭／身體，不是把真人脖子扭轉 180°。</output>
+<div id="rig31-stage-head-controls" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-top:8px;background:#07131f;border:1px solid #265269;border-radius:8px;padding:8px">
+<button type="button" id="rig31-stage-activate" style="min-height:42px">啟用真頭頸關節</button>
+<label style="display:flex;flex-direction:column;gap:4px">頭部左右（有限角度）
+<input id="rig31-stage-headYaw" type="range" min="-40" max="40" step="1" value="0"></label>
+<label style="display:flex;flex-direction:column;gap:4px">頸部左右（有限角度）
+<input id="rig31-stage-neckYaw" type="range" min="-30" max="30" step="1" value="0"></label>
+</div>
 
 <p>3D 场景優先佔用畫面空間；控制面板縮於周邊。單場景切換不重新初始化 Real3D 工作區。</p>
 </section>
