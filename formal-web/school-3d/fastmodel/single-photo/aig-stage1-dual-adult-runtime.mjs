@@ -14,7 +14,7 @@ import {makeAIGStage1CanonicalMM,auditAIGStage1MMConversion,
  aigStage1WebGLGeometryFromCanonicalMM,
  aigStage1WebGLMetersFromTicks,aigStage1MmFromTicks}
  from './aig-stage1-mm-coordinate-contract.mjs';
-import {renderAIGStage1True4KPNG}
+import {renderAIGStage1True4KPNG,renderAIGStage1ResolutionPNG}
  from './aig-stage1-true4k-capture.mjs';
 export const AIG_STAGE1_RUNTIME='AIG_STAGE1_DUAL_ADULT_TRUE_WEBGL_VIEWS';
 const el=id=>document.getElementById(id);
@@ -197,7 +197,10 @@ export function installAIGStage1DualAdultRuntime({
     gender:last4KOutput.gender,
     view:last4KOutput.view,width:last4KOutput.width,
     height:last4KOutput.height,sha256:last4KOutput.sha256,
-    realGPUFramebufferReadback:last4KOutput.actual8MPFramebufferAndReadback,
+    realGPUFramebufferReadback:last4KOutput.actualGPUFramebufferReadback,
+    selectedResolution:last4KOutput.selectedResolution,
+    requestedResolution:last4KOutput.requestedResolution,
+    actuallyDowngraded:last4KOutput.actuallyDowngraded,
     sourceDimensionsPreserved:true,
     visualAcceptancePASS:false
    }
@@ -387,7 +390,7 @@ export function installAIGStage1DualAdultRuntime({
   el('stage1-4k-status').textContent=message;
   el('stage1-4k-status').dataset.error=failed?'true':'false';
  };
- const captureTrue4K=async(view=currentView)=>{
+ const captureResolution=async(view=currentView,manualRequest=null)=>{
   if(!active||!viewer||!model||!stageScene||!stageCamera)
    error('START_STAGE1_REAL_3D_BODY_FIRST');
   if(fourKBusy)error('ONE_4K_JOB_AT_A_TIME');
@@ -396,12 +399,13 @@ export function installAIGStage1DualAdultRuntime({
   fourKBusy=true;
   const gender=selected;
   const orientation=el('stage1-4k-orientation').value;
-  fourKStatus('以原始幾何和同一 GPU 真正渲染 4K '+view+
-   '；超過 GPU 限制將 BLOCK。');
+  const requested=manualRequest??el('stage1-output-resolution').value;
+  fourKStatus('使用原始 3D 幾何和同一 GPU，依 '+requested+
+   ' 渲染 '+view+'；實際解析度將逐張驗證。');
   try{
-   const record=await renderAIGStage1True4KPNG({
+   const record=await renderAIGStage1ResolutionPNG({
     renderer:viewer.renderer,scene:stageScene,
-    sourceBody:model.source,
+    sourceBody:model.source,requested,
     currentCamera:stageCamera,view,orientation,
     deviceMemoryGB:navigator.deviceMemory??8
    });
@@ -412,40 +416,47 @@ export function installAIGStage1DualAdultRuntime({
    section.style.cssText='margin:9px 0;padding:8px;border:1px solid #536e94;border-radius:8px';
    const title=document.createElement('p');
    title.textContent=(gender==='male'?'男生泳褲':'女生連身泳衣')+
-    '｜'+view+'｜真 '+record.width+'×'+record.height+
+    '｜'+view+'｜'+record.selectedResolution.toUpperCase()+
+    ' '+record.width+'×'+record.height+
+    (record.actuallyDowngraded?'（自動向下相容）':'')+
     '｜PNG SHA '+record.sha256.slice(0,12)+'…｜人物外觀未核准';
    const picture=document.createElement('img');
-   picture.src=url;picture.alt='實際 4K WebGL 成人技術人體 '+gender+' '+view;
+   picture.src=url;picture.alt='實際 '+record.selectedResolution+
+    ' WebGL 成人技術人體 '+gender+' '+view;
    picture.style.cssText='max-width:350px;width:100%;height:auto;border-radius:6px';
    const link=document.createElement('a');
    link.href=url;
    link.download='AIG-Stage1-'+gender+'-'+view+'-'+
-    record.width+'x'+record.height+'-TRUE-4K.png';
-   link.textContent='儲存真正 4K PNG（非放大圖片）';
+    record.width+'x'+record.height+'-'+
+    record.selectedResolution.toUpperCase()+'-NATIVE.png';
+   link.textContent='儲存原生 '+record.selectedResolution.toUpperCase()+
+    ' PNG（非放大圖片）';
    link.style.cssText='display:block;margin:8px 0;color:#a9e9ff';
    section.append(title,picture,link);
    el('stage1-4k-gallery').prepend(section);
    last4KOutput={...record,gender,blob:null};
    publish();
-   fourKStatus('已完成 '+record.width+'×'+record.height+
-    ' GPU 畫素渲染、PNG 實際尺寸與 SHA 驗證。'+
+   fourKStatus('已完成 '+record.selectedResolution.toUpperCase()+' '+
+    record.width+'×'+record.height+
+    (record.actuallyDowngraded?'（自動從 4K 向下相容）':'')+
+    '，真 GPU 原生像素、PNG 尺寸及 SHA 已檢查。'+
     '人物比例／外觀仍需目視，Stage 1 BLOCK。');
    return record;
   }catch(e){
-   fourKStatus('4K BLOCKED：'+String(e?.message||e)+
-    '。不以低解析度圖片偽裝；原始模型與舊快照保留。',true);
+   fourKStatus('解析度 '+requested+' BLOCKED：'+String(e?.message||e)+
+    '。手動指定不暗中降級，原始模型與舊快照保留。',true);
    throw e;
   }finally{fourKBusy=false;}
  };
  const fourKAllViews=async()=>{
   const entries=[];
   for(const view of views){
-   entries.push(await captureTrue4K(view));
+   entries.push(await captureResolution(view));
    // Yield between independent GPU captures, not overlapping framebuffers.
    await new Promise(resolve=>requestAnimationFrame(resolve));
   }
   if(new Set(entries.map(x=>x.sha256)).size!==4)
-   error('FOUR_4K_CAMERA_FILES_IDENTICAL_BLOCKED');
+   error('FOUR_CAMERA_RENDER_FILES_IDENTICAL_BLOCKED');
   return entries;
  };
  const set4KPreview=(mode)=>{
@@ -510,7 +521,7 @@ export function installAIGStage1DualAdultRuntime({
   catch(e){fourKStatus('4K 預覽 BLOCK：'+String(e.message||e),true)}
  });
  el('stage1-4k-current').addEventListener('click',()=>{
-  captureTrue4K().catch(()=>{});
+  captureResolution().catch(()=>{});
  });
  el('stage1-4k-four').addEventListener('click',()=>{
   fourKAllViews().catch(()=>{});
@@ -522,6 +533,7 @@ export function installAIGStage1DualAdultRuntime({
  },{once:true});
  publish();
  return Object.freeze({setup,selectView,capture,display,
-  captureTrue4K,fourKAllViews,set4KPreview,stop,
+  captureResolution,captureTrue4K:(v)=>captureResolution(v??currentView,'4k'),
+  fourKAllViews,set4KPreview,stop,
   get isActive(){return active},get evidence(){return proofState}});
 }
