@@ -52,6 +52,8 @@ for(const gender of ['male','female']){
    'head cannot be horizontally flattened');
   assert.ok(surface.shoulderTorsoLeftOverlapMm>10);
   assert.ok(surface.shoulderTorsoRightOverlapMm>10);
+  assert.equal(surface.footGroundContactMm,0,
+   'Feet must sit at real Y0.000 mm, not float above the ground');
   assert.equal(surface.entireHumanSilhouetteVisuallyApproved,false);
   assert.equal(surface.fullContinuousSkinnedMeshVerified,false);
  });
@@ -118,4 +120,15 @@ test('flat anatomical head is rejected using actual vertex bounding box',()=>{
  const report=auditAIGStage1BodySurface(model);
  assert.equal(report.actualBodySurfaceNumericPASS,false);
  assert.ok(report.actualBodySurfaceErrors.includes('HEAD_ASPECT_FLATTENED'));
+});
+
+test('unsupported floating-foot deformation must be detected from actual mesh vertices',()=>{
+ const model=buildAIGStage1AdultAnatomy('male');
+ for(const side of ['left','right']){
+  const a=model.parts.find(p=>p.id===side+'Foot').geometry.positions;
+  for(let i=1;i<a.length;i+=3)a[i]+=.035;
+ }
+ const surface=auditAIGStage1BodySurface(model);
+ assert.equal(surface.actualBodySurfaceNumericPASS,false);
+ assert.ok(surface.actualBodySurfaceErrors.includes('FEET_NOT_GROUNDED_AT_MM_ZERO'));
 });
