@@ -228,6 +228,29 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 </div>
 <p class="hint">按一次完成來源照片 SHA → 像素標籤 → 多區截面 → 融合 SDF → 原輪廓與修正輪廓比較 → 擇優產生一份封閉 3D 候選。下面 3.1–3.4 關節與指尖模組仍接同一個共用模型，不會把原圖、已匯入 GLB 或 CNC 程式覆蓋。正面 XY 輪廓吻合，不代表背面、臉部與材質 100% 一致。</p>
 <button type="button" id="scan29-build">01｜一次掃描並建立／比較外型、比例、顏色的真 3D 模型</button>
+<div id="scan36-one-core" style="margin:10px 0;padding:9px;border:1px solid #437f94;border-radius:9px;background:#071925">
+<strong>Real3D 3.6｜一套實際運算核心 · 120 個邏輯工作槽</strong>
+<p class="hint">120 槽分塊共用一個程式和一個 WebGL 視窗；不是 120 顆實體 CPU 或 120 個同時運作的 GPU 核心。手機／桌面按硬體情況排程，外型驗收前不強行活化關節。</p>
+<div class="world-grid">
+<label>實際渲染品質
+<select id="scan36-light">
+<option value="balanced" selected>標準 PBR（手機預設）</option>
+<option value="soft">柔和 PBR（低反光）</option>
+<option value="quality">高品質 PBR + 陰影貼圖（較耗效能）</option>
+<option value="raytrace">要求光追（目前安全退回高品質 PBR）</option>
+</select>
+</label>
+<button id="scan36-fit" type="button" style="align-self:end">模型完整置中／還原視野</button>
+</div>
+<output id="scan36-visible" role="status" aria-live="polite" style="display:block;padding:8px;color:#b7e5d5">尚未建立 3D 模型；真實畫面會顯示在上方工作視窗。</output>
+<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start">
+<figure style="margin:0;max-width:220px">
+<canvas id="scan36-source-preview" width="220" height="260" aria-label="唯一來源照片原始像素對照" style="width:100%;height:auto;border:1px solid #375975;background:#02070e"></canvas>
+<figcaption style="font-size:12px;color:#bbdded">來源照片（實際原始 RGB，不是 3D 渲染）</figcaption>
+</figure>
+<p class="hint" style="flex:1;min-width:190px">上方是真 3D 模型，下方是來源照。3.5 XY 邊緣誤差可檢查輪廓，但還不能認證五官、髮絲、服裝、隱藏背面或 100% 相似。完整硬體光線追蹤尚未接入。</p>
+</div>
+</div>
 <button type="button" id="scan29-probe">02｜顯示五軸 A/B 法線掃描路徑</button>
 <button type="button" id="scan29-hide">只移除這次曲面預覽（保留原 GLB 與場景）</button>
 <output id="scan29-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#adefe7">尚未建立 3.5 統一外型。先載入原始照片並完成來源像素分割，再一次掃描。</output>
