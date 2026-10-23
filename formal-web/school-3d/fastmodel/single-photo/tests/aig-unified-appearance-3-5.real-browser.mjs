@@ -72,7 +72,7 @@ try{
    await page.waitForFunction(()=>document.getElementById('vision27-status')
     .textContent.includes('真像素分割完成'));
    await page.locator('#aig35-width').selectOption('1.1');
-   await page.locator('#aig35-height').selectOption('0.9');
+   await page.locator('#aig35-height').selectOption('.9');
    await page.locator('#aig35-depth').selectOption('1.2');
    await page.locator('#aig35-colour').selectOption('1.15');
    await page.locator('#scan29-radial').selectOption('48');
