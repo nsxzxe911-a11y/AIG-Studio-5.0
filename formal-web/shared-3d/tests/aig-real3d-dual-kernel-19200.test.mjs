@@ -142,3 +142,55 @@ test('source categorizer detects photo, human or real source mesh; refuses ambig
  assert.throws(()=>inspectAIGReal3DSource({...photo,...source()}),
   /EXACTLY_ONE_SOURCE_FORMAT_REQUIRED/);
 });
+
+test('separate actual CPU drawing Worker proof and GPU rendering are both mandatory',async()=>{
+ const src=source();let frames=0,workers=0;
+ const renderer={status:'READY',getCamera:()=>({}),render:()=>{
+  frames++;
+  return {status:'WEBGL_XYZ_TRIANGLES_RENDERED',triangles:12};
+ }};
+ const out=await executeAIGReal3DDual19200({
+  source:src,renderer,
+  drawingWorkerFactory:async ({scene,plan})=>{
+   workers++;
+   assert.strictEqual(scene,src.scene);
+   assert.equal(plan.totalLogicalWorkSlots,19200);
+   return {actualWorkerThreadsUsed:1,actualGpuContextsCreated:0,
+    actualSourceTrianglesInspected:12,actualSourceVerticesInspected:24,
+    realWorkChunks:3,degenerateTriangles:0};
+  }
+ });
+ assert.equal(workers,1);
+ assert.equal(frames,1);
+ assert.equal(out.metrics.actualCpuWorkersUsed,1);
+ assert.equal(out.metrics.renderPasses,1);
+ assert.equal(out.metrics.drawingVisitedTriangles,12);
+});
+test('CPU worker cannot falsely return less source geometry or extra GPU contexts',async()=>{
+ const src=source();let frames=0;
+ const renderer={status:'READY',getCamera:()=>({}),
+  render:()=>{frames++;return {status:'WEBGL_XYZ_TRIANGLES_RENDERED',triangles:12}}};
+ for(const bad of [
+  {actualWorkerThreadsUsed:1,actualGpuContextsCreated:1,
+   actualSourceTrianglesInspected:12},
+  {actualWorkerThreadsUsed:1,actualGpuContextsCreated:0,
+   actualSourceTrianglesInspected:11}
+ ]){
+  await assert.rejects(executeAIGReal3DDual19200({
+   source:src,renderer,drawingWorkerFactory:async()=>bad
+  }),/REAL_DRAWING_WORKER_INTEGRITY_FAILED/);
+ }
+ assert.equal(frames,0);
+});
+test('real source body requires an installed geometry-to-scene converter, not fake automatic drawing',()=>{
+ const model={parts:[{geometry:{
+  positions:new Float32Array([0,0,0,1,0,0,0,1,0]),
+  indices:new Uint32Array([0,1,2])}}]};
+ const s=inspectAIGReal3DSource({model});
+ const p=planAIGReal3DDual19200({
+  sourceStats:s,hardwareConcurrency:4,capabilities:{webgl:true}
+ });
+ assert.equal(p.dispatchAllowed,false);
+ assert.equal(p.drawingKernel.methodInstalled,false);
+ assert.ok(p.limitationReasons.includes('SELECTED_SURFACE_ALGORITHM_NOT_INSTALLED'));
+});
