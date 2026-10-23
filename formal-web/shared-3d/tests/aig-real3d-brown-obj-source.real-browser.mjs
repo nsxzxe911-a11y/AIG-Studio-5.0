@@ -89,6 +89,15 @@ try{
  assert.ok(proof.silhouetteComparison.averageIoU>=0&&proof.silhouetteComparison.averageIoU<1,
   'Different synthetic GPU mesh and drawn alpha reference MUST NOT show exact visual identity');
  assert.equal(await page.locator('#reference-gallery figure').count(),4);
+ assert.equal(await page.locator('#profile-angle').isDisabled(),false);
+ assert.equal(proof.silhouetteComparison.images[0].verticalScanlineProfile.bands.length,12);
+ assert.equal(proof.silhouetteComparison.images[0].verticalScanlineProfile.modelGeometryModified,false);
+ assert.equal(await page.locator('#profile-table tbody tr').count(),12);
+ assert.match(await page.locator('#profile-table').textContent(),/參考平均覆蓋/);
+ await page.locator('#profile-angle').selectOption('side');
+ assert.match(await page.locator('#profile-table').textContent(),/方向 side/);
+ assert.equal(await page.locator('#profile-table tbody tr').count(),12);
+ await page.locator('#profile-angle').selectOption('front');
  for(let i=0;i<4;i++){
   const item=page.locator('#reference-gallery figure').nth(i);
   const p=page.waitForEvent('download',{timeout:15000});
@@ -116,6 +125,7 @@ try{
   oneSourceSevenTrueGPUFrames:true,
   realFourViews:true,
   alphaReferenceOverlayFourViewCompared:true,
+  twelveBandActualPixelWidthProfilesFourView:true,
   referencePictureWasSyntheticNotHuman:true,
   automaticHumanAppearanceApproval:false,
   noSyntheticHumanReconstruction:true,
