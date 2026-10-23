@@ -492,6 +492,17 @@ export function installAIG29ContinuousScan({
    $('scan37-status').textContent='服裝暫時隔離：'+String(e.message||e)+
     '；已保留中性人體素模。';
   }
+  let stagedHair=null;
+  try{
+   stagedHair=prepare310Hair(reconstruction.fusedOnePieceMesh,
+    $('scan310-hair').value);
+   group.add(stagedHair.layer);
+  }catch(e){
+   stagedHair=prepare310Hair(reconstruction.fusedOnePieceMesh,'none');
+   group.add(stagedHair.layer);
+   $('scan310-hair-status').textContent='髮型來源不足：'+
+    String(e.message||e)+'；保留原始人物，不產生假髮。';
+  }
   // Stage geometry and get a real GPU frame BEFORE swapping out the
   // previous successful model. Failure/cancellation does not replace it.
   stability39.assertCurrent(token);
@@ -519,6 +530,16 @@ export function installAIG29ContinuousScan({
    const prev=overlay;
    overlay=group;scan=reconstruction;rendererSource=viewer;
    wardrobe37Layer=stagedWardrobe.layer;
+   hair310Layer=stagedHair.layer;
+   hair310Proof={
+    schema:stagedHair.hair.schema,style:stagedHair.hair.style,
+    actualIndependentHairMeshes:stagedHair.hair.realIndependentHairMeshes,
+    realIndependent3DTriangles:stagedHair.hair.realIndependent3DTriangles??0,
+    true3DMeshAttachmentsAdded:stagedHair.layer.children.filter(x=>x.isMesh).length,
+    technicalGeometryNotHeroineApproved:true,
+    originalBodyMeshReconstructed:false,
+    physicallyAccurateStrandsAndCollisions:false
+   };
    motion39Proof=null;lastPose39=null;
    appearanceProof=newAppearanceProof;
    probeLines=null;scanStamp=scan.sourceSha256;
@@ -551,6 +572,10 @@ export function installAIG29ContinuousScan({
     originalViewerRendererReused:true,
     compositorNotBillboard:true
    };
+   $('scan310-hair-status').textContent=hair310Proof.style==='none'?
+    '沒有附加新髮型，保留原始頭部。':
+    '已建立 '+hair310Proof.style+' 3D 技術髮型，共 '+
+    hair310Proof.actualIndependentHairMeshes+' 件可跟隨頭骨的獨立幾何。';
    $('scan37-status').textContent='目前服裝：'+
     stagedWardrobe.result.outfitId+'；'+
     stagedWardrobe.result.garmentMeshCount+' 件真正獨立 3D 衣物。'+
@@ -615,6 +640,19 @@ export function installAIG29ContinuousScan({
  });
  $('scan38-next').addEventListener('click',()=>{
   browse38Offset+=8;refresh38Browser();
+ });
+ $('scan310-hair').addEventListener('change',()=>{
+  let token=null;
+  try{
+   token=stability39.begin('hair-switch');
+   update310Hair();
+   stability39.finish(token);proof();
+  }catch(e){
+   stability39.abandon(token);
+   $('scan310-hair-status').textContent=
+    '髮型切換失敗：'+String(e.message||e)+'。原髮型仍保留。';
+   status(String(e.message||e),true);
+  }
  });
  $('scan37-outfit').addEventListener('change',()=>{
   let token=null;
