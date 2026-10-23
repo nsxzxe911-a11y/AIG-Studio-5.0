@@ -39,15 +39,15 @@ function syntheticMeshSurfaceMarkers(){
  };
  const left=j=>p(j,22),right=j=>p(j,0);
  return {
-  headTop:[0,1,0],chin:p(3,0),noseTip:p(4,11),neckBase:p(7,0),
-  leftShoulder:left(11),rightShoulder:right(11),
-  leftElbow:left(16),rightElbow:right(16),
-  leftWrist:left(22),rightWrist:right(22),
-  leftThumbTip:left(25),rightThumbTip:right(25),
-  leftIndexTip:left(26),rightIndexTip:right(26),
-  pelvis:p(21,0),leftKnee:left(31),rightKnee:right(31),
-  leftHeel:left(39),rightHeel:right(39),
-  leftToe:left(40),rightToe:right(40)
+  headTop:[0,1,0],chin:p(38,0),noseTip:p(37,11),neckBase:p(34,0),
+  leftShoulder:left(30),rightShoulder:right(30),
+  leftElbow:left(25),rightElbow:right(25),
+  leftWrist:left(20),rightWrist:right(20),
+  leftThumbTip:left(16),rightThumbTip:right(16),
+  leftIndexTip:left(15),rightIndexTip:right(15),
+  pelvis:p(21,0),leftKnee:left(10),rightKnee:right(10),
+  leftHeel:left(2),rightHeel:right(2),
+  leftToe:left(1),rightToe:right(1)
  };
 }
 await mkdir(dir,{recursive:true});
