@@ -255,9 +255,11 @@ export function installAIG32DigitControls({
    target=anchor.xyz.map((v,i)=>v+(
     i===1&&key.includes('Hand')?-.045*h:
      i===2&&key.includes('Foot')?.04*h:0));
-   position=[target[0]+.01*h,target[1]+
-    (key.includes('Foot')?.12*h:.02*h),
-    target[2]+(key.includes('Foot')?.32*h:.27*h)];
+   // The new 3.3 palm/sole implicit field is wider than 3.2 tube proxies.
+   // Frame ALL five digits, not a zoomed-in unrecognizable coloured blob.
+   position=[target[0]+.018*h,target[1]+
+    (key.includes('Foot')?.17*h:.06*h),
+    target[2]+(key.includes('Foot')?.78*h:.70*h)];
   }
   // For hands/feet closeups the crude 3.0 solid frequently occludes
   // every analytic finger inside the source-derived wrist/ankle.
