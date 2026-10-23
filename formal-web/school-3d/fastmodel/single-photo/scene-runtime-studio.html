@@ -228,41 +228,26 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <button type="button" id="rig31-activate">01｜把 3.0 真曲面接上 3.1 頭頸與全身關節控制</button>
 <button type="button" id="rig31-reset">02｜關節全部回正（保留 3D 曲面與素材）</button>
 <div class="world-grid">
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頸部左右（<output id="rig31-value-neckYaw">0°</output>）
-<input type="range" id="rig31-neckYaw" min="-30" max="30" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頸部俯仰（<output id="rig31-value-neckPitch">0°</output>）
-<input type="range" id="rig31-neckPitch" min="-20" max="20" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頭部左右（<output id="rig31-value-headYaw">0°</output>）
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頸部左右（<output id="rig31-value-neckYaw">0°</output>）<input type="range" id="rig31-neckYaw" min="-30" max="30" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頸部俯仰（<output id="rig31-value-neckPitch">0°</output>）<input type="range" id="rig31-neckPitch" min="-20" max="20" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頭部左右（<output id="rig31-value-headYaw">0°</output>）<input type="range" id="rig31-headYaw" min="-40" max="40" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頭部點頭（<output id="rig31-value-headPitch">0°</output>）<input type="range" id="rig31-headPitch" min="-25" max="25" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頭部側傾（<output id="rig31-value-headRoll">0°</output>）<input type="range" id="rig31-headRoll" min="-20" max="20" step="1" value="0" style="width:100%;min-width:0"></label>
 </div>
 <details><summary>展開肩膀／手肘／髖部／膝蓋／腳踝等全身關節（實際可動）</summary>
-<div class="world-grid"><input type="range" id="rig31-headYaw" min="-40" max="40" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頭部點頭（<output id="rig31-value-headPitch">0°</output>）
-<input type="range" id="rig31-headPitch" min="-25" max="25" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頭部側傾（<output id="rig31-value-headRoll">0°</output>）
-<input type="range" id="rig31-headRoll" min="-20" max="20" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">胸椎前後（<output id="rig31-value-spineBend">0°</output>）
-<input type="range" id="rig31-spineBend" min="-20" max="20" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左肩活動（<output id="rig31-value-leftShoulder">0°</output>）
-<input type="range" id="rig31-leftShoulder" min="-75" max="75" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右肩活動（<output id="rig31-value-rightShoulder">0°</output>）
-<input type="range" id="rig31-rightShoulder" min="-75" max="75" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左肘彎曲（<output id="rig31-value-leftElbow">0°</output>）
-<input type="range" id="rig31-leftElbow" min="0" max="120" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右肘彎曲（<output id="rig31-value-rightElbow">0°</output>）
-<input type="range" id="rig31-rightElbow" min="0" max="120" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左髖活動（<output id="rig31-value-leftHip">0°</output>）
-<input type="range" id="rig31-leftHip" min="-45" max="60" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右髖活動（<output id="rig31-value-rightHip">0°</output>）
-<input type="range" id="rig31-rightHip" min="-45" max="60" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左膝彎曲（<output id="rig31-value-leftKnee">0°</output>）
-<input type="range" id="rig31-leftKnee" min="0" max="125" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右膝彎曲（<output id="rig31-value-rightKnee">0°</output>）
-<input type="range" id="rig31-rightKnee" min="0" max="125" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左踝活動（<output id="rig31-value-leftAnkle">0°</output>）
-<input type="range" id="rig31-leftAnkle" min="-25" max="25" step="1" value="0" style="width:100%;min-width:0"></label>
-<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右踝活動（<output id="rig31-value-rightAnkle">0°</output>）
-<input type="range" id="rig31-rightAnkle" min="-25" max="25" step="1" value="0" style="width:100%;min-width:0"></label></div>
-</details>
+<div class="world-grid">
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">胸椎前後（<output id="rig31-value-spineBend">0°</output>）<input type="range" id="rig31-spineBend" min="-20" max="20" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左肩活動（<output id="rig31-value-leftShoulder">0°</output>）<input type="range" id="rig31-leftShoulder" min="-75" max="75" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右肩活動（<output id="rig31-value-rightShoulder">0°</output>）<input type="range" id="rig31-rightShoulder" min="-75" max="75" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左肘彎曲（<output id="rig31-value-leftElbow">0°</output>）<input type="range" id="rig31-leftElbow" min="0" max="120" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右肘彎曲（<output id="rig31-value-rightElbow">0°</output>）<input type="range" id="rig31-rightElbow" min="0" max="120" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左髖活動（<output id="rig31-value-leftHip">0°</output>）<input type="range" id="rig31-leftHip" min="-45" max="60" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右髖活動（<output id="rig31-value-rightHip">0°</output>）<input type="range" id="rig31-rightHip" min="-45" max="60" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左膝彎曲（<output id="rig31-value-leftKnee">0°</output>）<input type="range" id="rig31-leftKnee" min="0" max="125" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右膝彎曲（<output id="rig31-value-rightKnee">0°</output>）<input type="range" id="rig31-rightKnee" min="0" max="125" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左踝活動（<output id="rig31-value-leftAnkle">0°</output>）<input type="range" id="rig31-leftAnkle" min="-25" max="25" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右踝活動（<output id="rig31-value-rightAnkle">0°</output>）<input type="range" id="rig31-rightAnkle" min="-25" max="25" step="1" value="0" style="width:100%;min-width:0"></label>
+</div></details>
 <div class="world-grid">
 <label>左右環繞查看（相機 ±180°，非關節）
 <input type="range" min="-180" max="180" value="0" step="5" id="rig31-camera-azimuth" style="width:100%"></label>
