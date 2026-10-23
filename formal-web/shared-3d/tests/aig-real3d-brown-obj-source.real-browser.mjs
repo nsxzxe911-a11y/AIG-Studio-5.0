@@ -27,6 +27,29 @@ function syntheticOBJ(){
  }
  return Buffer.from(v.concat(faces).join('\n'));
 }
+function syntheticMeshSurfaceMarkers(){
+ // Points sampled exactly from the current NONHUMAN elliptical mesh.
+ // Names are synthetic labels for plumbing QA, NOT actual anatomy.
+ const rings=42,segments=44;
+ const p=(j,k)=>{
+  const t=j/(rings-1),r=Math.max(.008,Math.sin(Math.PI*t));
+  const a=2*Math.PI*k/segments;
+  return [Number((.25*r*Math.cos(a)).toFixed(8)),
+   Number(t.toFixed(8)),Number((.15*r*Math.sin(a)).toFixed(8))];
+ };
+ const left=j=>p(j,22),right=j=>p(j,0);
+ return {
+  headTop:[0,1,0],chin:p(3,0),noseTip:p(4,11),neckBase:p(7,0),
+  leftShoulder:left(11),rightShoulder:right(11),
+  leftElbow:left(16),rightElbow:right(16),
+  leftWrist:left(22),rightWrist:right(22),
+  leftThumbTip:left(25),rightThumbTip:right(25),
+  leftIndexTip:left(26),rightIndexTip:right(26),
+  pelvis:p(21,0),leftKnee:left(31),rightKnee:right(31),
+  leftHeel:left(39),rightHeel:right(39),
+  leftToe:left(40),rightToe:right(40)
+ };
+}
 await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({headless:true,args:[
  '--enable-webgl','--use-gl=angle','--use-angle=swiftshader',
@@ -45,6 +68,11 @@ try{
   name:'SYNTHETIC_NONHUMAN_CAPSULE.obj',mimeType:'text/plain',buffer:buf
  });
  await page.locator('#body-height').fill('1680');
+ await page.locator('#landmark-file').setInputFiles({
+  name:'SYNTHETIC_NONHUMAN_LABELS.json',
+  mimeType:'application/json',
+  buffer:Buffer.from(JSON.stringify(syntheticMeshSurfaceMarkers()))
+ });
  await page.locator('#source-origin').fill('Synthetic test mesh: NOT a real human');
  await page.locator('#capture-method').selectOption('MANUAL_MODEL');
  await page.locator('#source-rights').check();
@@ -79,6 +107,28 @@ try{
  assert.equal(proof.sourceReview.personAuthenticityVerified,false);
  assert.equal(proof.sourceReview.naturalAppearancePASS,false);
  assert.equal(proof.sourceReview.releasePASS,false);
+ assert.equal(proof.sourceReview.computedEvidence.labeledAnatomyValidatedAgainstMesh,true,
+  'Synthetic marker labels must be native OBJ attached for this pipeline-only test');
+ assert.equal(proof.anatomicalProjection.originalObjMarkerMeshAuditComplete,true);
+ assert.equal(proof.anatomicalProjection.fourAngleProjectedPoints.length,4);
+ assert.equal(proof.anatomicalProjection.fourSourceGPUAnnotations.length,4);
+ assert.equal(proof.anatomicalProjection.regionComparisonCount,4);
+ assert.equal(proof.anatomicalProjection.naturalHumanAppearancePASS,false);
+ assert.equal(proof.anatomicalProjection.releasePASS,false);
+ assert.equal(await page.locator('#anatomy-gallery figure').count(),4);
+ assert.equal(await page.locator('#anatomy-region-table tbody tr').count(),16);
+ for(let i=0;i<4;i++){
+  const picture=page.locator('#anatomy-gallery figure').nth(i);
+  const promise=page.waitForEvent('download',{timeout:20000});
+  await picture.locator('a').click();
+  const dl=await promise,bytes=await readFile(await dl.path());
+  assert.equal(bytes.readUInt32BE(0),0x89504e47);
+  assert.equal(bytes.readUInt32BE(16),1080);
+  assert.equal(bytes.readUInt32BE(20),1920);
+  const sha=createHash('sha256').update(bytes).digest('hex');
+  assert.equal(sha,proof.anatomicalProjection.fourSourceGPUAnnotations[i].sha256);
+  await copyFile(await dl.path(),dir+'/SYNTHETIC_ANATOMY_MARKERS_'+i+'.png');
+ }
  assert.equal(proof.silhouetteComparison.transparentReferencesUploaded,4);
  assert.equal(proof.silhouetteComparison.fourViewSilhouetteComparePASS,true,
   JSON.stringify(proof.silhouetteComparison.errors));
@@ -126,6 +176,7 @@ try{
   realFourViews:true,
   alphaReferenceOverlayFourViewCompared:true,
   twelveBandActualPixelWidthProfilesFourView:true,
+  meshAudited21SourceLandmarksProjectedOverTrueGpuFourViews:true,
   referencePictureWasSyntheticNotHuman:true,
   automaticHumanAppearanceApproval:false,
   noSyntheticHumanReconstruction:true,
