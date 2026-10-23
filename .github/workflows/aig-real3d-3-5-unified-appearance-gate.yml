@@ -5,6 +5,8 @@ on:
       - verify/real3d-unified-appearance-3-5-20261023
     paths:
       - 'formal-web/school-3d/fastmodel/single-photo/aig-unified-appearance-3-5.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-unified-120-core-3-6.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-120-core-3-6.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-continuous-surface-scan-2-9-ui.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.html'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-appearance-3-5.test.mjs'
@@ -31,6 +33,8 @@ jobs:
       - name: Strict source geometry, screenshot-safe and no misleading 100 percent gate
         run: |
           node --check aig-unified-appearance-3-5.mjs
+          node --check aig-unified-120-core-3-6.mjs
+          node --test tests/aig-unified-120-core-3-6.test.mjs
           node --check aig-continuous-surface-scan-2-9-ui.mjs
           node --check scene-runtime-studio.mjs
           node --test tests/aig-unified-appearance-3-5.test.mjs
@@ -44,7 +48,10 @@ jobs:
           node --check dist/scene-runtime-studio.js
           grep -q 'aig35-width' dist/scene-runtime-studio.html
           grep -q 'aig35-colour' dist/scene-runtime-studio.html
+          grep -q 'scan36-light' dist/scene-runtime-studio.html
+          grep -q 'scan36-source-preview' dist/scene-runtime-studio.html
           grep -q 'AIG_REAL3D_3_5_UNIFIED_SOURCE_APPEARANCE_GATE' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_6_ONE_KERNEL_120_LOGICAL_SLOTS' dist/scene-runtime-studio.js
       - name: Install Chromium QA for actual phone/desktop rendered geometry
         run: |
           npm install --no-save playwright@1.55.0
