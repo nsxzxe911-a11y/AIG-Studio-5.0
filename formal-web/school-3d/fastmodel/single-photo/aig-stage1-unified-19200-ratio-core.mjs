@@ -6,7 +6,7 @@
  * This core produces measurements from REAL model XYZ and bone positions.
  * It never mutates source anatomy or permits automatic appearance approval.
  */
-import {AIG_STAGE1_SCHEMA} from './aig-stage1-dual-adult-anatomy.mjs';
+import {AIG_STAGE1_SCHEMA,auditAIGStage1BodySurface} from './aig-stage1-dual-adult-anatomy.mjs';
 import {planAIG36UnifiedCore}
  from './aig-unified-120-core-3-6.mjs';
 import {makeAIGStage1CanonicalMM,auditAIGStage1MMConversion,
@@ -300,6 +300,7 @@ export function runStage1UnifiedRenderLogicCore({
  const mmEvidence=auditAIGStage1MMConversion(model,millimeters);
  const bounds=measureAIGStage1Bounds(model);
  const proportion=auditHumanProportion(model);
+ const surface=auditAIGStage1BodySurface(model);
  const skeleton=auditSkeletonAlignment(model);
  const framing=fitHumanToView(model,{view,aspect,verticalFovDeg});
  const viewportResult=viewport?auditViewportAspect(viewport):null;
@@ -314,6 +315,7 @@ export function runStage1UnifiedRenderLogicCore({
  };
  const violations=[
   ...proportion.proportionIssues,...skeleton.alignmentIssues,
+  ...surface.actualBodySurfaceErrors,
   ...mmEvidence.millimeterContractViolations
  ];
  if(!framing.framingNumericContractPASS)violations.push('FRAMING_HEIGHT_OR_WIDTH');
@@ -332,6 +334,7 @@ export function runStage1UnifiedRenderLogicCore({
   allocatedActualWorkUnits:Object.freeze(used),
   no19200PhysicalRendererClaim:true,
   proportions:proportion,skeleton,viewport:viewportResult,
+  actualSurfaceClearances:surface,
   canonicalMillimeters:mmEvidence,
   dimensionsMm:Object.freeze({
    bodyHeight:mmEvidence.verifiedMillimeterHeight,
