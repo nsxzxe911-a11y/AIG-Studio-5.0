@@ -179,6 +179,12 @@ try{
    await publishAIG316SnapshotManifest({
     out,device:device.name,stages:snapshots316
    });
+   if(process.env.AIG_SNAPSHOT_ONLY==='1'){
+    console.log('AIG316_CANVAS_STAGE_EVIDENCE_CAPTURED',
+     device.name,snapshots316.length,
+     'Synthetic fixture — NOT approved heroine');
+    continue;
+   }
 
    // 3.13: the hero remains source-bound. Additional crowd bodies are
    // explicitly SAME-mesh technical test instances, NOT distinct classmates.
