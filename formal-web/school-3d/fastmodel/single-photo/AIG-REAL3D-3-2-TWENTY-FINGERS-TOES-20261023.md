@@ -30,3 +30,15 @@ Date: 2026-10-23, Asia/Taipei. This is a technical **source-aware articulated 3D
 - Capture or infer hand palm geometry + all finger webbing, true spread and per-finger lengths from manually reviewed labelled photo, stereo/LiDAR or scan; fit nail, knuckles, skin colour and self-contact; integrate digit skin smoothly with 3.0 hand surface and 3.1 body rig.
 - Capture plantar toe/sole/heel real shape and toe-ground contact; calibrate mm and source scale. Not just more triangle count; visual quality and actual 1:1 measurement require independent Gates.
 - Keep full body/neck joints, original source SHA, rest mesh and mobile 60 FPS criteria in every later release.
+
+## Updated actual Gate results and visual usability
+- **Real3D 3.2 original twenty-digit and shoulder-follow PHONE + DESKTOP GATE PASS**: run **39915925882**, SHA `07f56be1`, `completed/success`. https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39915925882
+- Downloadable verified evidence artifact ID **12485096627**, `AIG-Real3D-3-2-Actual-20-Fingers-Toes-56-Phalanges-Phone-Desktop`, size 684608 bytes, containing actual mobile & desktop Chromium WebGL viewport PNGs and joint proof JSON. No native Android/Windows installer pass implied.
+- IMPORTANT image inspection: the default 3.2 screenshot inherited the previous 3.1 **underside camera**. It is an actual WebGL view but visually too flattened/ambiguous to use as a good showcase or anatomy proof. It is NOT evidence of photorealistic fingers/toes. Do not overstate.
+- Following user focus on clear realistic models, added **four actual 3D camera close-ups** `digits32-focus-leftHand`, `digits32-focus-rightHand`, `digits32-focus-leftFoot`, `digits32-focus-rightFoot`, and front whole-body reset; focus is computed from source-locked wrist/foot anchors and manipulates ONE preexisting WebGL camera. These additions are *not* merely screenshots/buttons.
+- New browser test now captures full front view, enlarged LEFT hand five fingers, enlarged RIGHT foot five toes and the dynamic shoulder-follow close-up. Source commits `9f365749`, `f92c6b54`, `24df24c5`. The new standalone Gate **39916660304** is queued/in-progress as of last check, so don't claim close-up physical screenshots PASS until the actual run succeeds and artifacts have been visually reviewed.
+- **3 project combined Release Gate is NOT yet green.** PR stays DRAFT and official Render/APK/EXE must not be claimed updated without independent release evidence.
+
+## Next 3.3 visual quality priorities
+- Existing per-digit surfaces are source-based *anatomical priors*: real 3D xyz points and actual bending, but look like technical small curved sections, **not yet naturally detailed fingers/toes**. Improve organic hand palm webbing, knuckle pads, nails, toe-ground contact and skin shape with independently reviewed source landmarks and captured depth. Don't just subdivide arbitrary cylinders.
+- Frame genuinely readable macro views, compare right hand/left hand and toe morphologies, foot underside, head/neck 3.1 and full body snapshots; keep source SHA and 3D/print appearance Gates distinct.
