@@ -19,7 +19,7 @@ export function installAIG313ClassroomCapacity({
   !$('scan313-show'))throw Error('AIG313_REAL_VIEWER_AND_ROSTER_UI_REQUIRED');
  const roster=createAIG313ClassmateRoster();
  let group=null,sharedGeometry=null,material=null,viewer=null,
-  benchBusy=false,benchGeneration=0,rows=[],last=null,
+  benchBusy=false,sweepBusy=false,benchGeneration=0,rows=[],last=null,
   measuredTimeSequence=0,sourceSha=null,priorCamera=null;
  const record=()=>{
   const sourceObjects=Number(getLoadedWorldCharacterCount())||0;
@@ -64,6 +64,7 @@ export function installAIG313ClassroomCapacity({
   }
   priorCamera=null;sourceSha=null;viewer=null;
   $('scan313-bench').disabled=false;
+  $('scan313-sweep').disabled=false;
   record();
  };
  const preview=(count)=>{
@@ -231,6 +232,45 @@ export function installAIG313ClassroomCapacity({
  $('world-preview')?.addEventListener('click',()=>{
   if(group)clear();
  });
+ const sweep=async()=>{
+  if(benchBusy||sweepBusy)throw Error('AIG313_BENCHMARK_ALREADY_RUNNING');
+  const scan=getFusedScan();
+  if(!scan?.mesh?.parent)throw Error('AIG313_NO_REAL_SOURCE_HUMANOID');
+  const selected=Number($('scan313-count').value),serial=benchGeneration;
+  sweepBusy=true;$('scan313-sweep').disabled=true;
+  rows=[];last=null;
+  let consecutiveDrops=0;
+  try{
+   for(const count of [1,4,8,12,16,24,32]){
+    if(!sweepBusy||benchGeneration!==serial&&group===null)
+     throw Error('AIG313_SWEEP_CANCELLED');
+    preview(count);
+    await measure({frames:32});
+    if(!last.p95SampleMeetsTarget)consecutiveDrops++;
+    else consecutiveDrops=0;
+    if(consecutiveDrops>=2){
+     status('本瀏覽器連續兩級未達 30 FPS 的 P95 目標；'+
+      '已停止增加負荷，避免過度壓測手機。'+
+      '此結果只代表相同技術網格，不能當作真人角色硬體上限。');
+     break;
+    }
+   }
+   const summary=summariseAIG313CrowdEvidence(rows);
+   if(consecutiveDrops<2)
+    status('本瀏覽器已量測 '+summary.testedCounts.join('、')+
+     ' 個技術 3D 副本；達 30 FPS P95 的最高測試檔位 '+ 
+     summary.maxTechnicalTestClonesAtTarget+
+     '，不是正式同學的保證人數。');
+   return record();
+  }finally{
+   sweepBusy=false;$('scan313-sweep').disabled=false;
+   if(group&&Number.isInteger(selected)&&AIG313_COUNTS.includes(selected)&&
+    !benchBusy)try{preview(selected)}catch{}
+  }
+ };
+ $('scan313-sweep').addEventListener('click',()=>{
+  sweep().catch(e=>{status(out(e),true);record()});
+ });
  $('scan313-show').addEventListener('click',()=>{
   try{preview(Number($('scan313-count').value))}
   catch(e){status(out(e),true);record()}
@@ -247,7 +287,7 @@ export function installAIG313ClassroomCapacity({
  // Read-only load of source library inventory; creates NO fake GLB.
  refreshSources().catch(e=>status(out(e),true));
  record();
- return Object.freeze({preview,measure,clear,refreshSources,
+ return Object.freeze({preview,measure,sweep,clear,refreshSources,
   get proof(){return record()},
   get lastMeasurement(){return last},
   get measuredRows(){return [...rows]},
