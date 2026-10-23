@@ -38,6 +38,16 @@ try{
      return proof.activeSceneRendered===true&&proof.modelGender===g&&
       proof.submittedFrameCount>=2;
     },gender,{timeout:25000});
+    const aspect=await page.evaluate(()=>{
+     const canvas=document.getElementById('viewport');
+     const rect=canvas.getBoundingClientRect();
+     return {css:rect.width/rect.height,
+      actual:canvas.width/canvas.height,
+      cssSize:[rect.width,rect.height],
+      gpuBitmap:[canvas.width,canvas.height]};
+    });
+    assert.ok(Math.abs(aspect.css-aspect.actual)<.015,
+     'STAGE1_WEBGL_CANVAS_DISTORTS_BODY_PROPORTIONS '+JSON.stringify(aspect));
     const state=JSON.parse(await page.locator('#stage1-proof').textContent());
     assert.equal(state.actualStage1SourceSchema,
      'AIG_STAGE1_ADULT_MALE_FEMALE_ANATOMY_V1');
