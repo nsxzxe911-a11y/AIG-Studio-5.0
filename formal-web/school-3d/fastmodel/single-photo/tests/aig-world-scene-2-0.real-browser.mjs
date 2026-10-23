@@ -162,10 +162,27 @@ try{
    await page.goto('http://127.0.0.1:8765/scene-runtime-studio.html',
     {waitUntil:'load'});
    await page.waitForFunction(()=>document.querySelectorAll('#world-saved option').length>1);
-   await choose('world-saved','櫻花校園場景');
-   await page.locator('#world-load').click();
-   await page.waitForFunction(()=>document.getElementById('world-status')
-    .textContent.includes('已從外部素材庫讀取'));
+   // Multiple legitimate historical world snapshots can share one title.
+   // Never use a strict single text locator; load candidate asset IDs and
+   // keep ONLY the immutable scene UUID that the test actually created.
+   const savedSceneIds=await page.locator('#world-saved option').evaluateAll(
+    nodes=>nodes.filter(x=>x.value&&x.textContent.includes('櫻花校園場景'))
+     .map(x=>x.value));
+   assert.ok(savedSceneIds.length>0,'source world snapshots not saved');
+   let sourceIdMatched=false;
+   for(const candidateId of savedSceneIds){
+    await page.locator('#world-saved').selectOption(candidateId);
+    await page.locator('#world-load').click();
+    await page.waitForFunction(()=>document.getElementById('world-status')
+     .textContent.includes('已從外部素材庫讀取')||
+     document.getElementById('world-status').textContent.includes('讀取失敗'));
+    const proof=JSON.parse(await page.locator('#world-proof').textContent());
+    if(proof.id===goodId&&proof.objects?.length===2){
+     sourceIdMatched=true;break;
+    }
+   }
+   assert.ok(sourceIdMatched,
+    'must reload exact immutable 2-GLB scene ID, never same-title substitute');
    await page.locator('#world-preview').click();
    await page.waitForFunction(()=>document.getElementById('world-status')
     .textContent.includes('已自動保存'),null,{timeout:30000});
