@@ -60,7 +60,8 @@ try{
  await page.locator('#load-source').click();
  await page.waitForFunction(()=>{
   const el=document.querySelector('#status');
-  return el.dataset.ready==='true'||el.textContent.startsWith('BLOCK');
+  return !document.querySelector('#load-source')?.disabled &&
+   (el.dataset.ready==='true'||el.textContent.startsWith('BLOCK'));
  },null,{timeout:160000});
  const text=await page.locator('#status').textContent();
  assert.equal(await page.locator('#status').getAttribute('data-ready'),'true',text);
