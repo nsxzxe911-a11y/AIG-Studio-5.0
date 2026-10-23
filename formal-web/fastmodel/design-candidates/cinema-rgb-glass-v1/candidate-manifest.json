@@ -1,0 +1,305 @@
+{
+  "schema": "AIG_FASTMODEL_CINEMA_RGB_GLASS_DESIGN_CANDIDATE_V1",
+  "authority_status": "CANDIDATE_NOT_APPROVED",
+  "pipeline_status": "VISUAL_REFERENCE_ONLY_NO_RUNTIME_CALLBACKS_CLAIMED",
+  "project": "AIG FastModel Cinema Engine",
+  "reference": {
+    "title": "AIG FastModel Cinema RGB Glass Desktop concept",
+    "image_library_path": "/AIG-II/FastModel/Authority-Candidates/AIG-FastModel-Cinema-RGB-Glass-Desktop-V1-CANDIDATE.png",
+    "sha256": "a027fdeb1d59910cf15a24daf2b31e6255ffc62bb30eaa519372e290514a5524",
+    "pixel_size": [
+      1672,
+      941
+    ],
+    "origin": "2026-10-24 user-requested AI-generated RGB glass desktop mockup",
+    "image_role": "visual-layout reference only; bitmap UI is not interactive",
+    "approved_authority": false,
+    "raster_text_untrusted": true,
+    "decorative_gpu_storage_progress_not_runtime_evidence": true
+  },
+  "layout": {
+    "desktop": {
+      "min_width_css_px": 1280,
+      "header_height_px": 56,
+      "nav_rail_px": 76,
+      "left_media_tray": "collapsible, default overlay or 0-170px",
+      "center_workspace_fraction": 0.7,
+      "right_inspector_fraction": 0.25,
+      "main_stage_min_height_fraction": 0.54,
+      "pinned_timeline_min_height_px": 200,
+      "pinned_timeline_max_height_fraction": 0.3,
+      "preview_persists_on_playback": true,
+      "inspector_scrolls_independently": true
+    },
+    "mobile": {
+      "min_width_css_px": 360,
+      "top_header": "single-line project title + save + status",
+      "mode": "native-responsive mobile skin, no desktop squash",
+      "primary_preview_min_height_fraction": 0.6,
+      "primary_tabs": [
+        "畫面",
+        "控制",
+        "時間軸"
+      ],
+      "bottom_actions": [
+        "放入素材",
+        "AI生成",
+        "開始製作"
+      ],
+      "side_inspector": "full-width sheet opened on demand",
+      "persistent_playback_preview": true,
+      "action_safe_areas": true,
+      "touch_targets_min_css_px": 44
+    }
+  },
+  "page_ids": [
+    "FASTMODEL.HOME",
+    "FASTMODEL.ASSETS",
+    "FASTMODEL.AI_GENERATE",
+    "FASTMODEL.2D",
+    "FASTMODEL.2_5D",
+    "FASTMODEL.3D",
+    "FASTMODEL.CINEMA",
+    "FASTMODEL.VFX",
+    "FASTMODEL.SFX",
+    "FASTMODEL.DIALOGUE",
+    "FASTMODEL.MUSIC",
+    "FASTMODEL.EXPORT"
+  ],
+  "shared_button_manifest": [
+    {
+      "id": "FM.ASSET.IMAGE.IMPORT",
+      "label": "放入圖片",
+      "command": "OPEN_LOCAL_IMAGE_PICKER",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.ASSET.VIDEO.IMPORT",
+      "label": "放入影片",
+      "command": "OPEN_LOCAL_VIDEO_PICKER",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.AI.CHARACTER.GENERATE",
+      "label": "AI生成角色",
+      "command": "REQUEST_CHARACTER_GENERATION",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.PROJECT.START",
+      "label": "開始製作動畫",
+      "command": "CREATE_PRODUCTION_FROM_ASSETS",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.MODE.2D",
+      "label": "2D",
+      "command": "SET_ANIMATION_MODE_2D",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.MODE.2_5D",
+      "label": "2.5D",
+      "command": "SET_ANIMATION_MODE_2_5D",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.MODE.3D",
+      "label": "3D",
+      "command": "SET_ANIMATION_MODE_3D",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.MODE.CINEMA",
+      "label": "電影",
+      "command": "SET_ANIMATION_MODE_CINEMA",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.TIMELINE.SEEK",
+      "label": "時間軸定位",
+      "command": "SEEK_PREVIEW_TIME",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.SCENE.NEW",
+      "label": "新增分鏡",
+      "command": "ADD_STORYBOARD_SHOT",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.VFX.PANEL",
+      "label": "特效",
+      "command": "OPEN_EFFECTS_INSPECTOR",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.SFX.PANEL",
+      "label": "音效",
+      "command": "OPEN_SOUND_INSPECTOR",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.DIALOGUE.EDIT",
+      "label": "對話腳本",
+      "command": "EDIT_DIALOGUE_SCRIPT",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.MUSIC.EDIT",
+      "label": "音樂配樂",
+      "command": "OPEN_MUSIC_EDITOR",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.PREVIEW.PLAY",
+      "label": "播放預覽",
+      "command": "PREVIEW_PLAY",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.PREVIEW.PAUSE",
+      "label": "暫停預覽",
+      "command": "PREVIEW_PAUSE",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.EXPORT.RENDER",
+      "label": "輸出電影",
+      "command": "REQUEST_MEDIA_RENDER_EXPORT",
+      "implementation": "PENDING_REAL_RUNTIME"
+    },
+    {
+      "id": "FM.PROJECT.SAVE",
+      "label": "儲存專案",
+      "command": "SAVE_WORKING_COPY",
+      "implementation": "PENDING_REAL_RUNTIME"
+    }
+  ],
+  "region_manifest": [
+    {
+      "id": "FM.DESKTOP.HEADER",
+      "xywh": [
+        0,
+        0,
+        1,
+        0.068
+      ]
+    },
+    {
+      "id": "FM.DESKTOP.NAV",
+      "xywh": [
+        0,
+        0.068,
+        0.113,
+        0.932
+      ]
+    },
+    {
+      "id": "FM.DESKTOP.MEDIA_TRAY",
+      "xywh": [
+        0.116,
+        0.069,
+        0.112,
+        0.44
+      ]
+    },
+    {
+      "id": "FM.DESKTOP.STAGE",
+      "xywh": [
+        0.233,
+        0.07,
+        0.533,
+        0.373
+      ]
+    },
+    {
+      "id": "FM.DESKTOP.ACTION_BAR",
+      "xywh": [
+        0.233,
+        0.449,
+        0.533,
+        0.063
+      ]
+    },
+    {
+      "id": "FM.DESKTOP.MODE_SELECTOR",
+      "xywh": [
+        0.119,
+        0.518,
+        0.647,
+        0.156
+      ]
+    },
+    {
+      "id": "FM.DESKTOP.PIPELINE_STATUS",
+      "xywh": [
+        0.119,
+        0.678,
+        0.647,
+        0.073
+      ]
+    },
+    {
+      "id": "FM.DESKTOP.TIMELINE",
+      "xywh": [
+        0.119,
+        0.758,
+        0.647,
+        0.22
+      ]
+    },
+    {
+      "id": "FM.DESKTOP.INSPECTOR",
+      "xywh": [
+        0.772,
+        0.07,
+        0.225,
+        0.908
+      ]
+    }
+  ],
+  "rgb_glass": {
+    "background": "#020407",
+    "panel": "#07111B",
+    "states": [
+      "NORMAL",
+      "HOVER",
+      "PRESSED",
+      "SELECTED",
+      "DISABLED",
+      "ALARM"
+    ],
+    "frame_alpha_range": [
+      0.2,
+      0.55
+    ],
+    "controls_use_live_accessible_dom_text": true,
+    "never_use_rasterized_status_as_runtime": true,
+    "hit_region_independent_of_rgb_outer_glow": true,
+    "real_callbacks_required_for_all_active_controls": true,
+    "reduced_motion_and_low_gpu_fallback": true
+  },
+  "media_workflow": [
+    "IMPORT_IMAGE_VIDEO_OR_AI_ASSET",
+    "VERIFY_ASSET_RIGHTS_SOURCE_DIMENSIONS",
+    "AUTO_RECOMMEND_2D_2_5D_3D_CINEMA_NOT_FORCE_3D",
+    "BUILD_SHOTS_SCENE_ASSETS_STORYBOARD",
+    "CREATE_DIALOGUE_VOICE_SFX_MUSIC",
+    "COMPOSITE_WITH_TIMELINE",
+    "PREVIEW_RENDER_1080P_FIRST",
+    "EXPORT_ONLY_IF_ENCODER_AND_MEDIA_AVAILABLE"
+  ],
+  "gates": {
+    "formal_ui_approval": "BLOCK_UNTIL_USER_APPROVES",
+    "source_shape_3d_photo_to_avatar": "BLOCK_UNTIL_REAL_BODY_FACE_HAND_FOOT_VISUAL_GATE",
+    "true_2d_export": "UNVERIFIED",
+    "true_2_5d_export": "UNVERIFIED",
+    "true_3d_export": "UNVERIFIED",
+    "full_movie_fx_voice_music_export": "UNVERIFIED",
+    "android_windows_live_validation": "UNVERIFIED",
+    "preserve_aig_new_home": true,
+    "preserve_cnc_core_3ax_6ax": true,
+    "disallow_retired_sdf_metaball_morph_subdivision_as_formal_human": true
+  }
+}
