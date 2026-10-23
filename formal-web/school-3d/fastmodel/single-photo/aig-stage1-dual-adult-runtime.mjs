@@ -14,6 +14,8 @@ import {makeAIGStage1CanonicalMM,auditAIGStage1MMConversion,
  aigStage1WebGLGeometryFromCanonicalMM,
  aigStage1WebGLMetersFromTicks,aigStage1MmFromTicks}
  from './aig-stage1-mm-coordinate-contract.mjs';
+import {renderAIGStage1True4KPNG}
+ from './aig-stage1-true4k-capture.mjs';
 export const AIG_STAGE1_RUNTIME='AIG_STAGE1_DUAL_ADULT_TRUE_WEBGL_VIEWS';
 const el=id=>document.getElementById(id);
 const views=['front','profile','rear','quarter45'];
@@ -91,6 +93,8 @@ export function installAIGStage1DualAdultRuntime({
  let active=false,selected='male',currentView='front',model=null;
  let renderCount=0,session=0,lastAudit=null,proofState=null;
  let ratioEvidence=null,snapshotsByGender=new Map(),lastCameraPlan=null;
+ let fourKBusy=false,last4KOutput=null;
+ const captured4KURLs=[];
  const singleCore19200=planAIGStage1OneCore19200();
  const status=(text,blocked=false)=>{
   el('stage1-status').textContent=text;
@@ -187,7 +191,16 @@ export function installAIGStage1DualAdultRuntime({
    oneSingleCore19200:singleCore19200,
    realAnatomyRatioGate:ratioEvidence,
    observedFourViewSnapshotCount:(snapshotsByGender.get(selected)||[]).length,
-   cameraFitMeasurements:lastCameraPlan
+   cameraFitMeasurements:lastCameraPlan,
+   preview4K:viewer?.getAdaptive4KReport?.()??null,
+   actualFourKOutput:last4KOutput&&{
+    gender:last4KOutput.gender,
+    view:last4KOutput.view,width:last4KOutput.width,
+    height:last4KOutput.height,sha256:last4KOutput.sha256,
+    realGPUFramebufferReadback:last4KOutput.actual8MPFramebufferAndReadback,
+    sourceDimensionsPreserved:true,
+    visualAcceptancePASS:false
+   }
   };
   const ratio=ratioEvidence?.proportions;
   const statusText=ratio?[
@@ -257,6 +270,11 @@ export function installAIGStage1DualAdultRuntime({
    };
   }
   viewCamera('front',(viewer.canvas.width||800)/(viewer.canvas.height||600));
+  if(viewer.adaptive4KMode!==
+   el('stage1-4k-quality').value){
+   try{viewer.setAdaptive4KQuality(el('stage1-4k-quality').value)}
+   catch(e){fourKStatus('預覽品質使用原設定：'+String(e.message||e),true)}
+  }
   status('已建立 '+(gender==='male'?'成人男性（貼身泳褲）':'成人女性（貼身連身泳衣）')+
    '獨立 3D 基礎人體｜'+source.partCount+' 個可見部件、'+
    source.jointCount+' 個關節、'+source.actualIndexedTriangles+
@@ -358,6 +376,83 @@ export function installAIGStage1DualAdultRuntime({
    '人體外觀尚待你的目視驗收，Stage 1 仍為 BLOCK。');
   return shots;
  };
+ const fourKStatus=(message,failed=false)=>{
+  el('stage1-4k-status').textContent=message;
+  el('stage1-4k-status').dataset.error=failed?'true':'false';
+ };
+ const captureTrue4K=async(view=currentView)=>{
+  if(!active||!viewer||!model||!stageScene||!stageCamera)
+   error('START_STAGE1_REAL_3D_BODY_FIRST');
+  if(fourKBusy)error('ONE_4K_JOB_AT_A_TIME');
+  if(viewer.movieMode||viewer.reviewBusy)
+   error('4K_CAPTURE_BLOCKED_DURING_MOVIE_OR_REVIEW');
+  fourKBusy=true;
+  const gender=selected;
+  const orientation=el('stage1-4k-orientation').value;
+  fourKStatus('以原始幾何和同一 GPU 真正渲染 4K '+view+
+   '；超過 GPU 限制將 BLOCK。');
+  try{
+   const record=await renderAIGStage1True4KPNG({
+    renderer:viewer.renderer,scene:stageScene,
+    sourceBody:model.source,
+    currentCamera:stageCamera,view,orientation,
+    deviceMemoryGB:navigator.deviceMemory??8
+   });
+   if(gender!==selected)error('SOURCE_GENDER_CHANGED_DURING_4K_CAPTURE');
+   const url=URL.createObjectURL(record.blob);
+   captured4KURLs.push(url);
+   const section=document.createElement('section');
+   section.style.cssText='margin:9px 0;padding:8px;border:1px solid #536e94;border-radius:8px';
+   const title=document.createElement('p');
+   title.textContent=(gender==='male'?'男生泳褲':'女生連身泳衣')+
+    '｜'+view+'｜真 '+record.width+'×'+record.height+
+    '｜PNG SHA '+record.sha256.slice(0,12)+'…｜人物外觀未核准';
+   const picture=document.createElement('img');
+   picture.src=url;picture.alt='實際 4K WebGL 成人技術人體 '+gender+' '+view;
+   picture.style.cssText='max-width:350px;width:100%;height:auto;border-radius:6px';
+   const link=document.createElement('a');
+   link.href=url;
+   link.download='AIG-Stage1-'+gender+'-'+view+'-'+
+    record.width+'x'+record.height+'-TRUE-4K.png';
+   link.textContent='儲存真正 4K PNG（非放大圖片）';
+   link.style.cssText='display:block;margin:8px 0;color:#a9e9ff';
+   section.append(title,picture,link);
+   el('stage1-4k-gallery').prepend(section);
+   last4KOutput={...record,gender,blob:null};
+   publish();
+   fourKStatus('已完成 '+record.width+'×'+record.height+
+    ' GPU 畫素渲染、PNG 實際尺寸與 SHA 驗證。'+
+    '人物比例／外觀仍需目視，Stage 1 BLOCK。');
+   return record;
+  }catch(e){
+   fourKStatus('4K BLOCKED：'+String(e?.message||e)+
+    '。不以低解析度圖片偽裝；原始模型與舊快照保留。',true);
+   throw e;
+  }finally{fourKBusy=false;}
+ };
+ const fourKAllViews=async()=>{
+  const entries=[];
+  for(const view of views){
+   entries.push(await captureTrue4K(view));
+   // Yield between independent GPU captures, not overlapping framebuffers.
+   await new Promise(resolve=>requestAnimationFrame(resolve));
+  }
+  if(new Set(entries.map(x=>x.sha256)).size!==4)
+   error('FOUR_4K_CAMERA_FILES_IDENTICAL_BLOCKED');
+  return entries;
+ };
+ const set4KPreview=(mode)=>{
+  if(!viewer){
+   fourKStatus('預覽模式已設定 '+mode+'；開啟基礎人體後套用。');
+   return null;
+  }
+  const report=viewer.setAdaptive4KQuality(mode);
+  fourKStatus('自適應預覽：'+mode+'｜實際 '+
+   report.actualCanvasWidth+'×'+report.actualCanvasHeight+
+   ' 畫素；獨立 4K PNG 請使用輸出鍵。');
+  publish();
+  return report;
+ };
  const stop=()=>{
   if(!active)return;
   active=false;session++;
@@ -398,9 +493,23 @@ export function installAIGStage1DualAdultRuntime({
   try{await display('male');await display('female')}
   catch{/* fail closed and keep earlier actual snapshots */}
  });
+ el('stage1-4k-quality').addEventListener('change',()=>{
+  try{set4KPreview(el('stage1-4k-quality').value)}
+  catch(e){fourKStatus('4K 預覽 BLOCK：'+String(e.message||e),true)}
+ });
+ el('stage1-4k-current').addEventListener('click',()=>{
+  captureTrue4K().catch(()=>{});
+ });
+ el('stage1-4k-four').addEventListener('click',()=>{
+  fourKAllViews().catch(()=>{});
+ });
  el('stage1-close').addEventListener('click',stop);
- window.addEventListener('pagehide',stop,{once:true});
+ window.addEventListener('pagehide',()=>{
+  captured4KURLs.forEach(u=>URL.revokeObjectURL(u));
+  stop();
+ },{once:true});
  publish();
- return Object.freeze({setup,selectView,capture,display,stop,
+ return Object.freeze({setup,selectView,capture,display,
+  captureTrue4K,fourKAllViews,set4KPreview,stop,
   get isActive(){return active},get evidence(){return proofState}});
 }
