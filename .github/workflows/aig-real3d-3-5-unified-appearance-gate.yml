@@ -1,4 +1,4 @@
-name: AIG Real3D 3.12 Bounded Secondary Hair and Cloth Dynamics Gate
+name: AIG Real3D 3.13 Multi Character Crowd Actual FPS Gate
 on:
   push:
     branches:
@@ -11,6 +11,9 @@ on:
       - 'formal-web/school-3d/fastmodel/single-photo/aig-modular-hair-3-10.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-contact-constraints-3-11.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-secondary-motion-3-12.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-classmate-crowd-3-13.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-classmates-crowd-3-13-ui.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-classmate-crowd-3-13.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-secondary-motion-3-12.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-contact-constraints-3-11.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-modular-hair-3-10.test.mjs'
@@ -53,6 +56,9 @@ jobs:
           node --check aig-modular-hair-3-10.mjs
           node --check aig-contact-constraints-3-11.mjs
           node --check aig-secondary-motion-3-12.mjs
+          node --check aig-classmate-crowd-3-13.mjs
+          node --check aig-classmates-crowd-3-13-ui.mjs
+          node --test tests/aig-classmate-crowd-3-13.test.mjs
           node --test tests/aig-secondary-motion-3-12.test.mjs
           node --test tests/aig-contact-constraints-3-11.test.mjs
           node --test tests/aig-modular-hair-3-10.test.mjs
@@ -90,6 +96,9 @@ jobs:
           grep -q 'AIG_REAL3D_3_10_REMOVABLE_SOURCE_ANCHORED_HAIR' dist/scene-runtime-studio.js
           grep -q 'AIG_REAL3D_3_11_REAL_POSE_CONTACT_PROXY' dist/scene-runtime-studio.js
           grep -q 'AIG_REAL3D_3_12_FIXED_STEP_SECONDARY_HAIR_SKIRT' dist/scene-runtime-studio.js
+          grep -q 'scan313-count' dist/scene-runtime-studio.html
+          grep -q 'scan313-bench' dist/scene-runtime-studio.html
+          grep -q 'AIG_REAL3D_3_13_SOURCED_CLASSMATES_AND_CROWD_BENCH' dist/scene-runtime-studio.js
           grep -q 'REAL3D_19200_LOGICAL_WORK_SLOTS' dist/scene-runtime-studio.js
       - name: Install Chromium QA for actual phone/desktop rendered geometry
         run: |
