@@ -149,6 +149,7 @@ function chaikin(source,rounds=1){
 }
 function subdivide(positions,triangles,steps){
  let v=positions.map(p=>[...p]),tris=[...triangles];
+ let boundaryIndices=positions.map((_,i)=>i);
  for(let i=0;i<steps;i++){
   const cache=new Map(),refine=[];
   const middle=(a,b)=>{
@@ -163,9 +164,18 @@ function subdivide(positions,triangles,steps){
     ab=middle(a,b),bc=middle(b,c),ca=middle(c,a);
    refine.push(a,ab,ca,ab,b,bc,ca,bc,c,ab,bc,ca);
   }
+  // Crucial: the same subdivided perimeter must bind the front, rear
+  // and side wall. Original-only wall edges create T-junctions / open mesh.
+  const nextBoundary=[];
+  for(let k=0;k<boundaryIndices.length;k++){
+   const a=boundaryIndices[k],
+    b=boundaryIndices[(k+1)%boundaryIndices.length];
+   nextBoundary.push(a,middle(a,b));
+  }
+  boundaryIndices=nextBoundary;
   tris=refine;
  }
- return {points:v,triangles:tris};
+ return {points:v,triangles:tris,boundaryIndices};
 }
 function distToSegment(p,a,b){
  const dx=b[0]-a[0],dy=b[1]-a[1],v=dx*dx+dy*dy||1;
@@ -217,9 +227,9 @@ export function buildAIGReal3DTemplateMorph({
  if(n>maxVertices||tri.length/3>185000)
   fail('SOURCE_MESH_BUDGET');
  const positions=[],indices=[],normals=[];
- const boundary=outline.length;
- // The original polygon boundary remains indexed [0..boundary-1],
- // including after subdivision. Other vertices are interior.
+ const boundary=refined.boundaryIndices;
+ // Boundary edge midpoints created by subdivision are also attached
+ // to the 3D side wall. No floating T-junctions or fake closed mesh.
  const edgeDistances=points.map(p=>{
   let d=Infinity;
   for(let i=0;i<outline.length;i++)
@@ -237,8 +247,9 @@ export function buildAIGReal3DTemplateMorph({
   const a=tri[i],b=tri[i+1],c=tri[i+2];
   indices.push(a,c,b,n+a,n+b,n+c);
  }
- for(let k=0;k<boundary;k++){
-  const next=(k+1)%boundary,a=k,b=next,c=n+k,d=n+next;
+ for(let k=0;k<boundary.length;k++){
+  const a=boundary[k],b=boundary[(k+1)%boundary.length],
+   c=n+a,d=n+b;
   indices.push(a,b,d,a,d,c);
  }
  const normBuf=new Float64Array(positions.length);
