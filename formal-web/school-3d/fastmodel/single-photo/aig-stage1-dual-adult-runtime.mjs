@@ -262,8 +262,11 @@ export function installAIGStage1DualAdultRuntime({
     priorFrame?.(t);
     if(!active||!viewer?.renderer||!stageScene||!stageCamera)return;
     const w=viewer.canvas.width||800,h=viewer.canvas.height||600;
-    stageCamera.aspect=w/h;
-    stageCamera.updateProjectionMatrix();
+    const actualAspect=w/h;
+    // Real orientation, viewport resize, device pixel ratio changes:
+    // re-fit FULL body, not merely update camera aspect and crop limbs.
+    if(Math.abs(stageCamera.aspect-actualAspect)>.004)
+     viewCamera(currentView,actualAspect);
     viewer.renderer.render(stageScene,stageCamera);
     renderCount++;
     if(renderCount%25===0)publish();
