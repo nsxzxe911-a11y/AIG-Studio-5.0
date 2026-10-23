@@ -198,7 +198,21 @@ export class PhotoViewer{
    nativeAndroidWindows60FPSVerified:false
   });
  }
- fitCanvas(){if(this.movieMode)return;const r=this.canvas.parentElement.getBoundingClientRect();this.renderer.setSize(Math.max(1,r.width),Math.max(1,r.height),false);this.camera.aspect=Math.max(1,r.width)/Math.max(1,r.height);this.camera.updateProjectionMatrix();}
+ fitCanvas(){
+  if(this.movieMode)return;
+  // The actual canvas CSS box is the ONLY correct camera/render aspect.
+  // Using the entire parent PANEL height squashes people when more tool
+  // panels, stage gates or validation snapshots are expanded below canvas.
+  const rect=this.canvas.getBoundingClientRect();
+  const parent=this.canvas.parentElement.getBoundingClientRect();
+  const width=Math.max(1,rect.width||parent.width);
+  const height=Math.max(1,rect.height||parent.height);
+  const size=this.renderer.getSize(new THREE.Vector2());
+  if(Math.abs(size.x-width)>.5||Math.abs(size.y-height)>.5)
+   this.renderer.setSize(width,height,false);
+  this.camera.aspect=width/height;
+  this.camera.updateProjectionMatrix();
+}
  beginMovie1080p(){
   if(this.gpu17Enabled)this.setGpuAccelerationEnabled(false);
   if(this.movieMode||this.reviewBusy||this.actionImportBusy||!this.model||!this.animation)
