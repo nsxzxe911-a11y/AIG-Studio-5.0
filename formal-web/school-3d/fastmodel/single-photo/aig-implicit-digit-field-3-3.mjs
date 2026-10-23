@@ -54,7 +54,7 @@ export function aig33PrepareImplicitGroups(result,rig,{
     d.actual3DJointXYZ.some(p=>p.length!==3||p.some(v=>!Number.isFinite(v))))
     fail('ACTUAL_JOINT_XYZ_REQUIRED_'+d.id);
    for(let j=0;j<d.phalanxCount;j++){
-    const radius=body*(hand?.0095:.012)*
+    const radius=body*(hand?.0072:.0088)*
      [1.18,1.03,1,.94,.79][d.index]*(1-.13*j);
     centerline.push({
      a:[...d.actual3DJointXYZ[j]],b:[...d.actual3DJointXYZ[j+1]],
@@ -68,11 +68,11 @@ export function aig33PrepareImplicitGroups(result,rig,{
   const root=rig.sourceAnchors[group];
   if(!root)fail('MISSING_SOURCE_HAND_FOOT_ROOT_'+group);
   const palmCenter=[...root.xyz];
-  if(hand)palmCenter[1]+=.016*body;
-  else palmCenter[2]-=.024*body;
+  if(hand)palmCenter[1]+=.013*body;
+  else palmCenter[2]-=.023*body;
   const palmRadius=hand?
-   [.077*body,.044*body,.024*body]:
-   [.080*body,.022*body,.053*body];
+   [.061*body,.026*body,.020*body]:
+   [.066*body,.015*body,.040*body];
   // Finite scene-aligned ray proxy box; surface geometry is SDF, not box.
   const samples=[...centerline.flatMap(l=>[l.a,l.b]),palmCenter];
   const biggest=Math.max(...centerline.map(l=>l.radius),
@@ -88,12 +88,13 @@ export function aig33PrepareImplicitGroups(result,rig,{
    realSourceAnchored:!!root,
    sourceDigitCount:5,sourcePhalanxCount:centerline.length,
    sourceDigitMeasured:false,
+   organicSDFProfileRevision:'RETAIN_FIVE_SEPARATE_FINGER_TIPS_WITH_COMPACT_PALM_V2',
    originalGeometryUnchanged:true,
    fieldRepresentation:'14_ANALYTIC_CAPSULE_SDFS_PLUS_PALM_ELLIPSOID',
    skinSurfaceDeterminedBy:'GPU_FRAGMENT_RAYMARCH_ONLY',
    rasterizationProxyTrianglesVisibleAsSkin:false,
    centerline,palmCenter,palmRadius,
-   blendingWidth:(hand?.014:.012)*body,
+   blendingWidth:(hand?.0055:.0045)*body,
    min,max,span,maxMarchSteps:modes[quality],
    estimatedSourceBodyUnits:body
   });
