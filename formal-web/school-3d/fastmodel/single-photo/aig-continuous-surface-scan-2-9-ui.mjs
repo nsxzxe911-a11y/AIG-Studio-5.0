@@ -363,12 +363,30 @@ export function installAIG29ContinuousScan({
    $('scan37-status').textContent='服裝暫時隔離：'+String(e.message||e)+
     '；已保留中性人體素模。';
   }
-  // Stage the full model and validate ownership before replacing live scene.
+  // Stage geometry and get a real GPU frame BEFORE swapping out the
+  // previous successful model. Failure/cancellation does not replace it.
   stability39.assertCurrent(token);
+  const oldCamera={
+   position:viewer.camera.position.clone(),target:viewer.controls.target.clone(),
+   near:viewer.camera.near,far:viewer.camera.far
+  };
+  let stageCommitted=false;
   try{
    viewer.scene.add(group);
    stability39.assertCurrent(token);
-   // Never reset scene, source GLBs, bone mixer, vault or textures.
+   const cameraFit=fitExistingViewer(viewer,group);
+   await new Promise(resolve=>requestAnimationFrame(()=>
+    requestAnimationFrame(resolve)));
+   stability39.assertCurrent(token);
+   if(viewer.renderer.getContext()?.isContextLost?.()||
+    viewer.renderer.info.render.triangles<=0)
+    throw Error('3D 渲染未提交有效面片；保留上次成功模型');
+   if(getImage()?.sha!==data.sourceSha256)
+    throw Error('照片來源已變更，拒絕寫入過期重建成果');
+   // Commit is synchronous: no source change can interleave during swap.
+   if(stagedWardrobe.result.outfitId!=='body-proxy')
+    wardrobe38.planWear('procedural:'+stagedWardrobe.result.outfitId);
+   record38Wear(stagedWardrobe.result.outfitId,true);
    const prev=overlay;
    overlay=group;scan=reconstruction;rendererSource=viewer;
    wardrobe37Layer=stagedWardrobe.layer;
@@ -381,7 +399,6 @@ export function installAIG29ContinuousScan({
      triangleCount:item.geometry.triangleCount
     })),sourcePhotoUnmodified:true,bodySourceMeshNeverRescanned:true,
     outfitsUsedAsSeparateMesh:true,sourceSha256:data.sourceSha256};
-   const cameraFit=fitExistingViewer(viewer,group);
    core36Proof={
     plan,stabilityBudget:resource39,vertexColourWork:{
      actualVerticesColoured:group.userData.core36Shaded.actualVerticesColoured,
@@ -397,10 +414,6 @@ export function installAIG29ContinuousScan({
    };
    lighting36Proof=apply36Lighting(viewer,group,
     $('scan36-light')?.value||'balanced');
-   disposeGroup(prev);
-   await new Promise(resolve=>requestAnimationFrame(()=>
-    requestAnimationFrame(resolve)));
-   stability39.assertCurrent(token);
    drawProof={
     realActiveWebGLContext:!viewer.renderer.getContext()?.isContextLost?.(),
     actualDrawCalls:viewer.renderer.info.render.calls,
@@ -422,6 +435,9 @@ export function installAIG29ContinuousScan({
     core36Proof.vertexColourWork.completedIdenticalKernelSlots+
     ' 個真著色分塊。工作槽非實體 CPU/GPU，亦非外觀驗收。':
     '顯示證據不足：請查看 WebGL／相機診斷；保留原來源與 GLB。';
+   // Only after completing actual visibility evidence may old geometry go.
+   stageCommitted=true;
+   disposeGroup(prev);
    proof();
    status('3.0 網格連通／封閉驗收 PASS；3.5 統一外觀引擎已建立真實 3D 曲面，採用 '+
     unified.selectedMode+'；照片 XY 輪廓平均誤差 '+
@@ -429,7 +445,19 @@ export function installAIG29ContinuousScan({
     '原照片色彩仍取自來源像素；臉／髮／服裝擬真與隱藏深度尚未通過，'+
     '不得宣稱 100% 相似或解除動畫外觀 Gate。');
   }catch(e){
-   if(overlay!==group)disposeGroup(group);
+   if(!stageCommitted){
+    // Roll back staged scene and camera; preserve the old model if it is
+    // still relevant to the selected photo.
+    disposeGroup(group);
+    if(overlay?.parent){
+     viewer.camera.position.copy(oldCamera.position);
+     viewer.controls.target.copy(oldCamera.target);
+     viewer.camera.near=oldCamera.near;
+     viewer.camera.far=oldCamera.far;
+     viewer.camera.updateProjectionMatrix();
+     viewer.controls.update();
+    }
+   }
    throw e;
   }
  };
