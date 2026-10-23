@@ -85,8 +85,7 @@ export function planAIGReal3DDual19200({
   registeredAlgorithms.some(m=>!AIG_REAL3D_METHODS.includes(m)))
   fail('INVALID_SOURCE_HARDWARE_OR_METHOD');
  // Algorithms are never declared present just because the UI has a label.
- const existing=sourceStats.sourceType==='indexed-scene'||
-  sourceStats.sourceType==='human-parts';
+ const existing=sourceStats.sourceType==='indexed-scene';
  const selected=method==='auto'?
   (existing?'existing-mesh':
    registeredAlgorithms.find(m=>m==='sdf')||
@@ -161,7 +160,7 @@ export async function executeAIGReal3DDual19200({
  source,renderer,method='auto',algorithmRegistry={},
  resolution='preview',mobile=false,hardwareConcurrency=2,
  deviceMemoryGB=null,recentFrameMs=null,signal=null,
- shouldAcceptGeometry=()=>true,
+ shouldAcceptGeometry=()=>true,drawingWorkerFactory=null,
  yieldControl=()=>new Promise(resolve=>setTimeout(resolve,0))
 }={}){
  const stats=inspectAIGReal3DSource(source);
@@ -194,11 +193,23 @@ export async function executeAIGReal3DDual19200({
    fail('ALGORITHM_NO_RENDERABLE_SCENE');
   scene=built.scene;
  }
- // The drawing kernel does REAL vertex/index validation, chunked by
- // allocation, yielding to input. 19,200 slots are accounting not loops.
- let inspected=0;
+ // If available, send a STRUCTURED COPY of real indexed positions to ONE
+ // actual browser Worker. GPU remains on the main thread. If unavailable,
+ // use cooperative bounded CPU batches on the main thread (no thread claim).
+ let inspected=0,workerProof=null;
  const nodes=scene.nodes;
- for(const node of nodes){
+ if(drawingWorkerFactory!==null){
+  if(typeof drawingWorkerFactory!=='function')
+   fail('CPU_WORKER_FACTORY_MUST_BE_FUNCTION');
+  workerProof=await drawingWorkerFactory({scene,plan,signal});
+  if(!workerProof||workerProof.actualWorkerThreadsUsed!==1||
+   workerProof.actualGpuContextsCreated!==0||
+   workerProof.actualSourceTrianglesInspected!==stats.realWorkUnits)
+   fail('REAL_DRAWING_WORKER_INTEGRITY_FAILED');
+  inspected=workerProof.actualSourceVerticesInspected;
+  metrics.drawingVisitedTriangles=workerProof.actualSourceTrianglesInspected;
+  metrics.drawingChunks=workerProof.realWorkChunks;
+ }else for(const node of nodes){
   const pos=node.mesh?.positions,idx=node.mesh?.indices;
   if(!Array.isArray(pos)||!Array.isArray(idx)||pos.length%3||
    idx.length%3||!pos.length||!idx.length)
@@ -222,7 +233,11 @@ export async function executeAIGReal3DDual19200({
   inspected+=verts;
  }
  metrics.drawingActualVerticesChecked=inspected;
- if(!shouldAcceptGeometry({scene,sourceStats:stats,plan,metrics}))
+ metrics.actualCpuWorkersUsed=workerProof?.actualWorkerThreadsUsed??0;
+ metrics.degenerateTriangles=workerProof?.degenerateTriangles??null;
+ metrics.visuallyContinuousHumanBodyCertified=false;
+ if(!shouldAcceptGeometry({scene,sourceStats:stats,plan,metrics,
+  workerProof}))
   fail('GEOMETRY_APPEARANCE_GATE_BLOCKED');
  if(wasAborted(signal))fail('CANCELLED_BEFORE_RENDER');
  // Second core is the existing real renderer, not an invented extra context.
