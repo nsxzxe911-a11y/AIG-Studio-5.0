@@ -349,7 +349,7 @@ $('inspect').addEventListener('click',async()=>{
      (evidence.geometricErrors??[]).join('、')+'。':
     (sourceReview.readyForHumanReferenceReview?
      '已具備人工外觀核對前置資料。':'來源或人體標記仍有 Gate 缺口。'))+
-   ' 自然人體／照片一比一始終 BLOCK。',true);
+   ' 自然人體／照片一比一始終 BLOCK。',nativeGeometryGatePASS);
  }catch(e){
   setStatus('BLOCK：'+(e?.message||String(e)));
   $('evidence').textContent='檢查未通過；已顯示的圖片不得作為完整證據。';
