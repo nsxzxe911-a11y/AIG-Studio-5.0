@@ -1,0 +1,29 @@
+# Real3D 3.4 | Source photo hand/foot silhouette evidence → actual 3.3 implicit SDF
+
+2026-10-23 (Asia/Taipei). User requested “下一項” after seeing the technical-but-ugly 3.3 non-triangulated SDF fingers/toes. The next implemented advance is not just more SDF smoothing: constrain those surfaces with ACTUAL photo-labelled separated fingertip / toe-tip pixels, and never invent hidden depth.
+
+## Continuation
+- Repo: https://github.com/nsxzxe911-a11y/AIG-Studio-5.0
+- Branch: `verify/real3d-true-world-movie-2-5-20261023`
+- Draft PR #43: https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/pull/43
+- Preserve 2.6 original RGBA, immutable photo SHA, 2.7 source mask, 3.0 one-piece SDF rest geometry, 3.1 real 16 joints, 3.2 twenty independently moving fingers/toes / 56 links, 3.3 GLSL fragment SDF skins, original GLB movie, CNC 3-6AX and Fanuc safety/0.001 Gate.
+- No automatic full photo → visually correct five digits from ANY photograph; photo must show 5 separately observed labelled protrusions. Otherwise BLOCKED and existing 3.3 SDF remains intact.
+
+## Committed real source
+- `aig-photo-digit-silhouette-3-4.mjs` (pure first-party): scan original 2.6 source image **RGBA and SHA** plus actual 2.7 class-ID pixel labels `leftHand=8/rightHand=9/leftFoot=12/rightFoot=13`. Find a distal scanline with **exactly five independently visible source runs** and non-background gaps, trace them down source pixels with bounded support, record actual tip XY and RGB. Missing, overlapping, side-on, or only arm/leg source yields proof `safeForGeometryConstraint:false`, ZERO “five observed fingertips”. Source has no measured depth; even positive 2D mask does not know real thumb identity.
+- `constrainAIG34DigitPoseToPhoto` applies only validated source-matching tips to a FRESH copy of 3.2 3D digit XYZ centerlines, modifying pixel-constrained X placement and individually observed protrusion-length, preserving the already independent articulated per-phalange joint bending. Original 3.2 GPU geometries, indices and original source RGBA are never mutated. Z depth remains INFERRED. Source mismatches or impossible projection snap are rejected, not hidden.
+- `aig-photo-digit-silhouette-3-4-ui.mjs`: actually binds 2.6 original photo + 2.7 real pixel mask; one-click scan all four groups, preview real source photo with overlaid proven tips, SHA and visibility per group; apply only when evidence exists; clear on photo/mask mutation. Distinguishes **STAGED_WAITING_3D** from **APPLIED_TO_ACTUAL_RENDERER**. No external cloud dependence.
+- `scene-runtime-studio.html/.mjs`: formal RGB Chinese UI panel, stable buttons, source SHA callback to existing Real3D 3.2/3.3 shared renderer, no new GL context.
+- `aig-20-digit-articulation-3-2-ui.mjs`: source-evidence callback to actually rebuild the current default GLSL3 implicit field and preserve all 20 finger/toe controls. Same 3.0 rest-body geometry and 3.1 pose hierarchy untouched. Selected closeup isolation stays focused after slider changes.
+- `tests/aig-photo-digit-silhouette-3-4.test.mjs`: deliberately SOURCE-labelled real five protrusions with separate blank gaps, observed tip RGBA and coordinates, unit test ensures 3D source geometry actually changes while original photo/rest geometry does NOT; true 4-finger missing case must BLOCK rather than fake fifth; SHA validation and projected displacement bounds.
+- `tests/aig-photo-digit-silhouette-3-4.real-browser.mjs`: phone/desktop existing source-photo → 2.7 → 3.0 → 3.1 → 3.2/3.3 real WebGL, then 3.4 detects NO valid source class hand or foot visible (source fixture only has arms/legs), legitimately produces 0/4 and refuses to apply. Other 3.3 GPU joints and visually non-black hand/toe fragment SDF must keep working. The positive five-observed-pixel geometry case is *numerical* so far; don't falsely claim it has a distinct user-photo positive browser screenshot.
+- Dedicated Gate `.github/workflows/aig-real3d-3-4-source-silhouette-gate.yml`; extended original three-project `.github/workflows/aig-shared-real3d-v1-3.yml` to require the 3.4 source evidence tests while retaining all original CNC and 2.5 movie release blockers.
+
+## Honest Gate / limitations
+- 3.3 SDF 20-digit photon ray-marching GPU screen technical Gate #39922094090 PASS with source SHA and non-black mobile/desktop screenshots, but still not photorealistic actual observed fingernails/skin morphology. This was the reliable previous point.
+- 3.4 first dedicated Actions run **#39925479277** started on `8a79b35f`; numerical source tip tests and formal web build got through and phone/desktop true Chromium step was still running at checkpoint. Later dedicated run **#39925746678** reflects stricter proof status callback. MUST inspect actual final result and artifacts. Do not claim 3.4 integrated phone/desktop PASS until completed/success.
+- Accuracy limit: 2D five-tip presence proves only PHOTO PROJECTION, not real 3D surface morphology, accurate identity of thumb/index, back depth, physical mm 1:1, skin texture, collision, printable mesh. Source segmentation human-seeded, not trained automatic general finger semantic neural model.
+- Runtime technical PASS and user-approved visual realism are separate. 3.0 facial/head/torso still a crude mesh. The wider three-project GitHub Release Gate has repeatedly been RED due to Real3D 2.5 desktop video encoder empty frames; do not waive. This branch is unmerged draft; Render formal website, native APK and EXE have not been redeployed/delivered.
+
+## Next
+- Improve detection for rotated/perspective fingers without inventing fifth from overlapping sources; add user-correctable actual-photo landmark edits and multi-angle match / true depth constraints with bounded reprojection residual, nail/knuckle and palmar web anatomy, GPU performance tests on real Adreno Android.
