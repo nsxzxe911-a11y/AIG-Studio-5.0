@@ -93,7 +93,7 @@ export function installAIGStage1DualAdultRuntime({
  let active=false,selected='male',currentView='front',model=null;
  let renderCount=0,session=0,lastAudit=null,proofState=null;
  let ratioEvidence=null,snapshotsByGender=new Map(),lastCameraPlan=null;
- let fourKBusy=false,last4KOutput=null;
+ let fourKBusy=false,last4KOutput=null,previousPreviewQuality=null;
  const captured4KURLs=[];
  const singleCore19200=planAIGStage1OneCore19200();
  const status=(text,blocked=false)=>{
@@ -229,6 +229,7 @@ export function installAIGStage1DualAdultRuntime({
   if(!viewer){
    viewer=await getSharedViewer();
    if(!viewer?.renderer||!viewer?.scene)error('SHARED_PHOTOVIEWER_NOT_READY');
+   previousPreviewQuality=viewer.adaptive4KMode??'off';
   }
   if(viewer.movieMode||viewer.reviewBusy)
    error('CANNOT_REPLACE_ACTIVE_RECORDING_OR_REVIEW');
@@ -460,6 +461,10 @@ export function installAIGStage1DualAdultRuntime({
   if(!active)return;
   active=false;session++;
   if(viewer&&priorFrame!==null)viewer.onAfterRender=priorFrame;
+  if(viewer&&previousPreviewQuality!==null){
+   try{viewer.setAdaptive4KQuality(previousPreviewQuality)}
+   catch{/* isolate this optional quality setting, preserve source scene */}
+  }
   priorFrame=null;
   if(model){
    stageScene.remove(model.object.root);
@@ -473,6 +478,7 @@ export function installAIGStage1DualAdultRuntime({
   }
   stageScene=null;stageCamera=null;viewer=null;
   snapshotsByGender=new Map();ratioEvidence=null;lastCameraPlan=null;
+  previousPreviewQuality=null;
   status('已退出 Stage 1 基礎人體，原始 3D 工作場景仍保留。');
   publish();
  };
