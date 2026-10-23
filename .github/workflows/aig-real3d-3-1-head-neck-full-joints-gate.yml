@@ -1,0 +1,55 @@
+name: AIG Real3D 3.1 Head Neck Independent 16 Joint and 180 Camera Gate
+on:
+  push:
+    branches:
+      - verify/real3d-true-world-movie-2-5-20261023
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-articulated-view-3-1*'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-articulated-view-3-1*'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-continuous-surface-scan-2-9-ui.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.*'
+      - '.github/workflows/aig-real3d-3-1-head-neck-full-joints-gate.yml'
+  workflow_dispatch:
+jobs:
+  real-head-neck-joint-source-and-camera:
+    name: Real neck vs head source vertices, 16 joints and actual phone/desktop back/top/sole WebGL
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Source-preserving 16 joint deformation and orbit numerical gate
+        run: |
+          node --check aig-articulated-view-3-1.mjs
+          node --check aig-articulated-view-3-1-ui.mjs
+          node --check scene-runtime-studio.mjs
+          node --check tests/aig-articulated-view-3-1.real-browser.mjs
+          node --test tests/aig-articulated-view-3-1.test.mjs
+          node --test tests/aig-fused-manifold-surface-3-0.test.mjs
+          node --test tests/aig-continuous-surface-scan-2-9.test.mjs
+      - name: True formal WebGL build, preserve original source and movie
+        run: |
+          npm run build
+          test -s dist/scene-runtime-studio.html
+          test -s dist/scene-runtime-studio.js
+          node --check dist/scene-runtime-studio.js
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Real Chromium mobile desktop head neck + body pose and ±180 camera / top sole
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig31-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-articulated-view-3-1.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-3-1-Actual-HeadNeck-FullJoints-180-TopSole-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-3-1-head-neck-body-orbit/
+          if-no-files-found: warn
