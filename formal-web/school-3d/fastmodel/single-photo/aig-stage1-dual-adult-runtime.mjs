@@ -176,6 +176,21 @@ export function installAIGStage1DualAdultRuntime({
    observedFourViewSnapshotCount:(snapshotsByGender.get(selected)||[]).length,
    cameraFitMeasurements:lastCameraPlan
   };
+  const ratio=ratioEvidence?.proportions;
+  const statusText=ratio?[
+   '共用核心：19,200 邏輯工作槽（不是 19,200 個實體核心）',
+   '頭身比 '+ratio.headToBodyRatio.toFixed(3),
+   '肩寬／頭寬 '+ratio.shoulderToHeadRatio.toFixed(3),
+   '骨盆／肩寬 '+ratio.hipToShoulderRatio.toFixed(3),
+   '大腿／小腿 '+ratio.thighToCalfRatio.toFixed(3),
+   '左右骨架 '+(ratioEvidence.skeleton?.boneAlignmentNumericContractPASS?'數值通過':'待修'),
+   '入鏡 '+((ratioEvidence.camera?.actualProjectedBodyHeightRatio??0)*100).toFixed(1)+'%',
+   '畫布 '+(ratioEvidence.viewport?.viewportNumericContractPASS?'比例一致':'BLOCK'),
+   '四視角 '+(snapshotsByGender.get(selected)||[]).length+'/4',
+   '外觀仍為 BLOCK'
+  ].join('｜'):'目前沒有可以驗證的人體比例或 WebGL 證據。';
+  if(el('stage1-ratio-status'))
+   el('stage1-ratio-status').textContent=statusText;
   el('stage1-proof').textContent=JSON.stringify(proofState,null,2);
   return proofState;
  };
