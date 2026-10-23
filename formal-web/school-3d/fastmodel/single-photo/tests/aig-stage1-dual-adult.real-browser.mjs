@@ -76,6 +76,11 @@ try{
     assert.equal(state.realAnatomyRatioGate.skeleton.boneAlignmentNumericContractPASS,true);
     assert.equal(state.realAnatomyRatioGate.camera.framingNumericContractPASS,true);
     assert.equal(state.realAnatomyRatioGate.viewport.viewportNumericContractPASS,true);
+    assert.equal(state.preview4K.activeMode,'adaptive');
+    assert.equal(state.preview4K.previewPlan.gpuLimitsRespected,true);
+    assert.equal(state.preview4K.oneSharedRenderer,true);
+    assert.ok(state.preview4K.actualCanvasWidth>100);
+    assert.ok(state.preview4K.actualCanvasHeight>100);
     assert.equal(state.realAnatomyRatioGate.stage1ReleasePASS,false);
     assert.equal(state.garmentType,
      gender==='male'?'fitted-briefs':'fitted-one-piece');
