@@ -50,7 +50,8 @@ export function installAIG29ContinuousScan({
    originalPhotoAndGLBPreserved:true,
    CNC5AXSurfaceNormalPath:probeLines?.userData?.inspection?.sampleCount??0,
    CNCMachineNeverMoved:true,
-   simulatedProbeNotARealEcho:false,
+   actualSensorEchoMeasured:false,
+   geometricVirtualProbeOnly:true,
    webGLDrawEvidence:drawProof,
    oneToOneRealWorldFullBodyCertified:false,
    releaseAllowed:false
@@ -66,13 +67,13 @@ export function installAIG29ContinuousScan({
   return {width:a.width,height:a.height,sourceSha256:a.sha,
    pixels:a.original.data,labels:b.segmentation.labels};
  };
- function colorForSourceXYZ(s,data,i,raw){
+ function colorForSourceXYZ(s,data,i,raw,bodyHeightUnits){
   const k=i*3,x=s.positions[k],y=s.positions[k+1],z=s.positions[k+2];
   const {width,height,labels,pixels}=data;
   const projectedX=Math.max(0,Math.min(width-1,Math.round(
-   x/scan.bodyHeightUnits*height+(width-1)/2)));
+   x/bodyHeightUnits*height+(width-1)/2)));
   const projectedY=Math.max(0,Math.min(height-1,Math.round(
-   height-1-y/scan.bodyHeightUnits*height)));
+   height-1-y/bodyHeightUnits*height)));
   const lookup=(projectedY*width+projectedX),front=z>=0;
   const observed=front&&labels[lookup]===s.sourceLabelId&&
    pixels[lookup*4+3]>128;
@@ -103,7 +104,7 @@ export function installAIG29ContinuousScan({
    geometry.setIndex(new THREE.BufferAttribute(shell.indices,1));
    const vertexColours=new Float32Array(shell.positions.length);
    for(let i=0;i<shell.vertexCount;i++){
-    const col=colorForSourceXYZ(shell,data,i,shell.sourceVisibleRGB);
+    const col=colorForSourceXYZ(shell,data,i,shell.sourceVisibleRGB,reconstruction.bodyHeightUnits);
     vertexColours.set(col,i*3);
    }
    geometry.setAttribute('color',new THREE.BufferAttribute(vertexColours,3));
