@@ -42,7 +42,7 @@ export function installAIG29ContinuousScan({
    realFusedSingleManifold:scan?.manifoldAudit?.closedManifold??false,
    visualAppearanceReleasePassed:scan?.aestheticHumanReviewPassed??false,
    visualReleaseBlocker:scan?.visualReleaseGate??'NOT_EVALUATED',
-   3DPrintPhysicalScaleCertified:scan?.production3DPrintApproved??false,
+   physical3DPrintScaleCertified:scan?.production3DPrintApproved??false,
    actualSourceManifoldAudit:scan?.manifoldAudit??null,
    unifiedSDFGridCells:scan?.gridCellCount??null,
    userSelectedSmoothFusionWidth:scan?.signedDistanceFusionWidth??null,
