@@ -1,0 +1,52 @@
+name: AIG Real3D 2.9 True Curved Surface and Virtual Five-Axis Gate
+on:
+  push:
+    branches:
+      - verify/real3d-true-world-movie-2-5-20261023
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-continuous-surface-scan-2-9*'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-continuous-surface-scan-2-9*'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.*'
+      - '.github/workflows/aig-real3d-2-9-continuous-surface-five-axis-gate.yml'
+  workflow_dispatch:
+jobs:
+  true-curved-geometry:
+    name: Source-labelled head-to-foot continuous XYZ surface, virtual CNC 5AX probes phone desktop
+    runs-on: ubuntu-latest
+    timeout-minutes: 17
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Source-constrained curved triangle mesh, normals, 5AX A/B inspect without fake 1:1
+        run: |
+          node --check aig-continuous-surface-scan-2-9.mjs
+          node --check aig-continuous-surface-scan-2-9-ui.mjs
+          node --check tests/aig-continuous-surface-scan-2-9.real-browser.mjs
+          node --test tests/aig-continuous-surface-scan-2-9.test.mjs
+          node --check scene-runtime-studio.mjs
+      - name: Same formal WebGL renderer and original source/GLB/CNC bundles
+        run: |
+          npm run build
+          test -s dist/scene-runtime-studio.html
+          test -s dist/scene-runtime-studio.js
+          node --check dist/scene-runtime-studio.js
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: ACTUAL PHONE AND DESKTOP screenshot source curved XYZ and 5-axis normal probe
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig29-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-continuous-surface-scan-2-9.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-2-9-Actual-Curved-3D-WebGL-5AX-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-2-9-true-surface-five-axis/
+          if-no-files-found: warn
