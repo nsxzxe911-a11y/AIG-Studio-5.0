@@ -1,6 +1,6 @@
 /**
  * Real3D 3.7 — one shared reconstruction/render contract, scalable identical
- * LOGICAL compute slots (120 → 1200 → 2400 → 12000 → ...). Not physical cores; do not
+ * LOGICAL compute slots (120 → 1200 → 2400 → 12000 → 19200 → ...). Not physical cores; do not
  * create 120 WebGL contexts. Bounded, cooperative vertex work keeps one
  * source photo / same renderer and yields between batches.
  *
@@ -12,6 +12,7 @@ export const AIG36_SCHEMA='AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS';
 export const AIG36_SLOT_LIMIT=120000;
 export const AIG37_SLOT_PRESETS=Object.freeze([120,1200,2400,4800,9600,12000,19200,38400,76800,120000]);
 export const AIG38_FIXED_WORK_PROFILE=12000;
+export const AIG310_FIXED_WORK_PROFILE=19200;
 /** Explicitly separate installed algorithms from requested future features. */
 export const AIG36_CAPABILITY_STATUS=Object.freeze({
  oneSharedPBRRenderer:'IMPLEMENTED_EXISTING_VIEWER',
@@ -41,7 +42,7 @@ const fail=s=>{throw Error('AIG36_'+s)};
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const finite=(n)=>typeof n==='number'&&Number.isFinite(n);
 export function planAIG36UnifiedCore({
- requestedLogicalSlots=AIG38_FIXED_WORK_PROFILE,hardwareConcurrency=2,deviceMemoryGb=null,
+ requestedLogicalSlots=AIG310_FIXED_WORK_PROFILE,hardwareConcurrency=2,deviceMemoryGb=null,
  mobile=false,rayTracingRequested=false,gpuContextAvailable=true
 }={}){
  if(!Number.isInteger(requestedLogicalSlots)||requestedLogicalSlots<1||
@@ -58,7 +59,9 @@ export function planAIG36UnifiedCore({
   schema:AIG36_SCHEMA,kernelImplementationCount:1,
   logicalSlotCapacity:AIG36_SLOT_LIMIT,
   logicalSlotsConfigured:requestedLogicalSlots,
-  activeProfile:requestedLogicalSlots===AIG38_FIXED_WORK_PROFILE?
+  activeProfile:requestedLogicalSlots===AIG310_FIXED_WORK_PROFILE?
+   'REAL3D_19200_LOGICAL_WORK_SLOTS':
+   requestedLogicalSlots===AIG38_FIXED_WORK_PROFILE?
    'REAL3D_12000_LOGICAL_WORK_SLOTS':'CUSTOM_LOGICAL_WORK_SLOTS',
   slotPresets:AIG37_SLOT_PRESETS,
   schedulingLanes,realWebWorkersSpawned:0,
@@ -153,6 +156,7 @@ export async function colourAIG36VertexShards({
   slotCountLimitedByActualVertices:count<plan.logicalSlotsConfigured,
   estimatedTimeSavingNotProven:true,
   no12000PhysicalCoreClaim:true,
+  no19200PhysicalCoreClaim:true,
   hardwareSpeedupFromSlotsVerified:false,
   trueParallelCPUWorkers:0,sourcePixelsAltered:false,
   rendererContextsCreated:0
