@@ -97,6 +97,12 @@ try{
     'AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS');
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.logicalSlotsConfigured,19200);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.kernelImplementationCount,1);
+   assert.equal(proof.real310OneKernel19200LogicalWorkProfile.configuredLogicalSlots,19200);
+   assert.equal(proof.real310OneKernel19200LogicalWorkProfile.actualDispatchedVertexShards,
+    Math.min(19200,proof.real310OneKernel19200LogicalWorkProfile.actualSourceVertices));
+   assert.equal(proof.real310OneKernel19200LogicalWorkProfile.physical19200CpuGpuCoresProven,false);
+   assert.equal(proof.real310OneKernel19200LogicalWorkProfile.sameSharedWebGLContext,true);
+
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.realWebWorkersSpawned,0);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.plan.sharedWebGLContextCount,1);
    assert.equal(proof.unifiedReal36OneKernel120LogicalSlots.vertexColourWork.completedIdenticalKernelSlots,
