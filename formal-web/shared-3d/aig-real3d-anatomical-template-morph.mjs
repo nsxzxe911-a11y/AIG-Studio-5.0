@@ -172,7 +172,7 @@ function distToSegment(p,a,b){
  return Math.hypot(p[0]-a[0]-dx*t,p[1]-a[1]-dy*t);
 }
 function gauss(x,y,cx,cy,rx,ry){
- return Math.exp(-((x-cx)/rx)**2-((y-cy)/ry)**2);
+ return Math.exp(-(((x-cx)/rx)**2+((y-cy)/ry)**2));
 }
 function depth(x,y,edgeDistance,gender,face){
  let thickness=y>.86?.044:y>.80?.058:
