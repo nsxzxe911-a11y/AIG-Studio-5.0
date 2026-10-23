@@ -194,6 +194,9 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <button type="button" id="vision28-infer">02｜用已學權重自動辨識目前 2.6 照片</button>
 <button type="button" id="vision28-evaluate">03｜另一張已審核 2.7 照片進行跨照片 IoU 驗證</button>
 <button type="button" id="vision28-save">04｜另存真正學習的權重＋來源 SHA 至本機素材庫</button>
+<label>本機已保存的 2.8 模型<select id="vision28-saved-model"><option value="">尚未整理模型索引</option></select></label>
+<button type="button" id="vision28-refresh">重新整理本機模型索引</button>
+<button type="button" id="vision28-restore">從本機素材庫回讀來源模型與權重 SHA</button>
 <label>重新使用已保存的模型 JSON（原權重 SHA 驗證）
 <input id="vision28-model-file" type="file" accept=".json,application/json" style="display:block;max-width:100%;padding:10px;color:#d4ecfb"></label>
 <button type="button" id="vision28-import">匯入已訓練模型與權重 SHA（不重新猜測身材）</button>
