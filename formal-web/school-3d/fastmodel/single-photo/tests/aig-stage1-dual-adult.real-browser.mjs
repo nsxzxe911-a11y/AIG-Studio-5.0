@@ -58,6 +58,15 @@ try{
     assert.equal(state.noHairOrSchoolClothing,true);
     assert.equal(state.fullSkinnedBlendWeightsVerified,false);
     assert.equal(state.stage1PASS,false);
+    assert.equal(state.canonicalUnit,'mm');
+    assert.equal(state.precisionMm,.001);
+    assert.equal(state.coordinateMmGate.canonicalMillimeterGatePASS,true);
+    assert.equal(state.heightMm,gender==='male'?1780:1680);
+    assert.equal(state.realAnatomyRatioGate.canonicalMillimeters.canonicalMillimeterGatePASS,true);
+    assert.equal(state.realAnatomyRatioGate.dimensionsMm.bodyHeight,state.heightMm);
+    assert.equal(state.realAnatomyRatioGate.threeFixes.actualPelvisMeshSurfaceUsed,true);
+    assert.equal(state.realAnatomyRatioGate.threeFixes.fullBodyCameraAutofitPassed,true);
+    assert.equal(state.realAnatomyRatioGate.threeFixes.freshFourViewActualPngShaVerified,false);
     assert.equal(state.oneSingleCore19200.logicalSlotsConfigured,19200);
     assert.equal(state.oneSingleCore19200.sharedWebGLRendererCount,1);
     assert.equal(state.oneSingleCore19200.extraWebGLContextsCreated,0);
@@ -98,6 +107,9 @@ try{
     assert.equal(await page.locator('[data-stage1-gallery-gender="'+gender+'"] img').count(),4);
     const stageComplete=JSON.parse(await page.locator('#stage1-proof').textContent());
     assert.equal(stageComplete.observedFourViewSnapshotCount,4);
+    assert.equal(stageComplete.realAnatomyRatioGate.threeFixes.freshFourViewActualPngShaVerified,true);
+    assert.equal(stageComplete.realAnatomyRatioGate.dimensionsMm.bodyHeight,
+     gender==='male'?1780:1680);
     assert.equal(stageComplete.realAnatomyRatioGate.numericAndEvidenceGatePASS,true,
      JSON.stringify(stageComplete.realAnatomyRatioGate.numericAndEvidenceViolations));
     assert.equal(stageComplete.realAnatomyRatioGate.stage1ReleasePASS,false);
@@ -115,6 +127,12 @@ try{
     twoIndependentModelProfiles:true,
     maleGarment:'fitted-briefs',femaleGarment:'fitted-one-piece',
     originalGLBSourcePreserved:true,
+    physicalUnits:'mm',precisionMm:.001,
+    maleHeightMm:1780,femaleHeightMm:1680,
+    conversionToWebGL:'explicit 1mm=0.001 world meters; preserve renderer',
+    fixedThreeIssues:['actual pelvis mesh silhouette width in mm',
+     'full-body auto camera framing with distance mm',
+     'fresh SHA for all four camera snapshots after each model load'],
     trueWebGLCanvasSnapshots:output,
     userVisualReviewPassed:false,
     stage1FinalPASS:false
