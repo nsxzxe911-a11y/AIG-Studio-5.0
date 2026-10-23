@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport"
+content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AIG Real3D｜咖啡色人體渲染 V1</title>
+<style>
+:root{color-scheme:dark;font:14px/1.5 system-ui,"Microsoft JhengHei",sans-serif;background:#020407;color:#e4f4ff}
+*{box-sizing:border-box}body{margin:0;padding:14px;background:radial-gradient(ellipse at 65% -20%,#192955 0,transparent 55%),#020407}
+h1{font-size:23px;margin:3px 0 5px}p{color:#a9c9e0;margin:7px 0}.sub{color:#f9dd9d}.shell{max-width:1420px;margin:auto}
+.panel{border:1px solid #355a83;background:#07111b;border-radius:13px;padding:13px;margin:12px 0}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid #44c8ef;border-radius:9px;min-height:44px;padding:7px 13px;background:linear-gradient(105deg,#095975b8,#332e7cb9,#9b2c9c88);box-shadow:inset 0 0 12px #24d4ff24}
+button:disabled{opacity:.5;cursor:not-allowed}input{min-height:40px;max-width:100%}
+input[type=number]{width:115px;padding:7px;background:#091b2d;border:1px solid #356886;border-radius:7px}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
+code{color:#a4d8ff;overflow-wrap:anywhere}
+#gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+figure{border:1px solid #2a6c85;border-radius:11px;padding:9px;margin:0;background:#06111f;min-width:0}
+figure img{width:100%;height:400px;max-height:52vh;object-fit:contain;display:block;background:#020407}
+figcaption{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:9px}
+a{color:#7fe7fb}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:290px;overflow-y:auto;font-size:11px}
+.status{color:#ffdcb6;min-height:27px;padding:9px;background:#38261350;border:1px solid #8f683d;border-radius:8px}
+.status[data-ready=true]{background:#0a302933;border-color:#326f64;color:#a8fff2}
+canvas{width:220px;height:330px;display:block;position:absolute;left:-10000px;top:0;pointer-events:none;opacity:0}
+kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
+</style></head><body><main class="shell">
+<h1>AIG Real3D｜黑線輪廓 × 咖啡色 × 體積陰影 × 局部高光</h1>
+<p>先看<strong>真幾何輪廓</strong>，再看法線與材質，最後才能開電影炫光。此檢查器與正式 RGB 首頁／CNC 無關。</p>
+<p class="sub">注意：現有共享 WebGL 沒有 Bloom 後處理。GLB 原始幾何、膨脹比例、相機透視和材質高光必須分開找原因。舊假人體未獲核准。</p>
+<section class="panel">
+<div class="row">
+<label>本機 GLB 模型（不傳伺服器） <input id="model-file" type="file" accept=".glb,model/gltf-binary"></label>
+<label>實測身高 mm <input id="body-height" type="number" min="900" max="2200" step="1" value="1680"></label>
+<button id="inspect" type="button">開始四層真 GPU 渲染</button>
+</div>
+<p>四個固定相機角度：正面、側面、背面、45°。同一來源的四種照明模式：LIT、SILHOUETTE、NORMALS、ALBEDO。</p>
+<div id="status" class="status" role="status" aria-live="polite">未匯入模型。外觀驗收 BLOCK。</div>
+</section>
+<section class="panel"><h2>真實 3D 來源比例證據</h2><pre id="evidence">尚無來源。</pre></section>
+<section class="panel"><h2>真正 WebGL 畫面證據（不是 AI 示意圖）</h2><div id="gallery"></div></section>
+<canvas id="native-webgl" width="540" height="960"></canvas>
+</main><script type="module" src="./aig-real3d-human-brown-render-lab.mjs"></script></body></html>
