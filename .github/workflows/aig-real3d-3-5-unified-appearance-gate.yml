@@ -1,4 +1,4 @@
-name: AIG Real3D 3.15 Geometry-First Heroine Three-View Rendering Gate
+name: AIG Real3D 3.16 Mandatory Per-Stage Real WebGL Snapshot Gate
 on:
   push:
     branches:
@@ -15,6 +15,8 @@ on:
       - 'formal-web/school-3d/fastmodel/single-photo/aig-triangle-contact-3-14.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-heroine-render-review-3-15.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-heroine-render-review-3-15.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage-snapshot-gate-3-16.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage-snapshot-gate-3-16.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-triangle-intersection-audit-3-14.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-heroine-authority-3-14.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-heroine-hair-silhouette-3-14.mjs'
@@ -69,6 +71,8 @@ jobs:
           node --check aig-triangle-contact-3-14.mjs
           node --check aig-heroine-render-review-3-15.mjs
           node --test tests/aig-heroine-render-review-3-15.test.mjs
+          node --check tests/aig-stage-snapshot-gate-3-16.mjs
+          node --test tests/aig-stage-snapshot-gate-3-16.test.mjs
           node --check aig-triangle-intersection-audit-3-14.mjs
           node --check aig-heroine-authority-3-14.mjs
           node --check aig-heroine-hair-silhouette-3-14.mjs
@@ -137,9 +141,11 @@ jobs:
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           node tests/aig-unified-appearance-3-5.real-browser.mjs
+          test -s artifacts/aig-real3d-3-5-unified-appearance/phone-stage-snapshots-MANIFEST.json
+          test -s artifacts/aig-real3d-3-5-unified-appearance/desktop-stage-snapshots-MANIFEST.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: AIG-Real3D-3-5-SourceXY-Phone-Desktop-Appearance
+          name: AIG-Real3D-3-16-Per-Stage-Phone-Desktop-Actual-WebGL-Snapshots
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-3-5-unified-appearance/
           if-no-files-found: warn
