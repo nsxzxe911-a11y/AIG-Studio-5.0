@@ -5,7 +5,9 @@ on:
       - verify/real3d-scan-native-anatomy-gate-20261024
     paths:
       - 'formal-web/shared-3d/aig-real3d-scan-native-*'
+      - 'formal-web/shared-3d/aig-real3d-glb-native-*'
       - 'formal-web/shared-3d/tests/aig-real3d-scan-native-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-glb-native-*'
       - '.github/workflows/aig-real3d-scan-native-gate.yml'
   pull_request:
     paths:
@@ -26,9 +28,11 @@ jobs:
       - name: Real source parser syntax and Node tests
         run: |
           node --check formal-web/shared-3d/aig-real3d-scan-native-mesh.mjs
+          node --check formal-web/shared-3d/aig-real3d-glb-native-mesh.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-glb-native-mesh.real-browser.mjs
           node --check formal-web/shared-3d/aig-real3d-scan-native-lab.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-scan-native-mesh.real-browser.mjs
-          node --test formal-web/shared-3d/tests/aig-real3d-scan-native-mesh.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-scan-native-mesh.test.mjs formal-web/shared-3d/tests/aig-real3d-glb-native-mesh.test.mjs
       - name: Preserve AIG RGB homepage CNC and retired candidate state
         run: |
           grep -q '3ax-nc-workbench.html' formal-web/aig-new-home.html
@@ -58,10 +62,14 @@ jobs:
             sleep 1
           done
           node formal-web/shared-3d/tests/aig-real3d-scan-native-mesh.real-browser.mjs
+          node formal-web/shared-3d/tests/aig-real3d-glb-native-mesh.real-browser.mjs
           test -s artifacts/aig-real3d-scan-native-pipeline-fixture-only/manifest.json
+          test -s artifacts/aig-real3d-glb-native-synthetic-only/manifest.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: AIG-REAL3D-SCAN-NATIVE-SYNTHETIC-PIPELINE-QA-NOT-HUMAN-UNAPPROVED
-          path: artifacts/aig-real3d-scan-native-pipeline-fixture-only/
+          path: |
+            artifacts/aig-real3d-scan-native-pipeline-fixture-only/
+            artifacts/aig-real3d-glb-native-synthetic-only/
           if-no-files-found: warn
