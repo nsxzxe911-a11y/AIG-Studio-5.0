@@ -67,10 +67,14 @@ function jointAnchors(pts){
   rightArm=centroid(pts,p=>p.label===7||p.label===9),
   leftLeg=centroid(pts,p=>p.label===10||p.label===12),
   rightLeg=centroid(pts,p=>p.label===11||p.label===13);
- if(!skull||!neck||!torso||!leftArm||!rightArm||!leftLeg||!rightLeg)
-  fail('REVIEWED_HEAD_NECK_TORSO_TWO_ARMS_TWO_LEGS_REQUIRED');
+ if(!skull||!neck||!torso)
+  fail('REVIEWED_VISIBLE_HEAD_NECK_TORSO_REQUIRED');
+ // A head/upper-body-only photo can still have a real source-constrained
+ // head-neck rig. Absent arms/legs remain UNAVAILABLE, not guessed.
+ // They become independently movable only after actual per-class source
+ // regions exist, with their provenance disclosed.
  if(!(skull.y>neck.y&&neck.y>torso.minY&&
-  leftLeg.y<torso.y&&rightLeg.y<torso.y))
+  (!leftLeg||leftLeg.y<torso.y)&&(!rightLeg||rightLeg.y<torso.y)))
   fail('ACTUAL_SOURCE_ANATOMY_VERTICAL_ORDER_INVALID');
  // All pivots constrained to visible source geometry; NOT tracked
  // or physically measured skeleton joint centers.
@@ -85,11 +89,16 @@ function jointAnchors(pts){
  };
  const setSide=(prefix,arm,leg)=>{
   const s=prefix==='left'?-1:1;
-  pivots[prefix+'Shoulder']=[arm.x,arm.maxY-.035,arm.z];
-  pivots[prefix+'Elbow']=[arm.x+s*.004,arm.minY+.46*(arm.maxY-arm.minY),arm.z];
-  pivots[prefix+'Hip']=[leg.x,leg.maxY+.016,leg.z];
-  pivots[prefix+'Knee']=[leg.x,leg.minY+.54*(leg.maxY-leg.minY),leg.z];
-  pivots[prefix+'Ankle']=[leg.x,leg.minY+.13*(leg.maxY-leg.minY),leg.z];
+  if(arm){
+   pivots[prefix+'Shoulder']=[arm.x,arm.maxY-.035,arm.z];
+   pivots[prefix+'Elbow']=[arm.x+s*.004,
+    arm.minY+.46*(arm.maxY-arm.minY),arm.z];
+  }
+  if(leg){
+   pivots[prefix+'Hip']=[leg.x,leg.maxY+.016,leg.z];
+   pivots[prefix+'Knee']=[leg.x,leg.minY+.54*(leg.maxY-leg.minY),leg.z];
+   pivots[prefix+'Ankle']=[leg.x,leg.minY+.13*(leg.maxY-leg.minY),leg.z];
+  }
  };
  setSide('left',leftArm,leftLeg);setSide('right',rightArm,rightLeg);
  return {pivots,skull,neck,torso,leftArm,rightArm,leftLeg,rightLeg};
@@ -157,8 +166,7 @@ export function makeAIG31HeadBodyRig(fused){
   for(const p of pts)if(jointWeight(joint,p,anchors)>.01)count++;
   affected[joint]=count;
  }
- for(const key of ['headYaw','neckYaw','leftShoulder','rightShoulder',
-  'leftHip','rightHip'])
+ for(const key of ['headYaw','neckYaw'])
   if(affected[key]<15)fail('SOURCE_VERTEX_REGION_MISSING_'+key);
  return {
   schema:AIG31_SCHEMA,sourceSha256:fused.sourceSha256,
@@ -185,6 +193,8 @@ export function poseAIG31FusedMesh(rig,angles={}){
   if(!Object.hasOwn(JOINTS,name)||!Number.isFinite(degree)||
    degree<JOINTS[name].min||degree>JOINTS[name].max)
    fail('JOINT_RANGE_LIMIT_OR_UNKNOWN_JOINT_'+name);
+  if(degree!==0&&!rig.anchorMetadata.pivots[name])
+   fail('JOINT_UNAVAILABLE_IN_SOURCE_LABELS_'+name);
  }
  const pose=Object.fromEntries(Object.keys(JOINTS).map(k=>[k,angles[k]??0]));
  const positions=new Float32Array(rig.restPositions),affected={};
