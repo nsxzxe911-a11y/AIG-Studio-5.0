@@ -34,23 +34,23 @@ small{display:block;overflow-wrap:anywhere;color:#a1c9d5;margin-top:6px}
 <div><section>
 <h2>來源網格 · 獨立驗證，不自動產生假人</h2>
 <canvas id="source-canvas" width="1024" height="620" aria-label="實際來源網格共享 WebGL 檢查視窗"></canvas>
-<p class="warn">本輪不用 SDF、Metaball、Template Morph 或 Subdivision 當正式人體。只能讀取實際來源 OBJ 頂點與面，顯示多角度幾何，不聲稱來源一定是真人掃描或照片 1:1。檔案僅在本機瀏覽器讀取；沒有上傳至伺服器。</p>
+<p class="warn">本輪不用 SDF、Metaball、Template Morph 或 Subdivision 當正式人體。直接讀取實際來源 OBJ 或 GLB 頂點與面，顯示多角度幾何，不聲稱來源一定是真人掃描或照片 1:1。檔案僅在本機瀏覽器讀取；沒有上傳至伺服器。</p>
 </section><section><h2>正面／側面／背面／斜側面｜真正來源網格 GPU 對照</h2>
 <div id="gallery"></div></section></div>
 <aside><section>
 <h2>本機來源匯入 · Stage 1 BLOCK</h2>
-<label for="source-obj">原始 3D 人體網格 OBJ</label>
-<input id="source-obj" type="file" accept=".obj">
+<label for="source-obj">原始 3D 人體網格 OBJ／GLB（本機，不上傳）</label>
+<input id="source-obj" type="file" accept=".obj,.glb">
 <label for="source-landmarks">解剖標記 JSON（可選；缺少仍無法通過解剖 Gate）</label>
 <input id="source-landmarks" type="file" accept=".json">
 <label for="source-height">來源實際測量身高（mm）</label>
 <input id="source-height" type="number" min="900" max="2200" step="1" value="1680">
 <label for="up-axis">來源向上軸</label>
 <select id="up-axis"><option value="Y">Y-Up</option><option value="Z">Z-Up</option></select>
-<button id="load-source" type="button">解析真 OBJ → 解剖檢查 → 四視角 GPU</button>
+<button id="load-source" type="button">解析 OBJ／GLB 真網格 → 四視角 GPU</button>
 <p id="status" role="status">尚無可信來源，正式人體外觀 BLOCK。</p>
 <pre id="proof" aria-label="實際來源 SHA、拓樸、解剖及 GPU 檢查">沒有來源檔，沒有宣稱 PASS 的證據。</pre>
-<p>本頁不變更 HOME／CAD／CAM／3AX～6AX／NC，也不部署為正式人體。即使幾何通過，仍須來源權利確認、臉／五指／腳掌目視、照片相似度與實際骨架測試。</p>
+<p>GLB 目前支援靜態基礎網格與節點 TRS；尚未還原原始材質貼圖、骨架動畫與 Morph，所以不能宣稱完整擬真人物渲染。</p><p>本頁不變更 HOME／CAD／CAM／3AX～6AX／NC，也不部署為正式人體。即使幾何通過，仍須來源權利確認、臉／五指／腳掌目視、照片相似度與實際骨架測試。</p>
 </section></aside>
 </main>
 <script type="module" src="./aig-real3d-scan-native-lab.mjs"></script>
