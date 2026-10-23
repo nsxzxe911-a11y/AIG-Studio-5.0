@@ -124,6 +124,21 @@ function makeSurface(profile,width,height,{bodyHeightUnits,depthRatio,radialSegm
    // outward facing triangle orientation
    indices.push(a,b,c,b,d,c);
   }
+ // Both section ends must be sealed. Unlike a flat screen card, this
+ // represents a finite 3D interior surface. Duplicate cap vertices would
+ // create non-manifold seams; index the existing ring instead.
+ const topCenter=positions.length/3,top=interpolate(profile.rows,profile.top);
+ positions.push((top.mid-(width-1)/2)/height*bodyHeightUnits,
+  ((height-1-profile.top)/height)*bodyHeightUnits,0);
+ const bottomCenter=positions.length/3,bot=interpolate(profile.rows,profile.bottom);
+ positions.push((bot.mid-(width-1)/2)/height*bodyHeightUnits,
+  ((height-1-profile.bottom)/height)*bodyHeightUnits,0);
+ for(let k=0;k<radialSegments;k++){
+  const next=(k+1)%radialSegments;
+  indices.push(topCenter,ringPoints[0][next],ringPoints[0][k]);
+  const last=ringPoints[ringPoints.length-1];
+  indices.push(bottomCenter,last[k],last[next]);
+ }
  const {normals,zeroArea}=verticesAndNormals(positions,indices);
  const result={
   sourceLabelId:profile.label,vertexCount:positions.length/3,
@@ -136,6 +151,7 @@ function makeSurface(profile,width,height,{bodyHeightUnits,depthRatio,radialSegm
   degeneracyCount:zeroArea,
   depthProvenance:'PRIOR_INFERRED_ELLIPTIC_SECTION_NOT_PHOTOGRAPHIC_DEPTH',
   real3DSurface:true,continuousCrossSections:true,
+  indexedEndCapsClosed:true,
   actuallyMeasuredBackSurface:false
  };
  if(zeroArea>0)fail('SURFACE_CONTAINS_DEGENERATE_TRIANGLES');
