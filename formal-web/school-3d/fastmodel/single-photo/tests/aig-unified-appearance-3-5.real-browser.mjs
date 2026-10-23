@@ -143,6 +143,16 @@ try{
    const redressed=JSON.parse(await page.locator('#scan29-proof').textContent());
    assert.deepEqual(redressed.real38LazyAssetIndex.activeIds,['procedural:uniform']);
    assert.equal(redressed.real37ScalableCoreAndWardrobe.wardrobe.sourcePhotoUnmodified,true);
+   await page.locator('#scan310-hair').selectOption('ponytail');
+   await page.waitForFunction(()=>{
+    const p=JSON.parse(document.getElementById('scan29-proof').textContent);
+    return p.real310RemovableHair?.style==='ponytail'&&
+     p.real310RemovableHair.actualIndependentHairMeshes===2;
+   },null,{timeout:20000});
+   const pony=JSON.parse(await page.locator('#scan29-proof').textContent());
+   assert.equal(pony.real310RemovableHair.originalBodyMeshReconstructed,false);
+   assert.equal(pony.real310RemovableHair.physicallyAccurateStrandsAndCollisions,false);
+
    // Real joint deformation must propagate to REAL independent garment 3D
    // vertex attributes. A static clothing shell over a moving body is a FAIL.
    await page.locator('#rig31-activate').click();
@@ -167,11 +177,26 @@ try{
     .clothPhysicsAndCollisionStillNotCertified,true);
    assert.equal(posedClothes.real39GarmentActuallyFollowingBodyPose
     .originalBodyRestAndClothesUnchanged,true);
+   assert.ok(posedClothes.real39GarmentActuallyFollowingBodyPose
+    .realHairVerticesMoved>0,
+    'actual separate ponytail geometry must follow real joint vertex movements');
    await page.locator('#rig31-reset').click();
    await page.waitForFunction(()=>{
     const layer=JSON.parse(document.getElementById('scan29-proof').textContent)
      .real39GarmentActuallyFollowingBodyPose;
-    return layer?.realGarmentVerticesMoved===0;
+    return layer?.realGarmentVerticesMoved===0&&layer?.realHairVerticesMoved===0;
+   },null,{timeout:20000});
+   await page.locator('#scan310-hair').selectOption('short');
+   await page.waitForFunction(()=>{
+    const h=JSON.parse(document.getElementById('scan29-proof').textContent)
+     .real310RemovableHair;
+    return h?.style==='short'&&h?.actualIndependentHairMeshes===1;
+   },null,{timeout:20000});
+   await page.locator('#scan310-hair').selectOption('none');
+   await page.waitForFunction(()=>{
+    const h=JSON.parse(document.getElementById('scan29-proof').textContent)
+     .real310RemovableHair;
+    return h?.style==='none'&&h?.actualIndependentHairMeshes===0;
    },null,{timeout:20000});
 
 
