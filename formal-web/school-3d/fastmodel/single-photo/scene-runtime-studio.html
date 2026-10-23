@@ -70,8 +70,8 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <button id="stage1-capture" type="button">目前人體：真 WebGL 四視角快照</button>
 <button id="stage1-capture-both" type="button">男生＋女生：全部八張真 3D 快照</button>
 <div id="stage1-adaptive4k-controls" style="margin:9px 0;padding:9px;border:1px solid #3a5577;border-radius:8px">
-<strong>4K 實體渲染｜鏡頭自適應</strong>
-<p class="hint">預覽依 GPU 能力調節畫布像素；真正 4K 使用同一個 WebGLRenderer 直接渲染 3840×2160／直向 2160×3840 PNG，絕不放大低解析度冒充 4K。若裝置 GPU 不足，輸出 BLOCK 並保留原模型。</p>
+<strong>4K → 3K → 2K → 1080P｜向下相容、自適應鏡頭</strong>
+<p class="hint">自動輸出依 GPU 能力依序選擇 4K／3K／2K／1080P；手動指定解析度時不暗中降級。全部使用同一個 WebGL 渲染器直接生成目標像素，絕不把小圖片拉大。手機和 Windows 的人物尺度、0.001 mm 座標、四視角鏡頭構圖保持一致。</p>
 <label>預覽畫質
 <select id="stage1-4k-quality">
 <option value="adaptive" selected>自動適應（手機／電腦）</option>
@@ -79,15 +79,23 @@ button:disabled{opacity:.45;cursor:not-allowed}
 <option value="economy">省資源（低功耗）</option>
 <option value="off">原始畫質</option>
 </select></label>
-<label>4K PNG 方向
+<label>輸出原生解析度
+<select id="stage1-output-resolution">
+<option value="auto" selected>自動向下相容：4K → 3K → 2K → 1080P</option>
+<option value="4k">指定 4K｜3840×2160</option>
+<option value="3k">指定 3K｜3200×1800</option>
+<option value="2k">指定 2K｜2560×1440</option>
+<option value="1080p">指定 1080P｜1920×1080</option>
+</select></label>
+<label>PNG 方向
 <select id="stage1-4k-orientation">
 <option value="landscape" selected>3840×2160｜橫向 4K</option>
 <option value="portrait">2160×3840｜直向 4K</option>
 </select></label>
-<button id="stage1-4k-current" type="button">輸出目前鏡頭｜真正 4K PNG</button>
-<button id="stage1-4k-four" type="button">輸出四視角｜真正 4K PNG</button>
-<output id="stage1-4k-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#a9dce5">等待啟動基礎人體；如 GPU 不支援將明確阻擋，不自動偽造畫質。</output>
-<div id="stage1-4k-gallery" aria-label="4K 渲染的男女正側背四視角 PNG"></div>
+<button id="stage1-4k-current" type="button">輸出目前鏡頭｜原生畫質 PNG</button>
+<button id="stage1-4k-four" type="button">輸出四視角｜向下相容 PNG</button>
+<output id="stage1-4k-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#a9dce5">等待啟動人體；自動模式會顯示實際輸出級別，手動模式不降級。</output>
+<div id="stage1-4k-gallery" aria-label="4K 3K 2K 1080P 真 WebGL 渲染的男女四視角 PNG"></div>
 </div>
 <button id="stage1-close" type="button">退出基礎人體，返回原工作場景</button>
 <output id="stage1-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#b7e7ed">Stage 1 人體外觀仍為 BLOCK。先顯示男、女技術人體，再逐張檢查。</output>
