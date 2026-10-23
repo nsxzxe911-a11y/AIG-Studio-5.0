@@ -144,7 +144,31 @@ try{
      output.push({gender,view:'front',name,
       pixelResolution:[3840,2160],genuineGPU4K:true,
       sha256:hash(bytes),byteLength:bytes.length});
-     // Downward compatibility is proven with a SECOND native GPU image.
+     // Each tier is an INDEPENDENT real GPU render/readback, never
+     // a resized version of the previous 4K source screenshot.
+     for(const [tier,w,h] of [['3k',3200,1800],['2k',2560,1440]]){
+      await page.locator('#stage1-output-resolution').selectOption(tier);
+      await page.locator('#stage1-4k-current').dispatchEvent('click');
+      await page.waitForFunction(({tier,w,h})=>{
+       const p=JSON.parse(document.getElementById('stage1-proof').textContent);
+       return p.actualFourKOutput?.selectedResolution===tier&&
+        p.actualFourKOutput?.width===w&&
+        p.actualFourKOutput?.height===h&&
+        p.actualFourKOutput.realGPUFramebufferReadback===true;
+      },{tier,w,h},{timeout:90000});
+      const tierDownload=page.waitForEvent('download',{timeout:25000});
+      await page.locator('#stage1-4k-gallery a').first().click();
+      const actual=await tierDownload;
+      const actualPath=await actual.path(),actualBytes=await readFile(actualPath);
+      assert.equal(actualBytes.readUInt32BE(16),w);
+      assert.equal(actualBytes.readUInt32BE(20),h);
+      const target='desktop-male-front-ACTUAL-GPU-'+w+'x'+h+'-'+tier+'.png';
+      await copyFile(actualPath,dest+'/'+target);
+      output.push({gender,view:'front',name:target,
+       pixelResolution:[w,h],nativeLevel:tier,genuineGPUFrame:true,
+       sha256:hash(actualBytes),byteLength:actualBytes.length});
+     }
+     // Downward compatibility must also deliver real 1080p GPU pixels.
      await page.locator('#stage1-output-resolution').selectOption('1080p');
      await page.locator('#stage1-4k-current').dispatchEvent('click');
      await page.waitForFunction(()=>{
@@ -205,7 +229,7 @@ try{
     stage1FinalPASS:false
    };
    assert.equal(output.length,
-    device.name==='desktop'&&process.env.AIG_STAGE1_TRUE_4K_E2E==='1'?10:8);
+    device.name==='desktop'&&process.env.AIG_STAGE1_TRUE_4K_E2E==='1'?12:8);
    await writeFile(dest+'/'+device.name+'-STAGE1-MANIFEST.json',
     JSON.stringify(manifest,null,2));
    console.log('AIG_STAGE1_EIGHT_REAL_SNAPSHOTS',device.name,
