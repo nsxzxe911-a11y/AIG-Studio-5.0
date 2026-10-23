@@ -121,23 +121,34 @@ export function installAIG34PhotoDigitPanel({
    if(!valid.length)
     throw Error('四組來源都沒有可證明的五個分離指趾尖端；原 3D 不更動');
    state.applied=[...valid];proof();
-   onApplied();
-   status('已接入 '+(valid.length*5)+
-    ' 個真實來源 XY 指趾輪廓到 3.3；深度、指甲、真實物理尺寸仍未量測。');
+   const applied=onApplied();
+   if(applied?.status==='APPLIED_TO_ACTUAL_RENDERER')
+    status('已真正接入 '+applied.appliedTips+
+     ' 個來源照片 XY 指趾輪廓到執行中的 3.3；深度與物理尺寸仍未量測。');
+   else status('來源照片有 '+(valid.length*5)+
+    ' 個指趾 XY 尖端，已保存待接入；請先建立 3.0／3.3 3D 曲面再生效。');
   }catch(e){state.applied=[];proof();status(e.message,true)}
  });
  $('digits34-clear').addEventListener('click',()=>{
-  clear();onApplied();status('只清除 3.4 來源輪廓校正，原照片、3.0 人體與 3.1/3.2 關節保留。');
+  clear();
+  try{onApplied()}catch(e){status(e.message,true);return}
+  status('只清除 3.4 來源輪廓校正，原照片、3.0 人體與 3.1/3.2 關節保留。');
  });
  $('digits34-view').addEventListener('change',draw);
  $('photo23-source').addEventListener('change',()=>{
-  clear();onApplied();status('更換照片已使 3.4 舊 SHA 輪廓失效；無覆蓋原素材。');
+  clear();
+  try{onApplied()}catch(e){status(e.message,true);return}
+  status('更換照片已使 3.4 舊 SHA 輪廓失效；無覆蓋原素材。');
  });
  $('vision27-run').addEventListener('click',()=>{
-  clear();onApplied();status('2.7 來源像素遮罩更新，先重新執行 3.4 自動掃描。');
+  clear();
+  try{onApplied()}catch(e){status(e.message,true);return}
+  status('2.7 來源像素遮罩更新，先重新執行 3.4 自動掃描。');
  });
  $('vision27-clear').addEventListener('click',()=>{
-  clear();onApplied();status('2.7 分割已清空，3.4 來源指趾輪廓同步失效。');
+  clear();
+  try{onApplied()}catch(e){status(e.message,true);return}
+  status('2.7 分割已清空，3.4 來源指趾輪廓同步失效。');
  });
  proof();
  return {
