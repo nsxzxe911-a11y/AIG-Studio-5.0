@@ -1,0 +1,73 @@
+name: AIG Real3D genuine SDF vs Metaball unified body surface Gate
+on:
+  push:
+    branches:
+      - verify/real3d-continuous-surface-sdf-metaball-20261024
+    paths:
+      - 'formal-web/shared-3d/**'
+      - '.github/workflows/aig-real3d-implicit-continuous-surfaces-gate.yml'
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/**'
+      - '.github/workflows/aig-real3d-implicit-continuous-surfaces-gate.yml'
+  workflow_dispatch:
+jobs:
+  actual-isosurfaces:
+    name: SDF + Metaball actual scalar fields and ONE closed male/female human mesh
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Real geometrical field extraction syntax plus structural Gate
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-implicit-human-surfaces.mjs
+          node --check formal-web/shared-3d/aig-real3d-surface-lab.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-implicit-human-surfaces.test.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-implicit-human-surfaces.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-implicit-human-surfaces.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-dual-kernel-19200.test.mjs
+      - name: No false engine claims and AIG existing CNC site preserved
+        run: |
+          grep -q 'aig-real3d-surface-lab.html' formal-web/shared-3d/aig-real3d-lab.html
+          grep -q 'aig-download-center.html' formal-web/aig-new-home.html
+          grep -q '3ax-nc-workbench.html' formal-web/aig-new-home.html
+          grep -q '3ax-mobile-workspace.html' formal-web/aig-new-home.html
+          grep -q 'actualContinuousSurfaceTopologicalPASS' formal-web/shared-3d/aig-real3d-implicit-human-surfaces.mjs
+          grep -q 'anatomicalVisualAppearancePASS:false' formal-web/shared-3d/aig-real3d-implicit-human-surfaces.mjs
+          grep -q '19200' formal-web/shared-3d/aig-real3d-dual-kernel-19200.mjs
+  real-browser-gpu-comparison:
+    name: Native 1080x1920 genuine male and female SDF/Metaball GPU PNGs
+    runs-on: ubuntu-latest
+    needs: actual-isosurfaces
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Render FOUR genuine native-size screenshots using existing GPU
+        run: |
+          python3 -m http.server 8770 --bind 127.0.0.1 --directory formal-web >/tmp/aig-real3d-sdf-metaball-server.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8770/shared-3d/aig-real3d-surface-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-implicit-human-surfaces.real-browser.mjs
+          test -s artifacts/aig-real3d-sdf-metaball-genuine-gpu/female-sdf-TRUE-GPU-FRONT-1080x1920.png
+          test -s artifacts/aig-real3d-sdf-metaball-genuine-gpu/female-metaball-TRUE-GPU-FRONT-1080x1920.png
+          test -s artifacts/aig-real3d-sdf-metaball-genuine-gpu/male-sdf-TRUE-GPU-FRONT-1080x1920.png
+          test -s artifacts/aig-real3d-sdf-metaball-genuine-gpu/male-metaball-TRUE-GPU-FRONT-1080x1920.png
+          test -s artifacts/aig-real3d-sdf-metaball-genuine-gpu/manifest.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-REAL-SDF-Metaball-4-Male-Female-WebGL-Front-Gate-BLOCK
+          path: artifacts/aig-real3d-sdf-metaball-genuine-gpu/
+          if-no-files-found: warn
