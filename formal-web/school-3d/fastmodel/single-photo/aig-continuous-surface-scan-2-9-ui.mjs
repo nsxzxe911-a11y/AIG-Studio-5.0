@@ -22,6 +22,8 @@ import {buildAIG310ModularHair}
  from './aig-modular-hair-3-10.mjs';
 import {resolveAIG311PoseContacts}
  from './aig-contact-constraints-3-11.mjs';
+import {createAIG312SecondaryMotion}
+ from './aig-secondary-motion-3-12.mjs';
 const $=id=>document.getElementById(id);
 export function installAIG29ContinuousScan({
  getImage,getSegmentation,getSharedViewer,getBodyPose=()=>null
@@ -35,7 +37,16 @@ export function installAIG29ContinuousScan({
  let wardrobe37Proof=null,wardrobe37Layer=null,body37Proof=null;
  let motion39Proof=null,lastPose39=null;
  let hair310Layer=null,hair310Proof=null;
- let contact311Proof=null;
+ let contact311Proof=null,motion312Proof=null;
+ const dynamics312=new Map();
+ let simulation312Frame=null,simulation312Id=0;
+ const cancelSimulation312=()=>{
+  simulation312Id++;
+  if(simulation312Frame!==null){
+   cancelAnimationFrame(simulation312Frame);
+   simulation312Frame=null;
+  }
+ };
  const wardrobe38=createAIG38CharacterCatalog();
  const stability39=createAIG39StabilitySession();
  let browse38Offset=0;
@@ -53,12 +64,14 @@ export function installAIG29ContinuousScan({
   });
  };
  const removeOverlay=()=>{
+  cancelSimulation312();dynamics312.clear();
   disposeGroup(overlay);overlay=null;probeLines=null;
   scan=null;rendererSource=null;drawProof=null;scanStamp=null;
   appearanceProof=null;core36Proof=null;lighting36Proof=null;
   wardrobe37Proof=null;wardrobe37Layer=null;body37Proof=null;
   motion39Proof=null;lastPose39=null;
   hair310Layer=null;hair310Proof=null;contact311Proof=null;
+  motion312Proof=null;
   if(restore36Lighting){restore36Lighting();restore36Lighting=null}
   const label=$('scan36-visible');
   if(label)label.textContent='尚未建立 3D 曲面；原照片與其他 GLB 保留。';
@@ -79,6 +92,7 @@ export function installAIG29ContinuousScan({
    real39GarmentActuallyFollowingBodyPose:motion39Proof,
    real310RemovableHair:hair310Proof,
    real311CoarseRealContactConstraints:contact311Proof,
+   real312ContinuousSecondaryMovement:motion312Proof,
    real310OneKernel19200LogicalWorkProfile:core36Proof?{
     configuredLogicalSlots:core36Proof.plan.logicalSlotsConfigured,
     actualDispatchedVertexShards:core36Proof.vertexColourWork.effectiveSlotsUsed,
@@ -291,6 +305,7 @@ export function installAIG29ContinuousScan({
    !rendererSource||rendererSource.movieMode||rendererSource.reviewBusy)
    throw Error('請先建立可顯示的來源人體模型；錄影或驗收時不更換髮型');
   const style=$('scan310-hair').value;
+  cancelSimulation312();dynamics312.clear();
   const next=prepare310Hair(scan.fusedOnePieceMesh,style);
   const prev=hair310Layer;
   overlay.add(next.layer);hair310Layer=next.layer;
@@ -321,15 +336,18 @@ export function installAIG29ContinuousScan({
    ' 個獨立真 3D 技術髮型網格，跟隨頭骨移動；尚未有真髮絲物理。';
   proof();
  };
- const apply39BodyPose=(value)=>{
+ const apply39BodyPose=(value,{secondaryTick=false}={})=>{
   if(!scan?.manifoldAudit?.closedManifold||!overlay?.parent||
    !wardrobe37Layer?.parent||!scan.sourceSha256)
    return null;
   const base=scan.fusedOnePieceMesh;
+  if(!secondaryTick)cancelSimulation312();
   if(!(value?.positions instanceof Float32Array)||
    value.positions.length!==base.positions.length)
    throw Error('3.9 服裝與人體關節來源不一致，保留原衣物網格');
   const prepared=[];
+  const dynamicsMeasured=[];
+  const bodyMoving=Number(value.actualMovedVertexCount)>0;
   for(const mesh of [
    ...wardrobe37Layer.children,...(hair310Layer?.children??[])
   ]){
@@ -343,14 +361,30 @@ export function installAIG29ContinuousScan({
     mesh.name.includes('PLEATED_UNIFORM_SKIRT')?'skirt':null;
    // Static/rest poses must recover the true immutable rest garment. A
    // collision proxy is only active on an actually moved body pose.
-   const moved=Number(value.actualMovedVertexCount)>0;
-   const contact=mode&&moved?resolveAIG311PoseContacts({
-    posedAttachment:result.positions,bodyPosed:value.positions,
+   let dynamicResult=null;
+   if(mode){
+    let sim=dynamics312.get(mesh);
+    if(!sim){
+     sim=createAIG312SecondaryMotion({
+      restPositions:mesh.userData.immutableGarmentRestPositions,
+      bodyHeightUnits:scan.bodyHeightUnits,kind:mode
+     });
+     dynamics312.set(mesh,sim);
+    }
+    dynamicResult=sim.step({
+     targetPositions:result.positions,deltaSeconds:1/60,
+     restoreRest:!bodyMoving
+    });
+    dynamicsMeasured.push({mesh,mode,result:dynamicResult});
+   }
+   const dynamicPositions=dynamicResult?.positions??result.positions;
+   const contact=mode&&bodyMoving?resolveAIG311PoseContacts({
+    posedAttachment:dynamicPositions,bodyPosed:value.positions,
     sourceLabels:base.vertexSourceLabelIds,mode,
     maxCorrectionRatio:.06,marginRatio:.005,passes:2
    }):null;
    prepared.push({mesh,result,contact,
-    positions:contact?.positions??result.positions});
+    positions:contact?.positions??dynamicPositions});
   }
   // Commit only after EVERY attached garment validates against this body.
   for(const {mesh,result,positions} of prepared){
@@ -362,6 +396,21 @@ export function installAIG29ContinuousScan({
    geo.attributes.normal.needsUpdate=true;
   }
   lastPose39=value;
+  motion312Proof={
+   schema:'AIG_REAL3D_3_12_FIXED_STEP_SECONDARY_HAIR_SKIRT',
+   actuallySimulatedIndependentMeshes:dynamicsMeasured.length,
+   actualSecondaryVertices:dynamicsMeasured.reduce(
+    (s,x)=>s+x.result.changedVertices,0),
+   simulatedFrames:dynamicsMeasured.length?
+    Math.max(...dynamicsMeasured.map(x=>x.result.framesSimulated)):0,
+   maxMeasuredSecondaryLagUnits:dynamicsMeasured.length?
+    Math.max(...dynamicsMeasured.map(x=>x.result.actualMaxLagUnits)):0,
+   rootsPinnedToRealBodyPose:true,
+   originalRestAndSourceArraysUnchanged:true,
+   actualFrameSequenceDrivenBySingleRenderer:true,
+   fullHairStrandAndFabricPhysicsCertified:false,
+   underlyingPoseHasMovedVertices:bodyMoving
+  };
   const measured311=prepared.filter(x=>x.contact);
   contact311Proof={
    schema:'AIG_REAL3D_3_11_REAL_POSE_CONTACT_PROXY',
@@ -402,6 +451,29 @@ export function installAIG29ContinuousScan({
    ' 點，剩餘粗略碰撞 '+contact311Proof.remainingCoarseProxyPenetrations+
    ' 點。這不是完整布料或髮絲物理驗收。';
   proof();
+  // Bounded settling on the same WebGL viewer. Never spawn new renderers or
+  // endless background tasks; source or wardrobe switches cancel this work.
+  if(!secondaryTick&&bodyMoving&&dynamicsMeasured.length){
+   const generation=simulation312Id;
+   const originalOverlay=overlay,originalScan=scan;
+   let frames=0;
+   const settle=()=>{
+    simulation312Frame=null;
+    if(generation!==simulation312Id||
+     overlay!==originalOverlay||scan!==originalScan||
+     !overlay?.parent||!rendererSource?.renderer||
+     rendererSource.movieMode||rendererSource.reviewBusy)return;
+    try{
+     apply39BodyPose(value,{secondaryTick:true});
+     frames++;
+     if(frames<18)
+      simulation312Frame=requestAnimationFrame(settle);
+    }catch(e){
+     status('3.12 次級動態已隔離：'+String(e?.message||e),true);
+    }
+   };
+   simulation312Frame=requestAnimationFrame(settle);
+  }
   return motion39Proof;
  };
  const update37Wardrobe=()=>{
@@ -410,6 +482,7 @@ export function installAIG29ContinuousScan({
   if(rendererSource.movieMode||rendererSource.reviewBusy)
    throw Error('共用畫面正在錄影或檢查，暫停服裝更新');
   const outfitId=$('scan37-outfit').value;
+  cancelSimulation312();dynamics312.clear();
   if(outfitId!=='body-proxy')
    wardrobe38.planWear('procedural:'+outfitId);
   const next=prepareWardrobe37(scan.fusedOnePieceMesh,
@@ -583,7 +656,9 @@ export function installAIG29ContinuousScan({
     originalBodyMeshReconstructed:false,
     physicallyAccurateStrandsAndCollisions:false
    };
+   cancelSimulation312();dynamics312.clear();
    motion39Proof=null;lastPose39=null;contact311Proof=null;
+   motion312Proof=null;
    appearanceProof=newAppearanceProof;
    probeLines=null;scanStamp=scan.sourceSha256;
    wardrobe37Proof={...stagedWardrobe.result,
