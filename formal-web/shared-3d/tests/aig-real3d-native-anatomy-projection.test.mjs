@@ -31,15 +31,15 @@ function sampleOBJ(){
  const points=vs.slice(0,rings*segments).map(x=>x.split(' ').slice(1).map(Number));
  const pick=(j,k)=>points[j*segments+k],left=j=>pick(j,22),right=j=>pick(j,0);
  return {objText:vs.concat(faces).join('\n'),landmarks:{
-  headTop:[0,1,0],chin:pick(3,0),noseTip:pick(4,11),
-  neckBase:pick(7,0),leftShoulder:left(11),rightShoulder:right(11),
-  leftElbow:left(16),rightElbow:right(16),
-  leftWrist:left(22),rightWrist:right(22),
-  leftThumbTip:left(25),rightThumbTip:right(25),
-  leftIndexTip:left(26),rightIndexTip:right(26),
-  pelvis:pick(21,0),leftKnee:left(31),rightKnee:right(31),
-  leftHeel:left(39),rightHeel:right(39),
-  leftToe:left(40),rightToe:right(40)
+  headTop:[0,1,0],chin:pick(38,0),noseTip:pick(37,11),
+  neckBase:pick(34,0),leftShoulder:left(30),rightShoulder:right(30),
+  leftElbow:left(25),rightElbow:right(25),
+  leftWrist:left(20),rightWrist:right(20),
+  leftThumbTip:left(16),rightThumbTip:right(16),
+  leftIndexTip:left(15),rightIndexTip:right(15),
+  pelvis:pick(21,0),leftKnee:left(10),rightKnee:right(10),
+  leftHeel:left(2),rightHeel:right(2),
+  leftToe:left(1),rightToe:right(1)
  }};
 }
 const fixture=sampleOBJ();
