@@ -8,7 +8,11 @@ on:
       - 'formal-web/school-3d/fastmodel/single-photo/aig-continuous-surface-scan-2-9-ui.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.html'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-appearance-3-5.test.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-unified-appearance-3-5.real-browser.mjs'
       - '.github/workflows/aig-real3d-3-5-unified-appearance-gate.yml'
+  pull_request:
+    branches:
+      - verify/real3d-true-world-movie-2-5-20261023
   workflow_dispatch:
 jobs:
   same-photo-multi-method-one-geometry:
@@ -41,3 +45,19 @@ jobs:
           grep -q 'aig35-width' dist/scene-runtime-studio.html
           grep -q 'aig35-colour' dist/scene-runtime-studio.html
           grep -q 'AIG_REAL3D_3_5_UNIFIED_SOURCE_APPEARANCE_GATE' dist/scene-runtime-studio.js
+      - name: Install Chromium QA for actual phone/desktop rendered geometry
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Real shared WebGL screenshots and 3.5 shape, colour, proportion callbacks
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig35-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-unified-appearance-3-5.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-3-5-SourceXY-Phone-Desktop-Appearance
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-3-5-unified-appearance/
+          if-no-files-found: warn
