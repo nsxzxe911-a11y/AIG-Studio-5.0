@@ -223,5 +223,12 @@ export function installAIG29ContinuousScan({
   removeOverlay();proof();
   status('照片來源已變更，3.0 暫存融合曲面失效；原 3D 世界未刪除。');
  });
- proof();return {get report(){return scan},clear:removeOverlay};
+ proof();return {
+  get report(){return scan},
+  get mesh(){return overlay?.children?.find(
+   object=>object.isMesh&&object.name==='AIG30_ONE_PIECE_FUSED_HUMANOID_CURVED_SURFACE')??null},
+  get viewer(){return overlay?.parent?rendererSource:null},
+  get activeSourceSha256(){return scanStamp},
+  clear:removeOverlay
+ };
 }
