@@ -273,6 +273,73 @@ function makeAdult(gender){
 export function buildAIGStage1AdultAnatomy(gender){
  return makeAdult(gender);
 }
+/**
+ * Actual 3D geometry cross-section checks. Measurements are taken from
+ * real generated world-XYZ vertices, not invented name/rig flags.
+ * A contract PASS cannot certify photo likeness or deformation physics.
+ */
+export function auditAIGStage1BodySurface(model){
+ if(model?.schema!==AIG_STAGE1_SCHEMA)
+  bad('SURFACE_AUDIT_REQUIRES_REAL_ANATOMY');
+ const H=model.heightMeters,part=id=>model.parts.find(p=>p.id===id);
+ const envelope=(id,level,tolerance=.003)=>{
+  const a=part(id)?.geometry?.positions;
+  if(!(a instanceof Float32Array))bad('SURFACE_MISSING_'+id);
+  let min=Infinity,max=-Infinity,count=0;
+  for(let i=0;i<a.length;i+=3){
+   if(Math.abs(a[i+1]/H-level)>tolerance)continue;
+   count++;min=Math.min(min,a[i]);max=Math.max(max,a[i]);
+  }
+  if(count<16)bad('SURFACE_CROSS_SECTION_EMPTY_'+id);
+  return {min,max,count};
+ };
+ const head=part('head').geometry.positions;
+ let minY=Infinity,maxY=-Infinity,minX=Infinity,maxX=-Infinity;
+ for(let i=0;i<head.length;i+=3){
+  minY=Math.min(minY,head[i+1]);maxY=Math.max(maxY,head[i+1]);
+  minX=Math.min(minX,head[i]);maxX=Math.max(maxX,head[i]);
+ }
+ const a=envelope('leftThigh',.499),b=envelope('rightThigh',.499);
+ const leftShoulder=envelope('leftUpperArm',.808);
+ const rightShoulder=envelope('rightUpperArm',.808);
+ const torso=envelope('torso',.812);
+ const gap=b.min-a.max;
+ const overlap=Math.min(torso.min-leftShoulder.min,
+  rightShoulder.max-torso.max);
+ // Better measure actual overlap of each inner arm with torso's silhouette.
+ const leftOverlap=leftShoulder.max-torso.min;
+ const rightOverlap=torso.max-rightShoulder.min;
+ const headAspect=(maxY-minY)/(maxX-minX);
+ const errors=[];
+ if(!(gap/H>=.012&&gap/H<=.09))
+  errors.push('UPPER_THIGHS_MERGED_OR_TOO_FAR');
+ if(!(headAspect>=1.18&&headAspect<=1.65))
+  errors.push('HEAD_ASPECT_FLATTENED');
+ if(!(leftOverlap/H>=.008&&rightOverlap/H>=.008))
+  errors.push('SHOULDER_ARM_FLOATING');
+ if(![gap,headAspect,leftOverlap,rightOverlap].every(Number.isFinite))
+  errors.push('INVALID_BODY_SURFACE_MEASUREMENT');
+ return Object.freeze({
+  modelGender:model.gender,sourceRealXYZVertices:true,
+  smoothedContinuousRingLoft:true,
+  actualHeadHeightMm:+((maxY-minY)*1000).toFixed(3),
+  actualHeadWidthMm:+((maxX-minX)*1000).toFixed(3),
+  actualHeadHeightToWidth:+headAspect.toFixed(4),
+  upperThighInnerGapMm:+(gap*1000).toFixed(3),
+  upperThighGapNormalized:+(gap/H).toFixed(5),
+  shoulderTorsoLeftOverlapMm:+(leftOverlap*1000).toFixed(3),
+  shoulderTorsoRightOverlapMm:+(rightOverlap*1000).toFixed(3),
+  crossSectionSamples:Object.freeze({
+   upperLeftThigh:a.count,upperRightThigh:b.count,
+   torso:torso.count,leftShoulder:leftShoulder.count,
+   rightShoulder:rightShoulder.count
+  }),
+  actualBodySurfaceErrors:Object.freeze(errors),
+  actualBodySurfaceNumericPASS:errors.length===0,
+  entireHumanSilhouetteVisuallyApproved:false,
+  fullContinuousSkinnedMeshVerified:false
+ });
+}
 export function auditAIGStage1Anatomy(model){
  if(model?.schema!==AIG_STAGE1_SCHEMA)bad('UNRECOGNIZED_BODY_SOURCE');
  const ids=new Set(model.parts.map(x=>x.id));
@@ -295,9 +362,12 @@ export function auditAIGStage1Anatomy(model){
  }
  if(model.gender==='male'&&!ids.has('swimBriefs'))errors.push('MALE_BRIEFS_MISSING');
  if(model.gender==='female'&&!ids.has('onePieceSwim'))errors.push('FEMALE_ONE_PIECE_MISSING');
+ const surface=auditAIGStage1BodySurface(model);
+ errors.push(...surface.actualBodySurfaceErrors);
  const result={
   schema:AIG_STAGE1_SCHEMA,
   gender:model.gender,
+  actualSurfaceAudit:surface,
   coordinateUnits:model.originCoordinates.units,
   inspectedParts:check.length,actualJointCount:model.jointCount,
   actualTriangleCount:model.actualIndexedTriangles,
