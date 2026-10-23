@@ -1,5 +1,5 @@
 /**
- * Real3D 3.9: runtime stability gate for the ONE 12,000-slot logical kernel.
+ * Real3D 3.9: runtime stability gate for the ONE 19,200-slot logical kernel.
  * Thousands of logical shards do not increase physical CPU/GPU cores.
  * Source changes and hide actions invalidate in-flight work; one operation
  * owns the shared viewer at a time. No reset of the user GLB/world scene.
@@ -13,6 +13,7 @@ export function createAIG39StabilitySession(){
   schema:AIG39_STABILITY_SCHEMA,
   activeJob:active?.label??null,generation,completed,blocked,cancelled,
   physicallyParallel12000CoresVerified:false,
+  physicallyParallel19200CoresVerified:false,
   previousGLBAndWorldCleared:false
  });
  return Object.freeze({
@@ -57,7 +58,7 @@ export function createAIG39StabilitySession(){
  * device's available evidence. This is NOT a measured FPS or VRAM claim.
  */
 export function planAIG39ConservativeBudget({
- requestedLogicalSlots=12000,hardwareConcurrency=2,
+ requestedLogicalSlots=19200,hardwareConcurrency=2,
  mobile=false,deviceMemoryGb=null,vertexCount
 }={}){
  if(!Number.isInteger(requestedLogicalSlots)||
