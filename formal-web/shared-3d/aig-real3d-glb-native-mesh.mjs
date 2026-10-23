@@ -151,7 +151,7 @@ export function buildAIGReal3DGLBStatic({
   sourceName.length>180)bad('SOURCE_NAME');
  const state=parseChunks(bytes),{json}=state;
  const nodes=json.nodes??[],scenes=json.scenes??[];
- const positions=[],indices=[];
+ const positions=[],indices=[],parts=[];
  let primitiveCount=0,skinnedNodes=0,unhandledPrimitiveCount=0;
  function appendMesh(meshIndex,transform){
   const mesh=json.meshes[meshIndex];
@@ -166,6 +166,8 @@ export function buildAIGReal3DGLBStatic({
       ind.items.length%3!==0)bad('MESH_FORMAT');
    const start=positions.length;
    for(const xyz of pos.items)positions.push(apply(transform,xyz));
+   parts.push({start,count:pos.items.length,indices:ind.items,
+    materialIndex:p.material??null});
    for(const k of ind.items){
     if(k>=pos.items.length)bad('INDEX_OUTSIDE_PRIMITIVE');
     indices.push(start+k);
@@ -213,21 +215,33 @@ export function buildAIGReal3DGLBStatic({
  const renderGeometryPASS=audit.degenerateTriangles===0&&
   ratios.widthToHeight>=.18&&ratios.widthToHeight<=.9&&
   ratios.depthToHeight>=.06&&ratios.depthToHeight<=.65;
- const mesh=createAIG3DMesh({positions:flat,
-  normals:normals(flat,indices),indices,
-  provenance:'LOCAL_GLB_SOURCE_SHA_'+String(sourceSha256).slice(0,64)});
  const scene=createAIG3DScene({id:'scanNativeGLBCandidate',
   consumer:'FastModel',units:'METERS',
   source:'LOCAL_RAW_GLB_STATIC_BIND_OR_BASE_POSE_NOT_HUMAN_AUTHENTICATED'});
- addAIG3DNode(scene,{id:'sourceNativeGLB',mesh,
-  kind:'character',material:{baseColor:[.76,.61,.52,1],roughness:.85,
-   metallic:0,doubleSided:true},
-  source:'ORIGINAL_GLTF_MESH_VERTEX_TRIANGLES_STATIC_ONLY'});
+ if(parts.length>240)bad('TOO_MANY_PRIMITIVES');
+ for(let j=0;j<parts.length;j++){
+  const part=parts[j],localPositions=flat.slice(part.start*3,
+   (part.start+part.count)*3),localIndices=[...part.indices];
+  const mesh=createAIG3DMesh({positions:localPositions,
+   normals:normals(localPositions,localIndices),indices:localIndices,
+   provenance:'LOCAL_GLB_SOURCE_SHA_'+String(sourceSha256).slice(0,64)});
+  const src=part.materialIndex===null?null:json.materials?.[part.materialIndex];
+  const rgba=src?.pbrMetallicRoughness?.baseColorFactor;
+  const color=arr(rgba,4)&&rgba.every(x=>x>=0&&x<=1)?
+   rgba:[.76,.61,.52,1];
+  addAIG3DNode(scene,{id:'glbPrimitive'+j,mesh,
+   kind:'character',material:{baseColor:color,
+    roughness:Math.max(.04,Math.min(1,src?.pbrMetallicRoughness?.roughnessFactor??.85)),
+    metallic:Math.max(0,Math.min(1,src?.pbrMetallicRoughness?.metallicFactor??0)),
+    doubleSided:true},
+   source:'ORIGINAL_GLTF_MESH_PRIMITIVE_STATIC_ONLY'});
+ }
  return {scene,evidence:{
   schema:AIG_REAL3D_GLB_SCHEMA,sourceName,sourceSha256,
   sourceFormat:'GLB_2_BINARY_LOCAL',
   measuredHeightMm:heightMm,actualVertices:positions.length,
   actualTriangles:indices.length/3,primitiveCount,
+  separateSourcePrimitivesPreserved:scene.nodes.length,
   scannedSkinMeshActuallyVerified:false,
   originalGLBTexturesApplied:false,originalGLBSkinningAnimated:false,
   skinnedNodesPresentButNotDeformed:skinnedNodes,
