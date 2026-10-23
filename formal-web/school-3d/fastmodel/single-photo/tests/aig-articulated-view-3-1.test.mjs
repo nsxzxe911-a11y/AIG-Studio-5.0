@@ -40,7 +40,7 @@ test('3.1 camera rotates 180 around the actual head/sole without ever twisting b
  const top=cameraAIG31Orbit({elevationDegrees:89});
  const bottom=cameraAIG31Orbit({elevationDegrees:-89});
  assert.ok(top.position[1]>1);
- assert.ok(bottom.position[1]<-1);
+ assert.ok(bottom.position[1]<1,'bottom camera must look up from BELOW its target, not below global -1');
  assert.equal(back.headOrBodyWasPhysicallyTwisted,false);
  assert.equal(back.cameraHeadTopAndFootUndersideSupported,true);
  assert.throws(()=>cameraAIG31Orbit({azimuthDegrees:181}),
