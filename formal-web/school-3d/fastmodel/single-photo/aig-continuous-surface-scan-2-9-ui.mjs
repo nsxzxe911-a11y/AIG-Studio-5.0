@@ -16,9 +16,11 @@ import {createAIG38CharacterCatalog}
  from './aig-character-asset-index-3-8.mjs';
 import {createAIG39StabilitySession,planAIG39ConservativeBudget}
  from './aig-runtime-stability-3-9.mjs';
+import {deformAIG39AttachedGarment}
+ from './aig-garment-pose-follow-3-9.mjs';
 const $=id=>document.getElementById(id);
 export function installAIG29ContinuousScan({
- getImage,getSegmentation,getSharedViewer
+ getImage,getSegmentation,getSharedViewer,getBodyPose=()=>null
 }={}){
  if(typeof getImage!=='function'||typeof getSegmentation!=='function'||
   typeof getSharedViewer!=='function'||!$('scan29-build'))
@@ -27,6 +29,7 @@ export function installAIG29ContinuousScan({
  let drawProof=null,scanStamp=null,appearanceProof=null;
  let core36Proof=null,lighting36Proof=null,restore36Lighting=null;
  let wardrobe37Proof=null,wardrobe37Layer=null,body37Proof=null;
+ let motion39Proof=null,lastPose39=null;
  const wardrobe38=createAIG38CharacterCatalog();
  const stability39=createAIG39StabilitySession();
  let browse38Offset=0;
@@ -48,6 +51,7 @@ export function installAIG29ContinuousScan({
   scan=null;rendererSource=null;drawProof=null;scanStamp=null;
   appearanceProof=null;core36Proof=null;lighting36Proof=null;
   wardrobe37Proof=null;wardrobe37Layer=null;body37Proof=null;
+  motion39Proof=null;lastPose39=null;
   if(restore36Lighting){restore36Lighting();restore36Lighting=null}
   const label=$('scan36-visible');
   if(label)label.textContent='尚未建立 3D 曲面；原照片與其他 GLB 保留。';
@@ -65,6 +69,7 @@ export function installAIG29ContinuousScan({
    real36Lighting:lighting36Proof,
    real38LazyAssetIndex:wardrobe38.snapshot(),
    real39RuntimeStability:stability39.snapshot(),
+   real39GarmentActuallyFollowingBodyPose:motion39Proof,
    real37ScalableCoreAndWardrobe:core36Proof?.plan?.schema===
     'AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS'?{
      selectedLogicalSlots:core36Proof.plan.logicalSlotsConfigured,
@@ -233,11 +238,53 @@ export function installAIG29ContinuousScan({
    }));
    mesh.name='AIG37_CLOTHING_'+piece.name;
    mesh.userData={role:piece.role,generatedSurface:true,
-    notSourceMeasuredTailoredGarment:true};
+    notSourceMeasuredTailoredGarment:true,
+    sourceBodyVertexIndices:piece.geometry.sourceVertexIndices,
+    immutableGarmentRestPositions:piece.geometry.positions};
    layer.add(mesh);
   }
   return {layer,result};
  }
+ const apply39BodyPose=(value)=>{
+  if(!scan?.manifoldAudit?.closedManifold||!overlay?.parent||
+   !wardrobe37Layer?.parent||!scan.sourceSha256)
+   return null;
+  const base=scan.fusedOnePieceMesh;
+  if(!(value?.positions instanceof Float32Array)||
+   value.positions.length!==base.positions.length)
+   throw Error('3.9 服裝與人體關節來源不一致，保留原衣物網格');
+  const prepared=[];
+  for(const mesh of wardrobe37Layer.children){
+   if(!mesh.isMesh)continue;
+   const result=deformAIG39AttachedGarment({
+    garmentRest:mesh.userData.immutableGarmentRestPositions,
+    bodyRest:base.positions,bodyPosed:value.positions,
+    sourceVertexIndices:mesh.userData.sourceBodyVertexIndices
+   });
+   prepared.push({mesh,result});
+  }
+  // Commit only after EVERY attached garment validates against this body.
+  for(const {mesh,result} of prepared){
+   const geo=mesh.geometry;
+   geo.setAttribute('position',
+    new THREE.BufferAttribute(result.positions,3));
+   geo.computeVertexNormals();geo.computeBoundingSphere();
+   geo.attributes.position.needsUpdate=true;
+   geo.attributes.normal.needsUpdate=true;
+  }
+  lastPose39=value;
+  motion39Proof={
+   actualGarmentMeshesFollowingRig:prepared.length,
+   realGarmentVerticesMoved:prepared.reduce(
+    (s,x)=>s+x.result.actualGarmentVerticesMoved,0),
+   originalBodyRestAndClothesUnchanged:true,
+   clothPhysicsAndCollisionStillNotCertified:true,
+   sourceSha256:scan.sourceSha256,
+   bodyRestGeometryIdentityPreserved:true
+  };
+  proof();
+  return motion39Proof;
+ };
  const update37Wardrobe=()=>{
   if(!scan||!overlay?.parent||!rendererSource)
    throw Error('請先建立來源真 3D 人體素模，再選每日服裝');
@@ -265,6 +312,12 @@ export function installAIG29ContinuousScan({
   fitExistingViewer(rendererSource,overlay);
   lighting36Proof=apply36Lighting(rendererSource,overlay,
    $('scan36-light')?.value||'balanced');
+  if(typeof getBodyPose==='function'){
+   const pose=getBodyPose();
+   if(pose?.positions instanceof Float32Array&&
+    pose.positions.length===scan.fusedOnePieceMesh.positions.length)
+    apply39BodyPose(pose);
+  }
   $('scan37-status').textContent='已套用 '+outfitId+'：'+
    wardrobe37Proof.garmentMeshCount+' 個獨立真 3D 服裝元件，人體幾何未重建或修改。'+
    '目前是程序化衣型，不是女主角真實裁縫版。';
@@ -390,6 +443,7 @@ export function installAIG29ContinuousScan({
    const prev=overlay;
    overlay=group;scan=reconstruction;rendererSource=viewer;
    wardrobe37Layer=stagedWardrobe.layer;
+   motion39Proof=null;lastPose39=null;
    appearanceProof=newAppearanceProof;
    probeLines=null;scanStamp=scan.sourceSha256;
    wardrobe37Proof={...stagedWardrobe.result,
@@ -576,6 +630,8 @@ export function installAIG29ContinuousScan({
    object=>object.isMesh&&object.name==='AIG30_ONE_PIECE_FUSED_HUMANOID_CURVED_SURFACE')??null},
   get viewer(){return overlay?.parent?rendererSource:null},
   get activeSourceSha256(){return scanStamp},
-  clear:removeOverlay
+  clear:removeOverlay,
+  applyBodyPose:apply39BodyPose,
+  get latestGarmentMotionProof(){return motion39Proof}
  };
 }
