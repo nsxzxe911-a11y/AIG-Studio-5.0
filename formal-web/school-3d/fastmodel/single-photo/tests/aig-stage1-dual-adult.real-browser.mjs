@@ -58,6 +58,7 @@ try{
     assert.equal(state.noHairOrSchoolClothing,true);
     assert.equal(state.fullSkinnedBlendWeightsVerified,false);
     assert.equal(state.stage1PASS,false);
+    assert.equal(await page.locator('#stage1-output-resolution').count(),1);
     assert.ok((await page.locator('#stage1-4k-quality').count())===1);
     assert.ok((await page.locator('#stage1-4k-current').count())===1);
     assert.equal(state.canonicalUnit,'mm');
@@ -112,6 +113,7 @@ try{
     if(device.name==='desktop'&&gender==='male'&&
      process.env.AIG_STAGE1_TRUE_4K_E2E==='1'){
      await page.locator('#stage1-4k-orientation').selectOption('landscape');
+     await page.locator('#stage1-output-resolution').selectOption('4k');
      await page.locator('#stage1-4k-quality').selectOption('adaptive');
      await page.locator('#stage1-4k-current').dispatchEvent('click');
      await page.waitForFunction(()=>{
@@ -142,6 +144,28 @@ try{
      output.push({gender,view:'front',name,
       pixelResolution:[3840,2160],genuineGPU4K:true,
       sha256:hash(bytes),byteLength:bytes.length});
+     // Downward compatibility is proven with a SECOND native GPU image.
+     await page.locator('#stage1-output-resolution').selectOption('1080p');
+     await page.locator('#stage1-4k-current').dispatchEvent('click');
+     await page.waitForFunction(()=>{
+      const p=JSON.parse(document.getElementById('stage1-proof').textContent);
+      return p.actualFourKOutput?.selectedResolution==='1080p'&&
+       p.actualFourKOutput?.width===1920&&
+       p.actualFourKOutput?.height===1080&&
+       p.actualFourKOutput.realGPUFramebufferReadback===true;
+     },null,{timeout:90000});
+     const lowDownload=page.waitForEvent('download',{timeout:25000});
+     await page.locator('#stage1-4k-gallery a').first().click();
+     const png1080=await lowDownload;
+     const lowPath=await png1080.path();
+     const lowBytes=await readFile(lowPath);
+     assert.equal(lowBytes.readUInt32BE(16),1920);
+     assert.equal(lowBytes.readUInt32BE(20),1080);
+     const lowName='desktop-male-front-ACTUAL-GPU-1920x1080-1080p.png';
+     await copyFile(lowPath,dest+'/'+lowName);
+     output.push({gender,view:'front',name:lowName,
+      pixelResolution:[1920,1080],genuineGPU1080P:true,
+      sha256:hash(lowBytes),byteLength:lowBytes.length});
     }
     await page.locator('#stage1-capture').dispatchEvent('click');
     await page.waitForFunction(g=>
@@ -181,7 +205,7 @@ try{
     stage1FinalPASS:false
    };
    assert.equal(output.length,
-    device.name==='desktop'&&process.env.AIG_STAGE1_TRUE_4K_E2E==='1'?9:8);
+    device.name==='desktop'&&process.env.AIG_STAGE1_TRUE_4K_E2E==='1'?10:8);
    await writeFile(dest+'/'+device.name+'-STAGE1-MANIFEST.json',
     JSON.stringify(manifest,null,2));
    console.log('AIG_STAGE1_EIGHT_REAL_SNAPSHOTS',device.name,
