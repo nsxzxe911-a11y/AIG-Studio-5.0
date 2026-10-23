@@ -42,7 +42,7 @@ function addPhoto(gender,method,frame,build,record){
  dl.href=url;dl.download='AIG-Real3D-'+gender+'-'+method+
   '-FRONT-1080x1920-'+frame.sha256.slice(0,12)+'.png';
  const note=document.createElement('small');
- note.textContent=build.geometryEvidence.extractedTriangleCount+
+ note.textContent=record.extractedTriangleCount+
   ' 三角形／'+build.geometryEvidence.surfaceConnectedComponents+
   ' 連通區／開放邊 '+build.geometryEvidence.nonManifoldEdges+
   '／SHA256 '+frame.sha256+'｜自然人體仍 BLOCK';
