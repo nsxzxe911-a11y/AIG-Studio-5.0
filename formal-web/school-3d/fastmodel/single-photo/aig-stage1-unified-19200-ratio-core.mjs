@@ -100,9 +100,20 @@ export function auditHumanProportion(model){
   top=Math.max(top,hp[i+1]);bottom=Math.min(bottom,hp[i+1]);
   loX=Math.min(loX,hp[i]);hiX=Math.max(hiX,hp[i]);
  }
+ // Pelvis width is the actual BODY silhouette, not the distance
+ // between hip joint centers (those lie inside the pelvic surface).
+ const pelvisPoints=model.parts.find(x=>x.id==='torso')?.geometry?.positions;
+ if(!(pelvisPoints instanceof Float32Array))fail('PELVIS_BODY_MESH_REQUIRED');
+ let pelvisMin=Infinity,pelvisMax=-Infinity,pelvisSamples=0;
+ for(let i=0;i<pelvisPoints.length;i+=3){
+  if(Math.abs(pelvisPoints[i+1]-.570*H)>.008*H)continue;
+  pelvisMin=Math.min(pelvisMin,pelvisPoints[i]);
+  pelvisMax=Math.max(pelvisMax,pelvisPoints[i]);pelvisSamples++;
+ }
+ if(pelvisSamples<8)fail('PELVIS_WIDTH_SAMPLES_REQUIRED');
  const headHeight=top-bottom,headWidth=hiX-loX,
   shoulder=diff(J.leftShoulder.position,J.rightShoulder.position),
-  hip=diff(J.leftHip.position,J.rightHip.position),
+  hip=pelvisMax-pelvisMin,
   ll=diff(J.leftHip.position,J.leftKnee.position),
   lr=diff(J.leftKnee.position,J.leftAnkle.position);
  const legGapAtKnee=2*(Math.abs(J.leftKnee.position[0])-
@@ -111,6 +122,9 @@ export function auditHumanProportion(model){
   headToBodyRatio:round(headHeight/H),
   shoulderToHeadRatio:round(shoulder/headWidth),
   hipToShoulderRatio:round(hip/shoulder),
+  truePelvicSilhouetteSamples:pelvisSamples,
+  truePelvicBodyWidthMeters:round(hip),
+  hipJointDistanceMeters:round(diff(J.leftHip.position,J.rightHip.position)),
   thighToCalfRatio:round(ll/lr),
   legSeparationAtKneeMeters:round(legGapAtKnee),
   legSeparationNormalized:round(legGapAtKnee/H),
