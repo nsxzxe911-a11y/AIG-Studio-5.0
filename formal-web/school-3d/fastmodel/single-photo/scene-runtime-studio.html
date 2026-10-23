@@ -150,6 +150,35 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <button id="vision26-save" type="button">保存 2.6 校正證據到本機素材庫（不覆蓋原圖）</button>
 <details><summary>查看真毫米、來源 SHA、色彩及辨識可信度證據</summary><pre id="vision26-proof" style="max-height:340px;overflow:auto;white-space:pre-wrap;font:12px/1.6 ui-monospace,monospace">尚無 2.6 來源證據。</pre></details>
 </section>
+<section id="real3d27-segmentation" class="panel" style="margin:14px 0;padding:14px;background:#061827;border:1px solid #518e9f">
+<h2>Real3D 2.7｜真像素分割・頭髮／頸部／衣物遮擋分離</h2>
+<p>使用你已上傳的同一張照片，依<strong>使用者標示的類別種子點</strong>，用本機真實 RGBA 像素、顏色差異與邊緣阻力做競爭式區域分割。不需要外部服務。<strong>這是實際運作的非 AI 訓練分割演算法，不是假稱已能自動辨認人物身分</strong>；被頭髮遮住的頸部也不能憑空補畫為真實 3D。</p>
+<button id="vision27-sync" type="button">01｜接收 2.6 已驗證的原照片與 SHA</button>
+<output id="vision27-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#b4f3df">請先在上方 2.6 載入原始照片，再按 01。</output>
+<div class="world-grid">
+<label>目前要標記的真實類別
+<select id="vision27-class">
+<option value="0">背景（至少一點）</option>
+<option value="3">頭髮（可見像素）</option>
+<option value="4">頸部（可見像素）</option>
+<option value="2">臉部／頭部（可見像素）</option>
+<option value="14">衣物（可見像素）</option>
+<option value="1">人物整體（不可假稱已分出各部位）</option>
+<option value="16">動物</option><option value="17">植物</option>
+<option value="18">樹木</option><option value="19">建築</option>
+<option value="20">道路</option><option value="21">車輛</option>
+<option value="24">地面</option>
+</select></label>
+<label>快速運算上限（較高較精細、較耗時）
+<select id="vision27-resolution"><option value="256">快速 256</option><option value="320" selected>平衡 320</option><option value="384">精細 384</option></select></label>
+</div>
+<canvas id="vision27-canvas" width="640" height="420" aria-label="Real3D 2.7 點選實際人物頭髮頸部衣物與背景分割種子點" style="width:100%;height:auto;max-width:960px;display:block;background:#06111b;border:1px solid #5595a4;touch-action:manipulation"></canvas>
+<p style="font-size:12px">在畫面不同區域各點一個或多個種子；至少需要<strong>背景與一個目標</strong>。彩色疊圖是分割標籤示意色，與上方 2.6 的真實色彩預覽分離。</p>
+<button id="vision27-clear" type="button">清除本輪標記（原照片不變）</button>
+<button id="vision27-run" type="button">02｜執行真實像素邊緣分割</button>
+<button id="vision27-save" type="button">03｜保存來源 SHA＋RLE 像素分割證據</button>
+<details><summary>真像素分割結果／未知遮擋／防假 AI 來源證據</summary><pre id="vision27-proof" style="max-height:330px;overflow:auto;white-space:pre-wrap;font:12px/1.55 ui-monospace,monospace">尚無真實分割結果。</pre></details>
+</section>
 <section id="story-2-2" style="border:1px solid #447c95;border-radius:12px;padding:14px;margin-top:15px;background:#061727">
 <h2>Real3D 2.2｜中文劇情 → 原始 GLB 動作／鏡頭／字幕</h2>
 <p>先在上方載入真正含 AnimationClip 的人物，再輸入敘述。單一角色可省略代號；多角色必須填實際 node ID，例如 node-1。鏡頭必須先在「鏡頭關鍵格」設好時間及位置。人物缺少跑、跳、蹲、轉頭等原始 GLB 動作會明確 BLOCKED，絕不偽裝成已生成 3D 骨架。</p>
