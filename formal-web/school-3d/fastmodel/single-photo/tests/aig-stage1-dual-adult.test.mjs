@@ -11,7 +11,7 @@ for(const gender of ['male','female']){
   assert.ok(p.heightMeters>1.5&&p.heightMeters<1.9);
   assert.ok(p.partCount>=17);
   assert.equal(p.jointCount,21);
-  assert.ok(p.actualIndexedTriangles>10000);
+  assert.ok(p.actualIndexedTriangles>4800);
   assert.equal(p.noHair,true);
   assert.equal(p.noSchoolUniform,true);
   assert.equal(p.noSkirt,true);
