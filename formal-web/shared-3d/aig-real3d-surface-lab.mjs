@@ -43,8 +43,8 @@ function addPhoto(gender,method,frame,build,record){
   '-FRONT-1080x1920-'+frame.sha256.slice(0,12)+'.png';
  const note=document.createElement('small');
  note.textContent=record.extractedTriangleCount+
-  ' 三角形／'+build.geometryEvidence.surfaceConnectedComponents+
-  ' 連通區／開放邊 '+build.geometryEvidence.nonManifoldEdges+
+  ' 三角形／'+record.surfaceConnectedComponents+
+  ' 連通區／開放邊 '+record.nonManifoldEdges+
   '／SHA256 '+frame.sha256+'｜自然人體仍 BLOCK';
  card.append(title,image,dl,note);
  $('gallery').append(card);
