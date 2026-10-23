@@ -7,6 +7,9 @@ on:
       - 'formal-web/shared-3d/aig-real3d-webgl.mjs'
       - 'formal-web/shared-3d/aig-real3d-render-inspection*'
       - 'formal-web/shared-3d/tests/aig-real3d-render-inspection*'
+      - 'formal-web/shared-3d/tests/aig-real3d-human-brown-render-contract.test.mjs'
+      - 'formal-web/shared-3d/authority/aig-real3d-human-brown-render-v1.json'
+      - 'docs/REAL3D-HUMAN-BROWN-RENDER-V1-FORMAL-20261024.md'
       - '.github/workflows/aig-real3d-neutral-render-inspection-gate.yml'
   pull_request:
     paths:
@@ -30,7 +33,8 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-render-inspection.mjs
           node --check formal-web/shared-3d/aig-real3d-render-inspection-lab.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-render-inspection.real-browser.mjs
-          node --test formal-web/shared-3d/tests/aig-real3d-render-inspection.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-render-inspection.test.mjs formal-web/shared-3d/tests/aig-real3d-human-brown-render-contract.test.mjs
+          test -s docs/REAL3D-HUMAN-BROWN-RENDER-V1-FORMAL-20261024.md
           grep -q "setInspectionMode" formal-web/shared-3d/aig-real3d-webgl.mjs
           grep -q "postProcessBloomApplied:false" formal-web/shared-3d/aig-real3d-render-inspection.mjs
           test -s formal-web/aig-new-home.html
