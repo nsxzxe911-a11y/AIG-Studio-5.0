@@ -177,7 +177,7 @@ export function installAIG29ContinuousScan({
     compositorNotBillboard:true
    };
    proof();
-   status('統一外觀引擎已建立真實 3D 曲面，採用 '+
+   status('3.0 網格連通／封閉驗收 PASS；3.5 統一外觀引擎已建立真實 3D 曲面，採用 '+
     unified.selectedMode+'；照片 XY 輪廓平均誤差 '+
     unified.proof.source2DEdgeErrorAfterPx+' px（只評估可見 2D 輪廓）。'+
     '原照片色彩仍取自來源像素；臉／髮／服裝擬真與隱藏深度尚未通過，'+
