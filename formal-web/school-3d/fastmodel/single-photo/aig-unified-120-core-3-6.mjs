@@ -1,6 +1,6 @@
 /**
- * Real3D 3.6 — one shared reconstruction/render contract, 120 identical
- * LOGICAL compute slots. These are NOT physical CPU/GPU cores and do not
+ * Real3D 3.7 — one shared reconstruction/render contract, scalable identical
+ * LOGICAL compute slots (120 → 1200 → 2400 → ...). Not physical cores; do not
  * create 120 WebGL contexts. Bounded, cooperative vertex work keeps one
  * source photo / same renderer and yields between batches.
  *
@@ -8,18 +8,19 @@
  * detection. The user-facing ray request must fall back to supported PBR.
  */
 import {aig26SRGBToLinear} from './aig-vision-metric-color-2-6.mjs';
-export const AIG36_SCHEMA='AIG_REAL3D_3_6_ONE_KERNEL_120_LOGICAL_SLOTS';
-export const AIG36_SLOT_LIMIT=120;
+export const AIG36_SCHEMA='AIG_REAL3D_3_7_ONE_KERNEL_SCALABLE_LOGICAL_SHARDS';
+export const AIG36_SLOT_LIMIT=120000;
+export const AIG37_SLOT_PRESETS=Object.freeze([120,1200,2400,4800,9600,19200,38400,76800,120000]);
 /** Explicitly separate installed algorithms from requested future features. */
 export const AIG36_CAPABILITY_STATUS=Object.freeze({
  oneSharedPBRRenderer:'IMPLEMENTED_EXISTING_VIEWER',
  cameraAutofit:'IMPLEMENTED',
- sourceRGBVertexProjection:'IMPLEMENTED_120_LOGICAL_SHARDS',
+ sourceRGBVertexProjection:'IMPLEMENTED_SCALABLE_LOGICAL_SHARDS',
  syntheticSourceXYContourGate:'IMPLEMENTED_SOURCE_CONSTRAINED',
  sourcePhotoPreview:'IMPLEMENTED',
  webglShadowMap:'IMPLEMENTED_OPTIONAL',
  nativeRayTracing:'NOT_IMPLEMENTED_FALLS_BACK_TO_PBR',
- actual120ParallelPhysicalProcessors:'NOT_IMPLEMENTED',
+ actualScalableParallelPhysicalProcessors:'NOT_IMPLEMENTED',
  parallelBrowserWebWorkers:'NOT_IMPLEMENTED',
  automaticArbitraryPhotoSegmentation:'NOT_IMPLEMENTED_REQUIRES_2_7_MASK',
  realFaceHairClothesLikeness:'NOT_VALIDATED',
@@ -44,7 +45,7 @@ export function planAIG36UnifiedCore({
 }={}){
  if(!Number.isInteger(requestedLogicalSlots)||requestedLogicalSlots<1||
   requestedLogicalSlots>AIG36_SLOT_LIMIT)
-  fail('LOGICAL_SLOT_RANGE_1_TO_120');
+  fail('LOGICAL_SLOT_RANGE_1_TO_120000');
  const reported=finite(hardwareConcurrency)?Math.floor(hardwareConcurrency):2;
  // These bounded runners share ONE JavaScript event loop. Never count them
  // as parallel CPU workers or GPU units.
@@ -56,6 +57,7 @@ export function planAIG36UnifiedCore({
   schema:AIG36_SCHEMA,kernelImplementationCount:1,
   logicalSlotCapacity:AIG36_SLOT_LIMIT,
   logicalSlotsConfigured:requestedLogicalSlots,
+  slotPresets:AIG37_SLOT_PRESETS,
   schedulingLanes,realWebWorkersSpawned:0,
   parallelHardwareCoresCertified:0,
   execution:'ONE_JS_EVENT_LOOP_COOPERATIVE_SHARDS',
@@ -85,7 +87,7 @@ export function selectAIG36Lighting(mode,plan){
   pbr:true,shadows:mode==='quality',rayTracing:false});
 }
 /**
- * 120 numbered slots run THE SAME vertex shader-source projection kernel.
+ * 120/1200/2400+ slots run THE SAME vertex-source colour sampling kernel.
  * Work is real, measured vertex colour data, not 120 fictitious engines.
  * The cooperative queue bounds outstanding operations and yields to UI.
  */
@@ -108,7 +110,10 @@ export async function colourAIG36VertexShards({
  if(count<1)fail('EMPTY_MESH');
  const slots=Math.min(count,plan.logicalSlotsConfigured);
  const colors=new Float32Array(positions.length);
- let nextSlot=0,completed=0;
+ let nextSlot=0,completed=0,yieldBatch=0;
+ // More slots are NOT faster just because the partition count is larger.
+ // Yield after bounded actual work, not once every four tiny shards.
+ const yieldEverySlots=Math.max(4,Math.ceil(slots/64));
  const worker=async()=>{
   while(nextSlot<slots){
    if(signal?.aborted)fail('CANCELLED_BEFORE_APPLY');
@@ -131,7 +136,7 @@ export async function colourAIG36VertexShards({
    }
    completed++;
    // Yield to allow input/rendering even on a single-threaded phone.
-   if(completed%4===0)await yieldControl();
+   if(++yieldBatch%yieldEverySlots===0)await yieldControl();
   }
  };
  await Promise.all(Array.from({length:Math.min(slots,
@@ -141,6 +146,9 @@ export async function colourAIG36VertexShards({
   colours:colors,actualVerticesColoured:count,
   completedIdenticalKernelSlots:completed,
   logicalSlotsConfigured:plan.logicalSlotsConfigured,
+  effectiveSlotsUsed:slots,
+  slotCountLimitedByActualVertices:count<plan.logicalSlotsConfigured,
+  hardwareSpeedupFromSlotsVerified:false,
   trueParallelCPUWorkers:0,sourcePixelsAltered:false,
   rendererContextsCreated:0
  });
