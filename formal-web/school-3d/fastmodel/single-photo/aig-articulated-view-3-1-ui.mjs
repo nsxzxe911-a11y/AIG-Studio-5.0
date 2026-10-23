@@ -75,9 +75,14 @@ export function installAIG31HeadBodyControls({getFusedScan}={}){
   // at first pose replace only THIS PREVIEW geometry's working attribute.
   for(const name of JOINT_KEYS){
    const input=$('rig31-'+name);
+   const compact=$('rig31-stage-'+name);
+   if(compact)compact.value=input.value;
    input.disabled=!rig.anchorMetadata.pivots[name]||
     rig.affectedVertices[name]<10;
-   if(input.disabled){input.value='0';$('rig31-value-'+name).textContent='無來源'}
+   if(compact)compact.disabled=input.disabled;
+   if(input.disabled){input.value='0';
+    if(compact)compact.value='0';
+    $('rig31-value-'+name).textContent='無來源'}
    else $('rig31-value-'+name).textContent=input.value+'°';
   }
   refreshProof();return {s,rig};
@@ -156,6 +161,16 @@ export function installAIG31HeadBodyControls({getFusedScan}={}){
    '°；左右 180° 僅轉鏡頭，不會扭斷脖子。');
   refreshProof();
  };
+ $('rig31-stage-activate').addEventListener('click',()=>{
+  $('rig31-activate').click();
+ });
+ for(const name of ['headYaw','neckYaw']){
+  const compact=$('rig31-stage-'+name),main=$('rig31-'+name);
+  compact.addEventListener('input',()=>{
+   main.value=compact.value;
+   main.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+ }
  $('rig31-activate').addEventListener('click',()=>{
   try{
    const s=attach();
@@ -168,6 +183,8 @@ export function installAIG31HeadBodyControls({getFusedScan}={}){
    const s=attach();
    for(const key of JOINT_KEYS){
     $('rig31-'+key).value='0';
+    const compact=$('rig31-stage-'+key);
+    if(compact)compact.value='0';
     $('rig31-value-'+key).textContent=$('rig31-'+key).disabled?'無來源':'0°';
    }
    renderPose();status('16 關節已恢復來源姿態，原 3D 曲面和素材均保留。');
@@ -177,6 +194,8 @@ export function installAIG31HeadBodyControls({getFusedScan}={}){
   const input=$('rig31-'+name);
   input.addEventListener('input',()=>{
    $('rig31-value-'+name).textContent=input.value+'°';
+   const compact=$('rig31-stage-'+name);
+   if(compact)compact.value=input.value;
    if(!rig){status('請先建立 3.0 曲面並按 01 啟用真正關節');return}
    queuePose();
   });
