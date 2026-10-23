@@ -28,6 +28,10 @@ export function installAIG32DigitControls({
   $('digits32-status').style.color=bad?'#ffc89d':'#b9eee7';
  };
  const disposeGeometry=()=>{
+  // Detail inspection may temporarily isolate implicit skin.
+  // ALWAYS restore the old body visibility without deleting its geometry.
+  const current=getFusedScan();
+  if(current?.mesh?.isMesh)current.mesh.visible=true;
   if(!group)return;
   group.parent?.remove(group);
   for(const mesh of meshes.values()){
@@ -255,6 +259,16 @@ export function installAIG32DigitControls({
     (key.includes('Foot')?.12*h:.02*h),
     target[2]+(key.includes('Foot')?.32*h:.27*h)];
   }
+  // For hands/feet closeups the crude 3.0 solid frequently occludes
+  // every analytic finger inside the source-derived wrist/ankle.
+  // Isolate ONLY in explicit part-inspection view; returning to BODY restores
+  // full scene, original mesh unchanged, never a fake source measurement.
+  if(actualSurfaceMode==='GLSL3_IMPLICIT_SDF'&&group){
+   const isolate=key!=='body';
+   s.mesh.visible=!isolate;
+   for(const part of group.children)
+    part.visible=!isolate||part.name.endsWith('_'+key);
+  }else{s.mesh.visible=true}
   v.orbit=false;
   v.controls.autoRotate=false;
   v.controls.target.set(...target);
@@ -268,7 +282,9 @@ export function installAIG32DigitControls({
    exactRealCameraTarget:target,
    singleExistingWebGLRenderer:true,
    originalPhotoGLBNCUntouched:true,
-   detailIsInferredUnlessPerDigitDepthMeasured:true
+   detailIsInferredUnlessPerDigitDepthMeasured:true,
+   deliberatelyIsolatedDetailView:key!=='body',
+   originalBodyRestoredWhenLeavingDetail:true
   };
   reportProof();
   status(key==='body'?'已恢復正面全身 3D 工作視角。':
