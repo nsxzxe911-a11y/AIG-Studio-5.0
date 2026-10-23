@@ -71,7 +71,7 @@ test('2.7 refuses unsupported classes, photo identity mistakes, missing backgrou
  fail({seeds:seeds.filter(s=>s.labelId!==0)},
   /NEED_USER_BACKGROUND_AND_FOREGROUND_SEEDS/);
  fail({seeds:[{x:1,y:1,labelId:0},{x:120,y:80,labelId:25}]},
-  /USER_SEED_CLASS_INVALID/);
+  /SEED_COORDINATES_AND_CLASS_INVALID/);
  fail({seeds:[{x:1,y:1,labelId:0},{x:1.2,y:1,labelId:3}],
   maxWorkSide:128},/CONFLICTING_CLASS_SEEDS_IN_SAME_WORK_CELL/);
  fail({seeds,sourceSha256:'sha256:unverified'},/BOUNDED_RGBA_SOURCE_SHA/);
