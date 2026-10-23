@@ -3,7 +3,9 @@
  * no fake radar echo, no inferred full-body physical 1:1 certification.
  */
 import * as THREE from 'three';
-import {aig26SRGBToLinear} from './aig-vision-metric-color-2-6.mjs';
+import {planAIG36UnifiedCore,colourAIG36VertexShards,
+ fitAIG36Camera,selectAIG36Lighting}
+ from './aig-unified-120-core-3-6.mjs';
 import {inspectAIG30FusedFiveAxisSurface}
  from './aig-fused-manifold-surface-3-0.mjs';
 import {buildAIG35UnifiedAppearance}
@@ -17,6 +19,7 @@ export function installAIG29ContinuousScan({
   throw Error('AIG29_FORMAL_3D_SCAN_CONTRACT_REQUIRED');
  let overlay=null,scan=null,probeLines=null,rendererSource=null;
  let drawProof=null,scanStamp=null,appearanceProof=null;
+ let core36Proof=null,lighting36Proof=null,restore36Lighting=null;
  const status=(message,bad=false)=>{
   $('scan29-status').textContent=(bad?'BLOCKED：':'')+message;
   $('scan29-status').style.color=bad?'#ffd298':'#aef5e6';
@@ -33,7 +36,10 @@ export function installAIG29ContinuousScan({
  const removeOverlay=()=>{
   disposeGroup(overlay);overlay=null;probeLines=null;
   scan=null;rendererSource=null;drawProof=null;scanStamp=null;
-  appearanceProof=null;
+  appearanceProof=null;core36Proof=null;lighting36Proof=null;
+  if(restore36Lighting){restore36Lighting();restore36Lighting=null}
+  const label=$('scan36-visible');
+  if(label)label.textContent='尚未建立 3D 曲面；原照片與其他 GLB 保留。';
  };
  const proof=()=>{
   $('scan29-proof').textContent=JSON.stringify({
@@ -44,6 +50,8 @@ export function installAIG29ContinuousScan({
    realFusedSingleManifold:scan?.manifoldAudit?.closedManifold??false,
    visualAppearanceReleasePassed:scan?.aestheticHumanReviewPassed??false,
    unifiedReal35AppearancePipeline:appearanceProof,
+   unifiedReal36OneKernel120LogicalSlots:core36Proof,
+   real36Lighting:lighting36Proof,
    visualReleaseBlocker:scan?.visualReleaseGate??'NOT_EVALUATED',
    physical3DPrintScaleCertified:scan?.production3DPrintApproved??false,
    actualSourceManifoldAudit:scan?.manifoldAudit??null,
@@ -78,22 +86,67 @@ export function installAIG29ContinuousScan({
   return {width:a.width,height:a.height,sourceSha256:a.sha,
    pixels:a.original.data,labels:b.segmentation.labels};
  };
- function colorForSourceXYZ(s,data,i,raw,bodyHeightUnits,classId=s.sourceLabelId,gain=1){
-  const k=i*3,x=s.positions[k],y=s.positions[k+1],z=s.positions[k+2];
-  const {width,height,labels,pixels}=data;
-  const projectedX=Math.max(0,Math.min(width-1,Math.round(
-   x/bodyHeightUnits*height+(width-1)/2)));
-  const projectedY=Math.max(0,Math.min(height-1,Math.round(
-   height-1-y/bodyHeightUnits*height)));
-  const lookup=(projectedY*width+projectedX),front=z>=0;
-  const observed=front&&labels[lookup]===classId&&
-   pixels[lookup*4+3]>128;
-  const sourceRGB=observed?[
-   pixels[lookup*4]/255,pixels[lookup*4+1]/255,
-   pixels[lookup*4+2]/255]:raw;
-  // Inferred rear material deliberately softened, not invented exact dye.
-  return sourceRGB.map(v=>aig26SRGBToLinear(
-   Math.max(0,Math.min(1,(front?v:v*.80)*gain))));
+ function drawSourceReference(data){
+  const canvas=$('scan36-source-preview');
+  if(!canvas)return false;
+  const ctx=canvas.getContext('2d');
+  if(!ctx)return false;
+  const temp=document.createElement('canvas');
+  temp.width=data.width;temp.height=data.height;
+  temp.getContext('2d').putImageData(new ImageData(
+   new Uint8ClampedArray(data.pixels),data.width,data.height),0,0);
+  const scale=Math.min(canvas.width/data.width,canvas.height/data.height);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(temp,(canvas.width-data.width*scale)/2,
+   (canvas.height-data.height*scale)/2,
+   data.width*scale,data.height*scale);
+  return true;
+ }
+ function fitExistingViewer(viewer,group){
+  group.updateMatrixWorld(true);
+  const bounds=new THREE.Box3().setFromObject(group);
+  if(bounds.isEmpty())throw Error('3D 曲面範圍為空，禁止切到空畫面');
+  const center=bounds.getCenter(new THREE.Vector3());
+  const size=bounds.getSize(new THREE.Vector3());
+  const fit=fitAIG36Camera({width:Math.max(size.x,.001),
+   height:Math.max(size.y,.001),depth:Math.max(size.z,.001),
+   verticalFovDeg:viewer.camera.fov,aspect:viewer.camera.aspect});
+  viewer.controls.target.copy(center);
+  viewer.camera.position.set(center.x,
+   center.y+size.y*.04,center.z+fit.distance);
+  viewer.camera.near=fit.near;viewer.camera.far=fit.far;
+  viewer.camera.updateProjectionMatrix();
+  viewer.camera.lookAt(center);viewer.controls.update();
+  return {sizeXYZ:[size.x,size.y,size.z],
+   distance:fit.distance,cameraFitFromRealMesh:true};
+ }
+ function apply36Lighting(viewer,group,requested){
+  if(restore36Lighting){restore36Lighting();restore36Lighting=null}
+  const selected=selectAIG36Lighting(requested,core36Proof?.plan);
+  const key=viewer.scene.children.find(o=>o.isDirectionalLight);
+  const renderer=viewer.renderer,shadowBefore=renderer.shadowMap.enabled;
+  const lightBefore=key?.castShadow??false,previousRoughness=[];
+  group.traverse(o=>{
+   if(!o.isMesh)return;
+   previousRoughness.push({mesh:o,roughness:o.material.roughness,
+    cast:o.castShadow,receive:o.receiveShadow});
+   o.material.roughness=requested==='soft'?.88:
+    requested==='balanced'?.76:.58;
+   o.castShadow=selected.shadows;o.receiveShadow=selected.shadows;
+  });
+  if(key)key.castShadow=selected.shadows;
+  renderer.shadowMap.enabled=selected.shadows;
+  restore36Lighting=()=>{
+   renderer.shadowMap.enabled=shadowBefore;
+   if(key)key.castShadow=lightBefore;
+   for(const e of previousRoughness){
+    e.mesh.castShadow=e.cast;e.mesh.receiveShadow=e.receive;
+    e.mesh.material.roughness=e.roughness;
+   }
+  };
+  return {...selected,existingDirectionalLight:!!key,
+   actualShadowMapActive:!!key&&selected.shadows,
+   physicalRayTracingVerified:false};
  }
  const buildPreview=async()=>{
   const data=source(),radialSegments=Number($('scan29-radial').value),
@@ -119,6 +172,18 @@ export function installAIG29ContinuousScan({
   if(!reconstruction.manifoldAudit.closedManifold||
    reconstruction.surfaces.length!==1)
    throw Error('單一人體曲面未符合連通封閉 Gate，保留原 3D 場景');
+  const viewer=await getSharedViewer();
+  if(!viewer?.scene||!viewer.renderer||viewer.movieMode||
+   viewer.reviewBusy||viewer.renderer.getContext()?.isContextLost?.())
+   throw Error('唯一共用 WebGL 核心不可用，保留上次成功模型');
+  const plan=planAIG36UnifiedCore({
+   requestedLogicalSlots:120,
+   hardwareConcurrency:navigator.hardwareConcurrency??2,
+   deviceMemoryGb:navigator.deviceMemory??null,
+   mobile:matchMedia('(pointer:coarse)').matches,
+   gpuContextAvailable:true,
+   rayTracingRequested:$('scan36-light')?.value==='raytrace'
+  });
   const group=new THREE.Group();
   group.name='AIG30_ONE_FUSED_WATERTIGHT_SDF_SOURCE_SURFACE';
   group.userData={sourceSha256:data.sourceSha256,
@@ -128,16 +193,12 @@ export function installAIG29ContinuousScan({
    geometry.setAttribute('position',new THREE.BufferAttribute(shell.positions,3));
    geometry.setAttribute('normal',new THREE.BufferAttribute(shell.normals,3));
    geometry.setIndex(new THREE.BufferAttribute(shell.indices,1));
-   const vertexColours=new Float32Array(shell.positions.length);
-   for(let i=0;i<shell.vertexCount;i++){
-    const classId=shell.vertexSourceLabelIds[i];
-    const sourceRGB=shell.sourceClassColorRGB[classId]??[.55,.52,.52];
-    const col=colorForSourceXYZ(shell,data,i,sourceRGB,
-     reconstruction.bodyHeightUnits,classId,
-     newAppearanceProof.finalControls.colourGain);
-    vertexColours.set(col,i*3);
-   }
-   geometry.setAttribute('color',new THREE.BufferAttribute(vertexColours,3));
+   const shaded=await colourAIG36VertexShards({
+    shell,source:data,bodyHeightUnits:reconstruction.bodyHeightUnits,
+    colourGain:newAppearanceProof.finalControls.colourGain,plan
+   });
+   geometry.setAttribute('color',new THREE.BufferAttribute(shaded.colours,3));
+   group.userData.core36Shaded=shaded;
    geometry.computeBoundingSphere();
    const material=new THREE.MeshStandardMaterial({
     vertexColors:true,roughness:.76,metalness:0,
@@ -151,9 +212,6 @@ export function installAIG29ContinuousScan({
    group.add(mesh);
   }
   // Only swap the old 2.9 overlay AFTER the new geometry & viewer exist.
-  const viewer=await getSharedViewer();
-  if(!viewer?.scene||!viewer.renderer||viewer.movieMode||
-   viewer.reviewBusy)throw Error('真正共享 3D 渲染器未就緒或正在錄影／檢查');
   try{
    viewer.scene.add(group);
    // Never reset scene, source GLBs, bone mixer, vault or textures.
@@ -161,10 +219,21 @@ export function installAIG29ContinuousScan({
    overlay=group;scan=reconstruction;rendererSource=viewer;
    appearanceProof=newAppearanceProof;
    probeLines=null;scanStamp=scan.sourceSha256;
-   viewer.controls.target.set(0,1,0);
-   viewer.camera.position.set(2.15,1.4,3.4);
-   viewer.camera.lookAt(viewer.controls.target);
-   viewer.controls.update();
+   const cameraFit=fitExistingViewer(viewer,group);
+   core36Proof={
+    plan,vertexColourWork:{
+     actualVerticesColoured:group.userData.core36Shaded.actualVerticesColoured,
+     completedIdenticalKernelSlots:group.userData.core36Shaded.completedIdenticalKernelSlots,
+     trueParallelCPUWorkers:0},
+    cameraFit,sourceReferenceVisible:drawSourceReference(data),
+    realModelShownOnExistingCanvas:true,
+    imagePlaneErrorPx:newAppearanceProof.source2DEdgeErrorAfterPx,
+    headFaceHairClothesLikenessUserApproved:false,
+    appearanceGatePassed:false,rayTracingHardwareEnabled:false,
+    releaseAllowed:false
+   };
+   lighting36Proof=apply36Lighting(viewer,group,
+    $('scan36-light')?.value||'balanced');
    disposeGroup(prev);
    await new Promise(resolve=>requestAnimationFrame(()=>
     requestAnimationFrame(resolve)));
@@ -176,6 +245,13 @@ export function installAIG29ContinuousScan({
     originalViewerRendererReused:true,
     compositorNotBillboard:true
    };
+   const visible=!!overlay.parent&&
+    drawProof.realActiveWebGLContext&&drawProof.actualSubmittedTriangles>0;
+   $('scan36-visible').textContent=visible?
+    '已在同一個真 WebGL 視窗提交 '+drawProof.actualSubmittedTriangles+
+    ' 個三角面；120 邏輯工作槽已完成 '+core36Proof.vertexColourWork.completedIdenticalKernelSlots+
+    ' 個真著色分塊。這不是 120 顆硬體核心，也不是外觀驗收。':
+    '顯示證據不足：請查看 WebGL／相機診斷；保留原來源與 GLB。';
    proof();
    status('3.0 網格連通／封閉驗收 PASS；3.5 統一外觀引擎已建立真實 3D 曲面，採用 '+
     unified.selectedMode+'；照片 XY 輪廓平均誤差 '+
@@ -189,6 +265,28 @@ export function installAIG29ContinuousScan({
  };
  $('scan29-build').addEventListener('click',async()=>{
   try{await buildPreview()}catch(e){status(String(e.message||e),true)}
+ });
+ $('scan36-fit').addEventListener('click',()=>{
+  try{
+   if(!overlay?.parent||!rendererSource)
+    throw Error('尚無可置中的來源模型，請先掃描');
+   core36Proof.cameraFit=fitExistingViewer(rendererSource,overlay);
+   proof();
+   status('已依真 3D 外框重新置中，使用原共用相機。');
+  }catch(e){status(String(e.message||e),true)}
+ });
+ $('scan36-light').addEventListener('change',()=>{
+  try{
+   if(!overlay?.parent||!rendererSource){
+    $('scan36-visible').textContent='燈光選項已儲存；建立模型後套用。';
+    return;
+   }
+   lighting36Proof=apply36Lighting(rendererSource,overlay,
+    $('scan36-light').value);
+   proof();
+   status('已套用 '+lighting36Proof.active+
+    '；硬體光追尚未啟用，單一渲染器保持不變。');
+  }catch(e){status(String(e.message||e),true)}
  });
  $('scan29-probe').addEventListener('click',()=>{
   try{
