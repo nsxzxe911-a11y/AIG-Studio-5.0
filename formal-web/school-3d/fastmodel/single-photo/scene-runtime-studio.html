@@ -50,6 +50,33 @@ button:disabled{opacity:.45;cursor:not-allowed}
 </section>
 <section class="panel" id="stage" aria-label="真正 WebGL 工作視窗">
 <canvas id="viewport" aria-label="可旋轉縮放的真實 GLB 3D 場景"></canvas>
+<section id="stage1-adult-baselines" style="padding:12px;margin:9px 0;border:1px solid #367c91;border-radius:10px;background:#071523">
+<strong>Stage 1｜中性完整人體：成人男生／女生（基礎幾何 Gate）</strong>
+<p class="hint">僅測試頭、頸、肩、雙臂、軀幹、骨盆、左右腿、腳及關節。男生穿貼身泳褲，女生穿貼身連身泳衣。不加入頭髮、制服、照片臉型或動畫。同一 WebGL 工作視窗使用獨立測試場景，不覆蓋已匯入 GLB。</p>
+<div class="world-grid">
+<label>基礎人體
+<select id="stage1-gender">
+<option value="male" selected>成人男生｜貼身泳褲</option>
+<option value="female">成人女生｜貼身連身泳衣</option>
+</select></label>
+</div>
+<button id="stage1-start" type="button">顯示真正 3D 基礎人體</button>
+<div class="world-grid" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">
+<button id="stage1-front" type="button">正面</button>
+<button id="stage1-profile" type="button">側面</button>
+<button id="stage1-rear" type="button">背面</button>
+<button id="stage1-quarter45" type="button">45°</button>
+</div>
+<button id="stage1-capture" type="button">目前人體：真 WebGL 四視角快照</button>
+<button id="stage1-capture-both" type="button">男生＋女生：全部八張真 3D 快照</button>
+<button id="stage1-close" type="button">退出基礎人體，返回原工作場景</button>
+<output id="stage1-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#b7e7ed">Stage 1 人體外觀仍為 BLOCK。先顯示男、女技術人體，再逐張檢查。</output>
+<div id="stage1-snapshots" aria-label="男生與女生四視角實際三維快照"></div>
+<details><summary>真正座標／骨架／網格 Gate 資料</summary>
+<pre id="stage1-proof" style="max-height:300px;overflow:auto;white-space:pre-wrap;font-size:11px"></pre>
+</details>
+<p class="hint">共同規格：m、+Y 向上、-Z 正面、地面兩腳中間為原點。此版本為可旋轉的關節階層技術網格，尚未驗證連續蒙皮權重、真人解剖或照片身份。四視角不同並不等於外觀自動 PASS。</p>
+</section>
 <div id="real3d31-camera-bar" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:space-around;padding:7px;background:#071a27;border:1px solid #28596a;border-radius:8px">
 <button id="rig31-camera-front" type="button" style="flex:1;min-width:66px">正面</button>
 <button id="rig31-camera-left" type="button" style="flex:1;min-width:66px">左 90°</button>
