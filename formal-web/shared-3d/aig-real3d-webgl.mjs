@@ -59,13 +59,17 @@ const fs=[
  'varying vec3 vNormal,vWorld;',
  'uniform vec4 uColor;',
  'uniform vec3 uEye,uEmission;',
- 'uniform float uMetallic,uRoughness;',
+ 'uniform float uMetallic,uRoughness,uInspectMode;',
  'void main(){vec3 n=normalize(vNormal),l=normalize(vec3(0.42,0.79,0.55));',
  'vec3 view=normalize(uEye-vWorld);float diffuse=max(dot(n,l),0.0);',
  'vec3 halfV=normalize(l+view);',
  'float shine=mix(105.0,7.0,uRoughness);',
  'float spec=pow(max(dot(n,halfV),0.0),shine)*(0.06+uMetallic*0.44);',
- 'gl_FragColor=vec4(uColor.rgb*(0.24+0.76*diffuse)+vec3(spec)+uEmission,uColor.a);}'
+ 'vec3 shaded=uColor.rgb*(0.24+0.76*diffuse)+vec3(spec)+uEmission;',
+ 'if(uInspectMode>2.5){shaded=uColor.rgb;}',
+ 'else if(uInspectMode>1.5){shaded=normalize(vNormal)*0.5+0.5;}',
+ 'else if(uInspectMode>0.5){shaded=vec3(0.94,0.96,0.98);}',
+ 'gl_FragColor=vec4(shaded,uInspectMode>0.5?1.0:uColor.a);}'
 ].join('\n');
 const lineVs=[
  'attribute vec3 aPosition;uniform mat4 uModel,uVP;',
@@ -83,7 +87,9 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   canvas.getContext('webgl',{alpha:false,antialias:true,depth:true,preserveDrawingBuffer});
  if(!gl)return {status:'WEBGL_UNAVAILABLE',
   render(){return{status:'WEBGL_UNAVAILABLE'};},destroy(){},releaseMesh(){return false;},getCamera(){return null;},
-  setCamera(){throw Error('WEBGL_UNAVAILABLE');}};
+  setCamera(){throw Error('WEBGL_UNAVAILABLE');},
+  setInspectionMode(){throw Error('WEBGL_UNAVAILABLE');},
+  getInspectionMode(){return 'UNAVAILABLE';}};
  const webgl2=typeof WebGL2RenderingContext!=='undefined'&&gl instanceof WebGL2RenderingContext,
  uintExt=webgl2||gl.getExtension('OES_element_index_uint'),
  meshProg=program(gl,vs,fs),lineProg=program(gl,lineVs,lineFs);
@@ -95,7 +101,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   eye:gl.getUniformLocation(meshProg,'uEye'),
   emissive:gl.getUniformLocation(meshProg,'uEmission'),
   metal:gl.getUniformLocation(meshProg,'uMetallic'),
-  rough:gl.getUniformLocation(meshProg,'uRoughness')};
+  rough:gl.getUniformLocation(meshProg,'uRoughness'),
+  inspect:gl.getUniformLocation(meshProg,'uInspectMode')};
  const lu={pos:gl.getAttribLocation(lineProg,'aPosition'),
   model:gl.getUniformLocation(lineProg,'uModel'),
   vp:gl.getUniformLocation(lineProg,'uVP'),
@@ -103,6 +110,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  const camera={projection:'perspective',yaw:.7,pitch:.36,distance:14,
   focus:[0,0,0],fovDeg:48,orthoSpan:9,near:.01,far:20000};
  let dead=false,lost=false,cache=new WeakMap(),buffers=[],last=null;
+ const INSPECTION_MODES=['LIT','SILHOUETTE','NORMALS','ALBEDO'];
+ let inspectionMode='LIT';
  let currentQuality=quality,lastFrameBudget=null;
  const requestedHardwareAA=gl.getContextAttributes()?.antialias===true;
  const activeMSAASamples=()=>{
@@ -138,6 +147,12 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   return getCamera();
  }
  function getCamera(){return {...camera,focus:[...camera.focus]};}
+ function setInspectionMode(mode){
+  if(dead)throw Error('AIG3D_RENDERER_DESTROYED');
+  if(!INSPECTION_MODES.includes(mode))throw Error('AIG3D_INSPECTION_MODE_INVALID');
+  inspectionMode=mode;return getInspectionMode();
+ }
+ function getInspectionMode(){return inspectionMode;}
  function setQuality(next){
   if(dead)throw Error('AIG3D_RENDERER_DESTROYED');
   getAIG3DQuality(next);
@@ -187,6 +202,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   gl.uniform3fv(u.eye,new Float32Array(eye));
   gl.uniform3fv(u.emissive,new Float32Array(mat.emissive));
   gl.uniform1f(u.metal,mat.metallic);gl.uniform1f(u.rough,mat.roughness);
+  gl.uniform1f(u.inspect,INSPECTION_MODES.indexOf(inspectionMode));
   if(mat.doubleSided)gl.disable(gl.CULL_FACE);else gl.enable(gl.CULL_FACE);
   gl.drawElements(gl.TRIANGLES,mesh.count,mesh.type,0);
   return mesh.count/3;
@@ -238,6 +254,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   }
   last={status:'WEBGL_XYZ_TRIANGLES_RENDERED',webglVersion:webgl2?2:1,
    triangles,nodes,rapid,feed,cameraProjection:camera.projection,
+   inspectionMode,postProcessBloomApplied:false,
+   meshVertexPositionsModifiedByRenderer:false,
    allocatedFramePixels:canvas.width*canvas.height,maxFramePixels:lastFrameBudget.maxFramePixels,
    antialiasProfile:currentQuality,effectiveSuperSampleScale:lastFrameBudget.effectiveScale,
    requestedSuperSampleScale:lastFrameBudget.targetScale,
@@ -330,7 +348,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   buffers=[];cache=new WeakMap();
  }
  return {status:'READY',contextVersion:webgl2?2:1,render,destroy,
-  setCamera,getCamera,setQuality,getQuality,releaseMesh,captureNativePNG,
+  setCamera,getCamera,setInspectionMode,getInspectionMode,
+  setQuality,getQuality,releaseMesh,captureNativePNG,
   getGpuLimit:()=>lost||dead?0:Math.min(
    gl.getParameter(gl.MAX_TEXTURE_SIZE),gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)),
   getLastStats:()=>last?{...last}:null};
