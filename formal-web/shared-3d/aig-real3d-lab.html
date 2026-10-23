@@ -77,6 +77,33 @@ footer{font-size:12px;padding:14px 20px;color:#adc7d6}
 <p id="human-source-status" role="status" aria-live="polite">等待生成真實 indexed XYZ 人體來源。</p>
 <div id="human-photo-result" style="display:grid;gap:8px;margin-top:10px"></div>
 </section>
+<section id="dual-19200-lab" aria-label="AIG 19200 雙核心研發驗證">
+<h2>繪圖＋渲染 2 合 1｜19,200 邏輯工作槽</h2>
+<p>繪圖核心（CPU 協作）負責網格來源驗證／幾何分配，渲染核心重用目前唯一的真 WebGL GPU。19,200 是可調度工作槽，<strong>不是 19,200 個實體核心或 19,200 線程</strong>。已被判定不自然的人體外觀仍為 BLOCK。</p>
+<label for="dual-method">工作方式（實際可執行才開放）</label>
+<select id="dual-method">
+<option value="auto">自動辨識來源 → 選擇已安裝核心</option>
+<option value="existing-mesh">現有 3D 網格／GPU 實際驗證（僅技術證據）</option>
+<option value="sdf">SDF 連續曲面（新人體生成尚未安裝）</option>
+<option value="metaball">Metaball 柔性曲面（尚未安裝）</option>
+<option value="template-morph">Template＋Morph（尚未安裝）</option>
+<option value="subdivision">Subdivision（尚未安裝）</option>
+<option value="voxel-contour">Voxel＋Dual Contouring（尚未安裝）</option>
+<option value="sweep-loft">Sweep／Loft（新連續人體版本尚未安裝）</option>
+</select>
+<label for="dual-target">渲染工作級別</label>
+<select id="dual-target">
+<option value="preview">即時預覽（不謊稱輸出 4K）</option>
+<option value="1080p">1080P 能力分配評估</option>
+<option value="2k">2K 能力分配評估</option>
+<option value="3k">3K 能力分配評估</option>
+<option value="4k">4K 能力分配評估（依實際 GPU 限制）</option>
+</select>
+<button id="dual-rebalance" type="button">辨識目前場景／自動重新分配</button>
+<button id="dual-verify" type="button">真執行繪圖核驗 → 原 WebGL 渲染</button>
+<div id="dual-status" class="state" role="status" aria-live="polite">研發模式：未檢測來源，未通過人體外觀驗收。</div>
+<pre id="dual-evidence" style="max-height:230px">等待真實來源核查。</pre>
+</section>
 <label for="quality">GPU 抗鋸齒／畫面圓滑度</label>
 <select id="quality">
 <option value="performance">效能優先｜1× · 低記憶體</option>
