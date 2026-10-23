@@ -1,0 +1,35 @@
+# Real3D 2.9: true continuous 3D surface / CNC-5AX-inspired virtual surface inspection
+
+Date 2026-10-23 (Asia/Taipei). User explicitly rejected 2.8-B **rectangle colour-block** test UI as inadequate for 3D, requested actual head-to-foot dimensional rendering / echo scan or CNC five-axis style surface inspection. **Do not present test colour blocks or a stylized 2D sway as finished 3D scan.**
+
+## Exact source
+- Repo: https://github.com/nsxzxe911-a11y/AIG-Studio-5.0
+- Branch: `verify/real3d-true-world-movie-2-5-20261023`
+- Draft PR #43: https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/pull/43
+- This is additive to 2.5 genuine GLB actor, 2.6 measured plane & sRGB, 2.7 source pixel segmentation, 2.8 reviewed-model learning and original AIG-II / AIG Studio CNC. **Do not reset assets/canvas, edit NC or move physical Fanuc**.
+
+## Actually implemented
+1. `aig-continuous-surface-scan-2-9.mjs`
+   - Real source-labelled 2D silhouette --> anatomically grouped variable-width **closed indexed 3D ring shell**, actual XYZ vertices, outward finite unit surface normals, sealed indexed end caps and 16–96 circumferential sections, not flat geometry nor displayed voxels.
+   - Section scale is explicitly technical relative units (2.0 by default); z-depth is ellipsoidal prior. One photo has no actual back-side/depth evidence. Visible RGB is sampled from source photo and geometry generated as original-source-constrained approximation; unknown surfaces remain **inferred** and true full-body 1:1, trained face ID, depth/echolocation certification are NOT claimed.
+   - Smooth ±5-pixel section averaging reduces staircase artifacts. Connected anatomical label sections do not taper to pin points at head-to-neck, neck-to-torso, pelvis-to-leg. Arms blend shoulder-end centers toward the actually present source torso contour, clearly labelled as an **inferred joint-contact prior**, not verified mesh union or true joints.
+   - 5AX-inspired A/B inspection computes *real generated XYZ surface normals* and finite normal-offset probe positions. This is **virtual geometric scan path only**, neither real ultrasound/radar/laser echoes nor physical five-axis machining G-code. Physical scanning would need camera/laser/stereo actual depth and controlled capture with calibration, safety and exposure limits.
+   - No claim of topological union or collision absence at all joins; source labels remain distinct meshes. Head, hands, feet, cloth, face depth, hair physics and real photorealistic texture still need work.
+2. `aig-continuous-surface-scan-2-9-ui.mjs`, wired in `scene-runtime-studio.mjs`, controls in `scene-runtime-studio.html`: Actual THREE.BufferGeometry MeshStandardMaterial PBR geometry inserted into **same existing PhotoViewer.scene/renderer/canvas** (not another GPU shell), front-facing source RGB converted to linear-light vertex colors, rear inferred material displayed subdued. Select 24/48/64/96 sections, slice steps, inferred z-depth, actual five-axis normal probe overlay, delete ONLY temporary 2.9 overlay. Source photo, world, GLB and NC left intact; original viewer reusable.
+3. `scene-runtime-studio.html`: expose full 2.7 semantic left/right arms, legs, feet and palms (previous select omitted their available class IDs). Real 2.9 panel explicitly states scanner is virtual, not measured.
+4. `tests/aig-continuous-surface-scan-2-9.test.mjs` numerical source geometry, section caps, indexes and real normal standoff; `tests/aig-continuous-surface-scan-2-9.real-browser.mjs` actual phone and desktop Chromium source photo -> 2.6 SHA -> 2.7 classified segmentation -> 2.9 true WebGL 3D mesh + five-axis inspection paths; screenshot actual WebGL canvas, GPU draw calls and triangle count, tear down only 2.9 source overlay. Test **uses a synthetic anatomically structured silhouette fixture**, not real-person measured depth.
+5. Standalone Gate: `.github/workflows/aig-real3d-2-9-continuous-surface-five-axis-gate.yml`. Existing combined `aig-shared-real3d-v1-3.yml` now includes 2.9 tests as required regression before 2.5 movie & NC. Prior Gate not removed.
+6. No live Render deployment, no APK/EXE, no verified natural-photo fully realistic model, no 0.001 mm human measurement or physical 5-axis scan. This is a verifiable geometric **engineering prototype**, not finished approval.
+
+## Real external screenshot/evidence
+- Standalone Real3D 2.9 **PASS**, run `39906646531`, source `458e8105`, with real desktop and phone **actual WebGL screen captures** showing a crude but genuine curved tube humanoid and separate A/B surface normal line overlays; artifact `12480619707` archived screenshots and pixel proof. https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39906646531
+- Endcap improved standalone **PASS**, run `39906720245`, source `127ec9e1`. https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39906720245
+- Smooth shape/avoid pinpoint neck/shoulders standalone **PASS**, run `39907294336`, source `2fad63e2`. https://github.com/nsxzxe911-a11y/AIG-Studio-5.0/actions/runs/39907294336
+- Latest shoulder contour blending `469b6d26` triggered run `39907402849` with actual browser evidence; confirm its final result and inspect *new* screenshots before claiming latest. Do not conflate prior PASS with latest changes.
+- Original combined three-project Web/CNC Gate run `39906720267` failed at **Real3D 2.5 DESKTOP MediaRecorder `NO_NONEMPTY_ACTUAL_3D_VIDEO_FRAMES`**, while 2.9 curved browser passed desktop and phone. Until this and other release requirements are GREEN, PR must remain draft and unpublished.
+
+## Next actual technical task
+1. Improve **real shoulder-neck-pelvis mesh continuity** further: the first real screenshot revealed separate capped solid islands and torso/arms overly simplistic. Current smoothing/overlap is a visual improvement but **does not establish a unified watertight human shell**. Use tested surface Boolean/SDF union or verified manifold junction stitching, explicit nonselfintersection and source/joint provenance, hair/cloth independent topologies, and human-reviewed real-photo geometry.
+2. Calibrated multiview stereo/turntable/LiDAR sensor *real* capture with proper calibration, confidence, occlusion/outlier and physical dimension evidence is mandatory to call it **actual 1:1 scanned body**. Virtual five-axis angles on a generated mesh are not a sensor.
+3. Only after actual source model and physical frame evidence, integrate texture mapping, relighting and PBR skin/cloth/hair with ICC/linear RGB boundaries and 60 FPS mobile/native Gate as distinct test.
+4. Fix existing desktop WebM blank frame issue separately, without accepting empty video or bypassing CINEMATIC/CNC Gate.
