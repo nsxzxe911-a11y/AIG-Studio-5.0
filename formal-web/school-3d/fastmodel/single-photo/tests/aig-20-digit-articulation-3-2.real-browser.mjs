@@ -257,7 +257,7 @@ try{
       .find(x=>x.id==='rightHandring')?.jointAnglesDegrees?.[1]===50}
     catch{return false}
    });
-   const beforeParentMove=JSON.parse(await page.locator('#digits32-proof').textContent)
+   const beforeParentMove=JSON.parse(await page.locator('#digits32-proof').textContent())
     .perDigitActualJoint3DAndPose.find(x=>x.id==='leftHandmiddle').actualTipXYZ;
    await page.locator('#rig31-leftShoulder').evaluate(el=>{
     el.value='35';el.dispatchEvent(new Event('input',{bubbles:true}));
