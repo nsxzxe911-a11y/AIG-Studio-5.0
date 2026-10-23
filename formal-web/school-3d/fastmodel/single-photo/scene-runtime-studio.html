@@ -270,6 +270,13 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <details id="scan314-heroine-authority" style="margin:10px 0;padding:10px;border-radius:9px;border:1px solid #6c556e">
 <summary>Real3D 3.14｜正式女主角外觀對照（來源照片為準）</summary>
 <p class="hint">正式來源已對照：2026/10/21 校園制服 3D 展示板，正／側／背面、臉部、服裝與背包。保留來源 SHA，只儲存由真圖取得的顏色統計，不把原照片上傳到 GitHub。外觀驗收仍為 BLOCKED：尚未完成臉型、細節髮束、格紋 UV 與服裝裁縫 3D 重建。</p>
+<section id="scan316-snapshot-policy" style="margin:10px 0;padding:10px;border:1px solid #39556d;border-radius:8px">
+<strong>3.16｜每階段真 3D 快照（必看正面／側面／背面）</strong>
+<p class="hint">每次建立來源幾何、換裝／換髮與女主角草模後，自動在原本的 WebGL 渲染器拍三張不同視角。失敗會明示 FAIL，原快照仍保留。這裡的畫面來自真 3D 網格，不是示意圖片；核准女主角之前一律標記外觀待驗收。</p>
+<button id="scan316-capture" type="button">立即拍攝目前真 3D 三視角</button>
+<output id="scan316-status" role="status" aria-live="polite" style="display:block;padding:7px;color:#b6e8ee">尚未拍攝；必須先建立有效的真 3D 模型。</output>
+<div id="scan316-gallery" aria-label="真 WebGL 每階段正側背快照"></div>
+</section>
 <details id="scan315-source-first" style="padding:9px;margin:9px 0;border:1px solid #4d667f;border-radius:8px">
 <summary>Real3D 3.15｜外型幾何優先：女主角真 3D 草模與三視角</summary>
 <p class="hint">此功能讓右側真正換上獨立校園制服與依來源輪廓生成的長髮草模，並可從正面、側面、背面檢查真 3D 幾何。模型臉型、髮絲細節與格紋尚未核准；不把照片貼在平面上，也不宣稱完成同一人物。</p>
