@@ -18,9 +18,9 @@
 - **2.5D**：清楚註明**單層視差練習**；並未重建被遮擋面，不得誤認為全 3D 或多圖層真分離。
 - **3D**：共用原 Real3D 的 GLB WebGL 來源匯入，顯示真 XYZ 網格基礎姿勢與旋轉檢視；不捏假人、不推測來源照片背面，也不冒充骨架動畫。
 - **電影模式**：現有多片段來源順序播放、進度 seek 與字幕；完整多軌合成、對白音軌、特效、真立體渲染尚未全部接線。
-- 本機音樂匯入＋原生 audio controls 真預聽，**未混入**輸出影片。
+- 本機配樂、音效、對白錄音可分別匯入、解碼成真 PCM，以 Web Audio 三組獨立增益控制，進入 WebM Opus 音訊軌。配樂在時間軸循環，音效與對白由片頭觸發一次；原生 source-video audio、AI 語音合成尚未接通。
 - PNG：真正 Canvas 畫面擷取；3D 模式可嘗試共用 WebGL 原生畫面擷取。
-- WebM：在 MediaRecorder 可用時，以 Canvas captureStream 即時輸出**僅畫面軌**，不承諾 MP4、音訊混音、4K、高速離線渲染或所有裝置可用。
+- WebM：在 MediaRecorder 與 Web Audio 可用時，以 Canvas captureStream 配上 PCM 混音進 MediaRecorder，輸出真 VP8/VP9 + Opus 的視聽串流。僅有本機來源音軌，不承諾 MP4、AI 角色配音、3D 角色骨架渲染、4K、高速離線渲染或所有裝置可用。
 - AI 角色生成為 disabled（後端未接），不准假 callback 或假的完成進度。
 
 ## 桌面與手機 UX
@@ -35,3 +35,15 @@
 - 使用者正式 Mobile Authority 圖：**尚待製作與獨立核准**。
 - AI 角色產生、真人一比一重建、動作庫、配音、音效混音、音樂原創、MP4/H.264 與真 4K：**尚未通過正式 Gate**。
 - Render 正式網站、AIG HOME 與 CNC 3AX/4AX/5AX/6AX／NC：**本分支不修改與不部署**。
+
+
+## 2026-10-24 Mobile 定版＋電影聲音合成施工
+
+- 使用者正式核准手機 390×844「畫面」頁。
+- Mobile Authority：`/AIG-II/FastModel/Approved-Authority/Mobile/AIG-FastModel-StarJourney-RGBGlass-Mobile-Authority-V1.png` (Library)，SHA-256 `771e25505942b9ae9424ac8a8329f40bd706063c6f1eded81b53e05daff69d35`。
+- `authority/starjourney-mobile-v1.json` 各平台獨立 Image ID、SHA、Mobile Tab ID 與不可偽裝 GPU/影音狀態規則。
+- 繪圖 2D/2.5D／音訊／字幕／時間軸繼續共享同一 command contract，桌面與手機 CSS 各自遵從核准視覺。
+- 新增 `audio-mixer.mjs`：解碼本機音樂、音效、使用者上傳的對白錄音，輸出 Web Audio stream 到 WebM Opus。每種聲音有獨立音量，錄影過程真 mux。
+- **成功實測版本**：GitHub Actions run `40020951943` 的 WebM (500KB) 已由 ffprobe 確認 VP9 video + Opus audio；FFmpeg volumedetect audio 有效（約 5.14 秒、mean -15.2dB，並非只有靜音 track）。此 run 僅用 220Hz 與 660Hz 合成測試聲音，**不是使用者指定的正式電影配樂**。
+- 後續另新增「真人錄製對白」第三軌，其測試狀態要以最新 GitHub run 為準，不能從上述兩軌證據推論三軌已 PASS。
+- **尚 BLOCK**：AI 音樂生成、文字配音 TTS、任意照片真 3D 身體、影片原生音訊抽取、精確分鏡對白對位、成品影片配音與音效完整業務驗收。
