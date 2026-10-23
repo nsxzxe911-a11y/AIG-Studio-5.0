@@ -123,6 +123,33 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <output id="photo23-status" role="status" aria-live="polite" style="display:block;color:#b3efe6;padding:8px">尚未處理照片，既有場景保持不變。</output>
 <pre id="photo23-proof" style="overflow:auto;max-height:200px;white-space:pre-wrap;font:12px/1.5 ui-monospace,monospace">尚無 2.3 來源與蒙皮證據。</pre>
 </section>
+<section id="real3d26-vision" class="panel" style="margin:14px 0;padding:14px;background:#061827;border:1px solid #508d95">
+<h2>Real3D 2.6｜真實尺寸／來源辨識／線性色彩工作區</h2>
+<p>來源沿用上方的原始照片（原圖不覆蓋）。真 1:1 量測只適用於<strong>有已知實際尺寸、同一平面、四角透視與第五個獨立校驗點</strong>的參考面。單照片未知深度的 3D 人體不可聲稱 1:1；語意標籤須由實際模型或人工提供，色彩校正不等於顯示器 ICC 驗收。</p>
+<button type="button" id="vision26-load">01｜讀取同一張原照片並計算來源 SHA</button>
+<output id="vision26-status" role="status" aria-live="polite" style="display:block;color:#aeeedb;padding:8px">尚未讀取來源；無尺寸／語意／色彩核准資料。</output>
+<div class="world-grid">
+<label>標記點模式<select id="vision26-pick"><option value="reference">四角＋獨立第五點（TL → TR → BR → BL → 驗證點）</option><option value="query">查詢平面 mm 座標</option><option value="neutral">選取中性參考色區域</option></select></label>
+<label>實測參考物寬（mm）<input id="vision26-width-mm" type="number" value="200" min="0.001" step="0.001"></label>
+<label>實測參考物高（mm）<input id="vision26-height-mm" type="number" value="100" min="0.001" step="0.001"></label>
+<label>第五點實測 X（mm）<input id="vision26-check-x" type="number" value="100" step=".001"></label>
+<label>第五點實測 Y（mm）<input id="vision26-check-y" type="number" value="50" step=".001"></label>
+<label>參考物出處<select id="vision26-reference-source"><option value="USER_MEASURED">使用者實際量測</option><option value="CAD_DIMENSION_AUTHORITY">CAD 尺寸來源</option></select></label>
+<label>中性校正卡目標亮度（sRGB 8-bit）<input id="vision26-neutral-target" type="number" value="128" min="8" max="247" step="1"></label>
+</div>
+<p style="font-size:12px">先依順序在左圖點 4 個參考物角點及 1 個已知位置的獨立檢查點；不是單純圖片放大。色彩模式另點實際中性灰卡所在區域。不提供校正來源即 BLOCKED。</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px">
+<div><label>原始來源（點選量測／灰卡）<canvas id="vision26-canvas" width="640" height="420" aria-label="Real3D 2.6 真實來源標記面" style="width:100%;max-height:450px;object-fit:contain;touch-action:manipulation;background:#04101b;border:1px solid #4e899d"></canvas></label></div>
+<div><label>線性光校正預覽（來源不修改）<canvas id="vision26-color-canvas" width="640" height="420" aria-label="Real3D 2.6 經中性灰卡校正的像素預覽" style="width:100%;max-height:450px;object-fit:contain;background:#04101b;border:1px solid #4e899d"></canvas></label></div>
+</div>
+<button id="vision26-calibrate" type="button">02｜計算透視＋獨立檢查點實際 mm 校正</button>
+<button id="vision26-color-run" type="button">03｜依實際中性灰卡校正線性 RGB</button>
+<label>外部 AI／人工語意標籤 JSON（附來源／模型 SHA、像素 RLE，沒有真實標籤不得冒充辨識成功）
+<input id="vision26-label-file" type="file" accept=".json,application/json" style="display:block;padding:10px;max-width:100%;color:#c9edff"></label>
+<button id="vision26-label-import" type="button">04｜驗證來源語意標籤與可信度</button>
+<button id="vision26-save" type="button">保存 2.6 校正證據到本機素材庫（不覆蓋原圖）</button>
+<details><summary>查看真毫米、來源 SHA、色彩及辨識可信度證據</summary><pre id="vision26-proof" style="max-height:340px;overflow:auto;white-space:pre-wrap;font:12px/1.6 ui-monospace,monospace">尚無 2.6 來源證據。</pre></details>
+</section>
 <section id="story-2-2" style="border:1px solid #447c95;border-radius:12px;padding:14px;margin-top:15px;background:#061727">
 <h2>Real3D 2.2｜中文劇情 → 原始 GLB 動作／鏡頭／字幕</h2>
 <p>先在上方載入真正含 AnimationClip 的人物，再輸入敘述。單一角色可省略代號；多角色必須填實際 node ID，例如 node-1。鏡頭必須先在「鏡頭關鍵格」設好時間及位置。人物缺少跑、跳、蹲、轉頭等原始 GLB 動作會明確 BLOCKED，絕不偽裝成已生成 3D 骨架。</p>
