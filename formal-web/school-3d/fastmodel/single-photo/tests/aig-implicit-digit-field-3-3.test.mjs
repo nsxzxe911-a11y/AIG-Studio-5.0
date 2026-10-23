@@ -23,7 +23,7 @@ function source(){
    points.push(prev.map((v,i)=>v+
     (d.type==='hand'?(i===1?-.028:0):(i===2?.022:0))));
   }
-  return {...d,actual3DJointXYZ:points};
+  return {...d,phalanxCount:d.phalanges,actual3DJointXYZ:points};
  });
  const result={sourceSha256:SHA,meshes,
   actualPositionsAndIndexedTrianglesPresent:true,
