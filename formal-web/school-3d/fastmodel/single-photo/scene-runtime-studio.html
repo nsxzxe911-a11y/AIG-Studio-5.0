@@ -333,6 +333,29 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <pre id="digits32-proof" style="white-space:pre-wrap;max-height:330px;overflow:auto;font:12px/1.5 ui-monospace,monospace">尚未產生。</pre>
 </details>
 </section>
+<section id="real3d34-photo-digit" class="panel" style="margin:14px 0;background:#081923;border:1px solid #438b9c">
+<h2>Real3D 3.4｜真照片指尖／趾尖輪廓掃描 → 約束 SDF 曲面</h2>
+<p>不再完全用固定比例猜測。由<strong>同一張照片與 2.7 已驗證的左右手／腳來源標籤</strong>，自動尋找五個實際分離的指趾輪廓；有五個可見突出區域，才可約束 3.3 的個別指趾長度與位置。被遮住、交疊、缺少手腳來源，保持原模型和「未驗證」狀態。</p>
+<p class="hint">只驗證照片平面 XY 的五個突出部分，不等於知道拇指順序、指甲、皮膚細節、前後深度或全身 1:1。特徵找不到不得憑空補出完整真實手腳。</p>
+<button id="digits34-detect" type="button">01｜自動掃描真照片：左右手、左右腳輪廓</button>
+<button id="digits34-apply" type="button">02｜把實際指尖輪廓接入 3.3 隱式曲面</button>
+<button id="digits34-clear" type="button">清除此輪輪廓校正（原圖、3D 模型及關節保留）</button>
+<div class="world-grid">
+<label>來源手腳群組特寫<select id="digits34-view">
+<option value="leftHand">左手指尖</option>
+<option value="rightHand">右手指尖</option>
+<option value="leftFoot">左腳趾尖</option>
+<option value="rightFoot">右腳趾尖</option>
+</select></label>
+</div>
+<canvas id="digits34-photo-preview" width="640" height="420"
+style="display:block;max-width:960px;width:100%;height:auto;background:#04121d;border:1px solid #356479"
+aria-label="來源照片實際輪廓和五個已觀察指尖位置；不生成假五指"></canvas>
+<output id="digits34-status" role="status" aria-live="polite" style="display:block;color:#a5eadb;padding:7px">待命：請先在 2.6 讀照片並在 2.7 建立真像素手腳分割。</output>
+<details><summary>真照片 SHA、五指尖來源像素、未觀察區域與 3D 約束 Gate</summary>
+<pre id="digits34-proof" style="white-space:pre-wrap;max-height:380px;overflow:auto;font:12px/1.4 ui-monospace,monospace">尚未自動定位真實指尖。</pre>
+</details>
+</section>
 <section id="real3d28-learning" class="panel" style="margin:14px 0;padding:14px;background:#071928;border:1px solid #5992a7">
 <h2>Real3D 2.8｜第一方本機 AI 模型訓練、辨識與未知區域</h2>
 <p>先用上方 2.7 真像素標註產生<strong>本人逐區審核過的訓練資料</strong>，才允許真正訓練權重。之後同一模型能直接對不同來源照片推論，不再逐點指定新照片。但目前是從你審核的資料學到的<b>輕量多類別像素機器學習模型</b>，不是預先知道所有人的頭髮、衣物、動植物的通用語意網路。</p>
