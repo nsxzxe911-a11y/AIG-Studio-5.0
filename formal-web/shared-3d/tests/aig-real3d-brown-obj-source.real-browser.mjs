@@ -48,6 +48,21 @@ try{
  await page.locator('#source-origin').fill('Synthetic test mesh: NOT a real human');
  await page.locator('#capture-method').selectOption('MANUAL_MODEL');
  await page.locator('#source-rights').check();
+ // Four independently attached actual transparent reference PNGs;
+ // ellipse is diagnostic synthetic geometry and NOT a source person photo.
+ const pngReference=Buffer.from((await page.evaluate(()=>{
+  const c=document.createElement('canvas');c.width=1080;c.height=1920;
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,1080,1920);ctx.fillStyle='#242424';
+  ctx.beginPath();ctx.ellipse(540,960,145,600,0,0,Math.PI*2);ctx.fill();
+  return c.toDataURL('image/png');
+ })).split(',')[1],'base64');
+ for(const angle of ['front','side','back','threeQuarter']){
+  await page.locator('#reference-'+angle).setInputFiles({
+   name:'QA_SYNTHETIC_ALPHA_'+angle+'.png',mimeType:'image/png',
+   buffer:pngReference
+  });
+ }
  await page.locator('#inspect').click();
  await page.waitForFunction(()=>{
   const a=document.getElementById('inspect'),s=document.getElementById('status');
@@ -64,6 +79,26 @@ try{
  assert.equal(proof.sourceReview.personAuthenticityVerified,false);
  assert.equal(proof.sourceReview.naturalAppearancePASS,false);
  assert.equal(proof.sourceReview.releasePASS,false);
+ assert.equal(proof.silhouetteComparison.transparentReferencesUploaded,4);
+ assert.equal(proof.silhouetteComparison.fourViewSilhouetteComparePASS,true,
+  JSON.stringify(proof.silhouetteComparison.errors));
+ assert.equal(proof.silhouetteComparison.allFourAnglesCompared,true);
+ assert.equal(proof.silhouetteComparison.images.length,4);
+ assert.equal(proof.silhouetteComparison.anatomicalVisualApproval,false);
+ assert.equal(proof.silhouetteComparison.personLikenessVerified,false);
+ assert.ok(proof.silhouetteComparison.averageIoU>=0&&proof.silhouetteComparison.averageIoU<1,
+  'Different synthetic GPU mesh and drawn alpha reference MUST NOT show exact visual identity');
+ assert.equal(await page.locator('#reference-gallery figure').count(),4);
+ for(let i=0;i<4;i++){
+  const item=page.locator('#reference-gallery figure').nth(i);
+  const p=page.waitForEvent('download',{timeout:15000});
+  await item.locator('a').click();
+  const dl=await p,blob=await readFile(await dl.path());
+  assert.equal(blob.readUInt32BE(0),0x89504e47);
+  assert.equal(blob.readUInt32BE(16),1080);
+  assert.equal(blob.readUInt32BE(20),1920);
+  await copyFile(await dl.path(),dir+'/SOURCE_DIFFERENCE_'+i+'.png');
+ }
  assert.equal(proof.sevenRealBrownGPUPasses.length,7);
  assert.deepEqual(proof.sevenRealBrownGPUPasses.slice(0,4).map(x=>x.mode),
   ['BLACK_CONTOUR','BROWN_FLAT','BROWN_VOLUME','BROWN_FINISH']);
@@ -80,6 +115,9 @@ try{
   localRawOBJ_SHA256:hash,sourceOBJ:buf.length,
   oneSourceSevenTrueGPUFrames:true,
   realFourViews:true,
+  alphaReferenceOverlayFourViewCompared:true,
+  referencePictureWasSyntheticNotHuman:true,
+  automaticHumanAppearanceApproval:false,
   noSyntheticHumanReconstruction:true,
   naturalHumanVisualPASS:false,releasePASS:false,renderDeployed:false
  },null,2));
