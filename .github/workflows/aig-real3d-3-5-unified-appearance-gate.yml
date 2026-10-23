@@ -40,6 +40,9 @@ on:
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-dual-adult-runtime.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-unified-19200-ratio-core.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-mm-coordinate-contract.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-4k-adaptive-render.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-stage1-true4k-capture.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-4k-adaptive-render.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-mm-coordinate-contract.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-unified-19200-ratio-core.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-stage1-dual-adult.test.mjs'
@@ -177,6 +180,9 @@ jobs:
           node --check aig-stage1-dual-adult-anatomy.mjs
           node --check aig-stage1-unified-19200-ratio-core.mjs
           node --check aig-stage1-mm-coordinate-contract.mjs
+          node --check aig-stage1-4k-adaptive-render.mjs
+          node --check aig-stage1-true4k-capture.mjs
+          node --test tests/aig-stage1-4k-adaptive-render.test.mjs
           node --test tests/aig-stage1-mm-coordinate-contract.test.mjs
           node --test tests/aig-stage1-unified-19200-ratio-core.test.mjs
           node --test tests/aig-stage1-dual-adult.test.mjs
@@ -185,16 +191,21 @@ jobs:
           npm run build
           grep -q 'AIG_STAGE1_ONE_CORE_19200_PROPORTION_GATE' dist/scene-runtime-studio.js
           grep -q 'AIG_STAGE1_CANONICAL_MM_0_001_V1' dist/scene-runtime-studio.js
+          grep -q 'AIG_STAGE1_SINGLE_WEBGL_ADAPTIVE_TRUE_4K' dist/scene-runtime-studio.js
+          grep -q 'stage1-4k-current' dist/scene-runtime-studio.html
       - name: Install Chromium for real HTML canvas rendering
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
-      - name: Actual male/female four-view WebGL screenshots for phone and desktop
+      - name: Actual male/female four-view WebGL screenshots and 3840x2160 GPU frame
+        env:
+          AIG_STAGE1_TRUE_4K_E2E: '1'
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/stage1-http.log 2>&1 &
           pid=$!
           trap 'kill "$pid" 2>/dev/null || true' EXIT
           node tests/aig-stage1-dual-adult.real-browser.mjs
+          test -s artifacts/aig-stage1-adult-male-female-swim-geometry/desktop-male-front-ACTUAL-GPU-3840x2160-4K.png
       - uses: actions/upload-artifact@v4
         if: always()
         with:
