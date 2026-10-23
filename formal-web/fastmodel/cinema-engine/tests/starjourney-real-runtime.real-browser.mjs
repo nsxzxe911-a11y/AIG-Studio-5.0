@@ -15,6 +15,18 @@ const errors=[],screens=[];
 const page=await browser.newPage({viewport:{width:1600,height:920},acceptDownloads:true});
 page.on('pageerror',e=>errors.push(e.message));
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAuMBgZc5GfYAAAAASUVORK5CYII=','base64');
+function makeRealWAV(hz,sec){
+ const rate=24000,n=Math.round(rate*sec),b=Buffer.alloc(44+n*2);
+ b.write('RIFF',0);b.writeUInt32LE(b.length-8,4);b.write('WAVE',8);
+ b.write('fmt ',12);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);
+ b.writeUInt16LE(1,22);b.writeUInt32LE(rate,24);b.writeUInt32LE(rate*2,28);
+ b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);
+ b.write('data',36);b.writeUInt32LE(n*2,40);
+ for(let i=0;i<n;i++){
+  const fade=Math.min(1,i/(rate*.04),(n-i)/(rate*.04));
+  b.writeInt16LE(Math.round(Math.sin(2*Math.PI*hz*i/rate)*.38*fade*32767),44+i*2);
+ }return b;
+}
 try{
  await page.goto('http://127.0.0.1:8765/fastmodel/cinema-engine/',{
   waitUntil:'domcontentloaded',timeout:30000});
@@ -44,7 +56,20 @@ try{
  assert.equal(bytes.readUInt32BE(16),960);
  assert.equal(bytes.readUInt32BE(20),540);
  await copyFile(await pic.path(),path+'/STARJOURNEY-TRUE-CANVAS-OUTPUT.png');
- let webmExportPASS=false,webmSize=0;
+ await page.locator('#audio-file').setInputFiles({
+  name:'QA_MUSIC_TRUE_220HZ.wav',mimeType:'audio/wav',buffer:makeRealWAV(220,1.5)
+ });
+ await page.waitForFunction(()=>document.getElementById('audio-short').textContent.includes('QA_MUSIC_TRUE'),null,{timeout:12000});
+ await page.locator('#sfx-file').setInputFiles({
+  name:'QA_SFX_TRUE_660HZ.wav',mimeType:'audio/wav',buffer:makeRealWAV(660,.65)
+ });
+ await page.waitForFunction(()=>document.getElementById('sfx-short').textContent.includes('QA_SFX_TRUE'),null,{timeout:12000});
+ assert.match(await page.locator('#feedback').textContent(),/已解碼真實/);
+ await page.locator('#music-volume').fill('60');
+ await page.locator('#sfx-volume').fill('80');
+ assert.equal(await page.locator('#music-volume-value').textContent(),'60%');
+ assert.equal(await page.locator('#sfx-volume-value').textContent(),'80%');
+ let webmExportPASS=false,webmSize=0,webmRealAudioTrackPASS=false;
  if(await page.evaluate(()=>typeof MediaRecorder!=='undefined'&&
     typeof HTMLCanvasElement.prototype.captureStream==='function'&&
     ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm']
@@ -54,7 +79,9 @@ try{
   const file=await promise,video=await readFile(await file.path());
   assert.equal(video.readUInt32BE(0),0x1a45dfa3);
   assert.ok(video.length>1000);
-  await copyFile(await file.path(),path+'/STARJOURNEY-REAL-CANVAS-VIDEO-ONLY.webm');
+  webmRealAudioTrackPASS=video.includes(Buffer.from('A_OPUS'))||video.includes(Buffer.from('A_VORBIS'));
+  assert.equal(webmRealAudioTrackPASS,true,'Real WebM requires audio codec track');
+  await copyFile(await file.path(),path+'/STARJOURNEY-REAL-CANVAS-MUSIC-SFX.webm');
   webmExportPASS=true;webmSize=video.length;
  }
  await page.screenshot({path:path+'/desktop-real-runtime-with-asset.png',fullPage:true});
@@ -92,6 +119,10 @@ try{
   webmExportNotTested:!webmExportPASS,
   webmVideoOnlyExportPASS:webmExportPASS,
   webmBytes:webmSize,
+  webmRealAudioTrackPASS,
+  musicAndSFXDecodedAndMixed:true,
+  aiDialogueVoiceGenerated:false,
+  sourceVideoAudioMixVerified:false,
   human3DPhotoReconstructionPASS:false,
   fullMovieWithAudioPASS:false,
   deployedToRender:false
