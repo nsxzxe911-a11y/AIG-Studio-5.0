@@ -86,6 +86,10 @@ function report(){
    rendererTextures:gpu?.memory?.textures??null,
    gpuVRAMBytesVerified:false,
    viewerContexts:1,
+   renderOutputColorSpace:viewer?.renderer?.outputColorSpace??null,
+   actualPBRLinearLightPipeline:!!viewer,
+   nativeDisplayICCColourCertified:false,
+   physicallyMeasured3DFullbodyCertified:false,
    immutableSourceAssetsPreserved:true
   },null,2);
   return;
