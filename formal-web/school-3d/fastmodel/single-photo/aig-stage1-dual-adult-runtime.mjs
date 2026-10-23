@@ -10,32 +10,41 @@ import {buildAIGStage1AdultAnatomy,auditAIGStage1Anatomy,
 import {planAIGStage1OneCore19200,runStage1UnifiedRenderLogicCore,
  fitHumanToView}
  from './aig-stage1-unified-19200-ratio-core.mjs';
+import {makeAIGStage1CanonicalMM,auditAIGStage1MMConversion,
+ aigStage1WebGLGeometryFromCanonicalMM,
+ aigStage1WebGLMetersFromTicks,aigStage1MmFromTicks}
+ from './aig-stage1-mm-coordinate-contract.mjs';
 export const AIG_STAGE1_RUNTIME='AIG_STAGE1_DUAL_ADULT_TRUE_WEBGL_VIEWS';
 const el=id=>document.getElementById(id);
 const views=['front','profile','rear','quarter45'];
 const error=s=>{throw Error('AIG_STAGE1_VIEW_'+s)};
-function convertPart(part,joints){
+function convertPart(part,joints,canonical){
  const g=new THREE.BufferGeometry();
- g.setAttribute('position',new THREE.BufferAttribute(part.geometry.positions,3));
+ const bodyMM=canonical.parts[part.id];
+ if(!bodyMM)error('MISSING_CANONICAL_MM_PART');
+ g.setAttribute('position',new THREE.BufferAttribute(
+  aigStage1WebGLGeometryFromCanonicalMM(bodyMM.positionTicks),3));
  g.setIndex(new THREE.BufferAttribute(part.geometry.indices,1));
  g.computeVertexNormals();
  g.computeBoundingSphere();
  if(part.parent){
-  const attach=joints[part.parent]?.position;
-  if(!attach)error('MISSING_ATTACHMENT_'+part.parent);
-  g.translate(-attach[0],-attach[1],-attach[2]);
+  const ticks=canonical.joints[part.parent]?.positionTicks;
+  if(!ticks)error('MISSING_MM_ATTACHMENT_'+part.parent);
+  g.translate(...Array.from(ticks,x=>-aigStage1WebGLMetersFromTicks(x)));
  }
  return g;
 }
-function createThreeAdult(source){
+function createThreeAdult(source,canonical){
  const root=new THREE.Group();
  root.name='AIG_STAGE1_'+source.gender.toUpperCase()+'_ANATOMY';
  const bones={};
  for(const [id,meta] of Object.entries(source.joints)){
   const bone=new THREE.Bone();bone.name=id;
   const parent=meta.parent?source.joints[meta.parent]:null;
-  const pos=meta.position.map((x,k)=>x-(parent?.position[k]??0));
-  bone.position.set(...pos);
+  const ticks=canonical.joints[id].positionTicks;
+  const parentTicks=parent?canonical.joints[meta.parent].positionTicks:null;
+  bone.position.set(...Array.from(ticks,(x,k)=>
+   aigStage1WebGLMetersFromTicks(x-(parentTicks?.[k]??0))));
   bones[id]=bone;
  }
  for(const [id,meta] of Object.entries(source.joints)){
@@ -52,7 +61,7 @@ function createThreeAdult(source){
  });
  let geometryTriangles=0;
  for(const p of source.parts){
-  const mesh=new THREE.Mesh(convertPart(p,source.joints),
+  const mesh=new THREE.Mesh(convertPart(p,source.joints,canonical),
    p.material==='swim'?materialSwim:materialBody);
   mesh.name=p.id;
   mesh.userData={role:p.role,material:p.material,
@@ -139,7 +148,8 @@ export function installAIGStage1DualAdultRuntime({
      aspect:stageCamera?.aspect||1,
      verticalFovDeg:stageCamera?.fov||40,
      viewport:actualCanvasViewport(),
-     snapshots:snapshotsByGender.get(selected)||[]
+     snapshots:snapshotsByGender.get(selected)||[],
+     canonicalMM:model.canonical
     });
    }catch(e){
     ratioEvidence={schema:'AIG_STAGE1_ONE_CORE_19200_PROPORTION_GATE',
@@ -157,6 +167,9 @@ export function installAIGStage1DualAdultRuntime({
    realTriangleCount:model?.object.geometryTriangles??0,
    realAnatomicalJointCount:model?.source.jointCount??0,
    measuredHeightMeters:model?.source.heightMeters??null,
+   heightMm:model?.canonical?.heightMm??null,
+   canonicalUnit:'mm',precisionMm:.001,
+   coordinateMmGate:model?.millimeterAudit??null,
    allJointsHaveParentHierarchy:true,
    actualJointSource:Object.keys(model?.source.joints??{}),
    garmentType:model?.source.garmentType??null,
@@ -208,14 +221,19 @@ export function installAIGStage1DualAdultRuntime({
   const audit=auditAIGStage1Anatomy(source);
   if(!audit.automaticGeometryContractPASS)
    error('ANATOMICAL_STRUCTURE_GATE_'+audit.structuralErrors.join('_'));
-  const next=createThreeAdult(source);
+  const canonical=makeAIGStage1CanonicalMM(source);
+  const millimeterAudit=auditAIGStage1MMConversion(source,canonical);
+  if(!millimeterAudit.canonicalMillimeterGatePASS)
+   error('MM_COORDINATE_CONTRACT_'+
+    millimeterAudit.millimeterContractViolations.join('_'));
+  const next=createThreeAdult(source,canonical);
   const originalObject=model;
   stageScene.add(next.root);
   if(originalObject){
    stageScene.remove(originalObject.object.root);
    originalObject.object.dispose();
   }
-  model={source,object:next};
+  model={source,object:next,canonical,millimeterAudit};
   // Each newly installed model must take NEW actual WebGL snapshots.
   // Keep previous gallery PNGs as evidence, but never silently reuse
   // yesterday's hash to satisfy the current session's Stage 1 Gate.
@@ -287,7 +305,11 @@ export function installAIGStage1DualAdultRuntime({
     saw.add(sha);
     shot.push({gender,view,width:w,height:h,png,
      rgbaSHA256:sha,sha256:sha,realWebGLRendererPixels:true,
-     realRendererPixels:true,camera});
+     realRendererPixels:true,camera,
+     bodyHeightMm:model.canonical.heightMm,
+     cameraPositionMm:camera.position.map(x=>
+      aigStage1MmFromTicks(Math.round(x*1000000))),
+     millimeterPrecision:.001});
    }
    snapshotsByGender.set(gender,shot.map(({view,sha256,
     realWebGLRendererPixels,camera})=>({view,sha256,realWebGLRendererPixels,
