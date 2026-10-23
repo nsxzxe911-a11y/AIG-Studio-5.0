@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020407">
+<title>AIG Real3D｜Scan-Native 人體來源網格研發（外觀 BLOCK）</title>
+<style>
+:root{font:15px system-ui,"Microsoft JhengHei",sans-serif;color:#dff1fa;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#020407}
+header{background:#07111b;padding:16px;border-bottom:1px solid #32677e;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:20px;margin:0}h2{font-size:17px}
+a{color:#8fe9fc}
+main{max-width:1500px;margin:auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 335px;gap:14px}
+section{background:#07111b;border:1px solid #37677e;padding:15px;border-radius:13px;margin-bottom:14px}
+p{line-height:1.65;color:#b6d1de}
+canvas{width:100%;aspect-ratio:16/9;background:#000;border-radius:10px}
+#gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+figure{margin:0;border:1px solid #34647c;border-radius:10px;padding:10px}
+figure img{display:block;width:100%;max-height:520px;object-fit:contain;background:#000}
+figcaption{font-weight:700;margin-bottom:7px}
+label{display:block;margin:12px 0 5px}
+input,select,button{width:100%;padding:10px;background:#0b2332;border:1px solid #407f98;border-radius:8px;color:inherit;font:inherit;min-height:44px}
+button{background:linear-gradient(110deg,#056877,#254e91);font-weight:700;cursor:pointer;margin-top:15px}
+button:disabled{opacity:.5}
+pre{max-height:350px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px}
+small{display:block;overflow-wrap:anywhere;color:#a1c9d5;margin-top:6px}
+.warn{color:#ffd39b}
+@media(max-width:820px){main{grid-template-columns:1fr}#gallery{grid-template-columns:1fr}}
+</style>
+</head><body>
+<header><h1>Real3D｜Scan-Native · 真實來源 3D 網格</h1>
+<nav><a href="../aig-new-home.html">AIG 新首頁</a>　<a href="./aig-real3d-template-lab.html">歷史候選</a></nav></header>
+<main>
+<div><section>
+<h2>來源網格 · 獨立驗證，不自動產生假人</h2>
+<canvas id="source-canvas" width="1024" height="620" aria-label="實際來源網格共享 WebGL 檢查視窗"></canvas>
+<p class="warn">本輪不用 SDF、Metaball、Template Morph 或 Subdivision 當正式人體。只能讀取實際來源 OBJ 頂點與面，顯示多角度幾何，不聲稱來源一定是真人掃描或照片 1:1。檔案僅在本機瀏覽器讀取；沒有上傳至伺服器。</p>
+</section><section><h2>正面／側面／背面／斜側面｜真正來源網格 GPU 對照</h2>
+<div id="gallery"></div></section></div>
+<aside><section>
+<h2>本機來源匯入 · Stage 1 BLOCK</h2>
+<label for="source-obj">原始 3D 人體網格 OBJ</label>
+<input id="source-obj" type="file" accept=".obj">
+<label for="source-landmarks">解剖標記 JSON（可選；缺少仍無法通過解剖 Gate）</label>
+<input id="source-landmarks" type="file" accept=".json">
+<label for="source-height">來源實際測量身高（mm）</label>
+<input id="source-height" type="number" min="900" max="2200" step="1" value="1680">
+<label for="up-axis">來源向上軸</label>
+<select id="up-axis"><option value="Y">Y-Up</option><option value="Z">Z-Up</option></select>
+<button id="load-source" type="button">解析真 OBJ → 解剖檢查 → 四視角 GPU</button>
+<p id="status" role="status">尚無可信來源，正式人體外觀 BLOCK。</p>
+<pre id="proof" aria-label="實際來源 SHA、拓樸、解剖及 GPU 檢查">沒有來源檔，沒有宣稱 PASS 的證據。</pre>
+<p>本頁不變更 HOME／CAD／CAM／3AX～6AX／NC，也不部署為正式人體。即使幾何通過，仍須來源權利確認、臉／五指／腳掌目視、照片相似度與實際骨架測試。</p>
+</section></aside>
+</main>
+<script type="module" src="./aig-real3d-scan-native-lab.mjs"></script>
+</body></html>
