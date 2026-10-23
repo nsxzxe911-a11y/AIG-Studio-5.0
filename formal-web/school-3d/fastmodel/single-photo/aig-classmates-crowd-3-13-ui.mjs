@@ -101,8 +101,8 @@ export function installAIG313ClassroomCapacity({
    const x=(column-(rowWidth-1)/2)*spacingX;
    const z=(row-(rowsNeeded-1)/2)*spacingZ;
    const scale=.90+(i%5)*.025;
-   dummy.position.set(center.x+x,
-    box.min.y*(1-scale),center.z+z);
+   dummy.position.set(x,
+    box.min.y*(1-scale),z);
    dummy.rotation.set(0,(i%7-3)*.055,0);
    dummy.scale.set(scale,scale,scale);dummy.updateMatrix();
    mesh.setMatrixAt(i,dummy.matrix);
@@ -165,7 +165,8 @@ export function installAIG313ClassroomCapacity({
   const gen=++benchGeneration;
   benchBusy=true;$('scan313-bench').disabled=true;
   status('正在量測同一個真 WebGL 場景的影格間隔、CPU 提交、Draw calls…');
-  const savedHook=viewer.onFrameMeasured,framesCollected=[];
+  const measurementViewer=viewer;
+  const savedHook=measurementViewer.onFrameMeasured,framesCollected=[];
   try{
    const actualRenderer=(()=>{
     const gl=viewer.renderer.getContext();
@@ -180,7 +181,8 @@ export function installAIG313ClassroomCapacity({
     const timeout=setTimeout(()=>finish(Error('FRAME_SAMPLING_TIMEOUT')),18000);
     const finish=(err)=>{
      if(finished)return;finished=true;clearTimeout(timeout);
-     if(viewer.onFrameMeasured===hook)viewer.onFrameMeasured=savedHook;
+     if(measurementViewer.onFrameMeasured===hook)
+      measurementViewer.onFrameMeasured=savedHook;
      err?reject(err):resolve([...framesCollected]);
     };
     const hook=(frame)=>{
@@ -191,7 +193,7 @@ export function installAIG313ClassroomCapacity({
      framesCollected.push(frame);
      if(framesCollected.length>=frames)finish();
     };
-    viewer.onFrameMeasured=hook;
+    measurementViewer.onFrameMeasured=hook;
    });
    if(gen!==benchGeneration||!group?.parent)throw Error('CROWD_SAMPLE_CANCELLED');
    const obj=group.children[0],personCount=group.userData.cloneCount;
@@ -217,6 +219,18 @@ export function installAIG313ClassroomCapacity({
    benchBusy=false;$('scan313-bench').disabled=false;
   }
  };
+ $('photo23-source')?.addEventListener('change',()=>{
+  if(group)clear();
+ });
+ $('scan29-hide')?.addEventListener('click',()=>{
+  if(group)clear();
+ });
+ $('scene-unload')?.addEventListener('click',()=>{
+  if(group)clear();
+ });
+ $('world-preview')?.addEventListener('click',()=>{
+  if(group)clear();
+ });
  $('scan313-show').addEventListener('click',()=>{
   try{preview(Number($('scan313-count').value))}
   catch(e){status(out(e),true);record()}
