@@ -7,6 +7,8 @@ import {projectAIGNativeOBJLandmarks,summarizeAIGLandmarkHeightRegions}
  from './aig-real3d-native-anatomy-projection.mjs';
 import {createAIGNativeAnatomyAnnotation}
  from './aig-real3d-native-anatomy-annotation.mjs';
+import {auditAIGNativeOBJLocalSurface}
+ from './aig-real3d-local-surface-topology.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {
  auditAIG3DSourceSilhouette,validateAIGInspectionCapturePlan,
@@ -85,6 +87,8 @@ $('inspect').addEventListener('click',async()=>{
  running=true;$('inspect').disabled=true;$('report-download').disabled=true;report=null;
  release();gallery.replaceChildren();$('reference-gallery').replaceChildren();
  $('anatomy-gallery').replaceChildren();$('anatomy-region-table').replaceChildren();
+ $('surface-table').replaceChildren();
+ $('surface-stats').textContent='未提供可驗證的原始 OBJ 網格標記，局部接合技術 Gate BLOCK。';
  $('anatomy-stats').textContent='來源標記尚未通過貼合檢查；真人自然外觀 BLOCK。';
  profiles=[];$('profile-angle').disabled=true;
  $('profile-table').replaceChildren();
@@ -207,10 +211,37 @@ $('inspect').addEventListener('click',async()=>{
     silhouetteResults.push(data.diagnostic);
    }catch(e){silhouetteProblems.push({angle,error:e.message});}
   }
-  let anatomicalProjection=null;
+  let anatomicalProjection=null,localSurface=null;
   const markerGateOK=isOBJ&&evidence.landmarkAudit?.complete===true&&
    landmarks!==null;
   if(markerGateOK){
+   // The ORIGINAL indexed triangles are the only geometry input. A GPU
+   // view, 2D alpha mask or sidecar label alone cannot repair a seam.
+   localSurface=auditAIGNativeOBJLocalSurface({
+    objText,landmarks,heightMm,upAxis:axis,sourceSha256:hash
+   });
+   $('surface-stats').textContent='五個來源標記區域的網格拓樸已分析。技術異常：'+
+    localSurface.regions.filter(r=>r.anomalyCodes.length).length+'/5；'+
+    '這不驗證五指、足趾或臉部自然性。';
+   const table=document.createElement('table');
+   const head=document.createElement('thead'),titles=document.createElement('tr');
+   for(const title of ['真 OBJ 區域','原始邊數','開放邊','非流形邊','面片方向錯誤',
+    '標記所屬相連元件','最大標記與表面距離 mm','技術異常']){
+    const th=document.createElement('th');th.textContent=title;titles.append(th);
+   }
+   head.append(titles);table.append(head);
+   const body=document.createElement('tbody');
+   for(const region of localSurface.regions){
+    const tr=document.createElement('tr');tr.dataset.region=region.id;
+    for(const value of [region.label,region.neighborhoodEdges,
+     region.openEdges,region.nonManifoldEdges,region.inconsistentFaceWindingEdges,
+     region.landmarkConnectedComponents,region.largestMarkerSnapErrorMm,
+     region.anomalyCodes.join('、')||'未檢測到上述技術異常']){
+     const td=document.createElement('td');td.textContent=String(value);tr.append(td);
+    }
+    body.append(tr);
+   }
+   table.append(body);$('surface-table').append(table);
    const views=[],annotations=[],regions=[];
    for(const angle of ['front','side','back','threeQuarter']){
     const projection=projectAIGNativeOBJLandmarks({
@@ -293,7 +324,7 @@ $('inspect').addEventListener('click',async()=>{
    '已比對 '+summary.count+'/4 視角；平均重合率：'+
    (summary.averageIoU===null?'無法計算':(summary.averageIoU*100).toFixed(2)+'%')+
    '；失敗：'+silhouetteProblems.length+'；這不是人體自然度自動驗收。';
-  report={...result,sourceReview,anatomicalProjection,silhouetteComparison:{
+  report={...result,sourceReview,anatomicalProjection,localSurfaceTopology:localSurface,silhouetteComparison:{
    ...summary,images:silhouetteResults,errors:silhouetteProblems,
    transparentReferencesUploaded:selected.length,
    fourViewSilhouetteComparePASS:summary.allFourAnglesCompared&&
