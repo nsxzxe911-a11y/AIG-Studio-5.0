@@ -1,0 +1,56 @@
+name: AIG Real3D 3.3 Direct SDF GPU Finger Toe Skin Gate
+on:
+  push:
+    branches:
+      - verify/real3d-true-world-movie-2-5-20261023
+    paths:
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-implicit-digit-field-3-3*'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-implicit-digit-raymarch-3-3*'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-20-digit-articulation-3-2-ui.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-implicit-digit-*'
+      - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.*'
+      - '.github/workflows/aig-real3d-3-3-implicit-sdf-skin-gate.yml'
+  workflow_dispatch:
+jobs:
+  actual-analytic-sdf-fragment-skin:
+    name: 20 independent real SDF digits without visible triangle tube skin (phone and desktop)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: formal-web/school-3d/fastmodel/single-photo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Bounded real analytical SDF, shaders, 20 source digits & 56 phalanges
+        run: |
+          node --check aig-implicit-digit-field-3-3.mjs
+          node --check aig-implicit-digit-raymarch-3-3.mjs
+          node --check aig-20-digit-articulation-3-2-ui.mjs
+          node --check tests/aig-implicit-digit-raymarch-3-3.real-browser.mjs
+          node --test tests/aig-implicit-digit-field-3-3.test.mjs
+          node --test tests/aig-20-digit-articulation-3-2.test.mjs
+          node --test tests/aig-articulated-view-3-1.test.mjs
+      - name: Build existing AIG formal WebGL viewer (no second canvas, no CNC edits)
+        run: |
+          npm run build
+          test -s dist/scene-runtime-studio.html
+          test -s dist/scene-runtime-studio.js
+          node --check dist/scene-runtime-studio.js
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Actual WebGL2 phone and desktop implicit SDF shader close-ups, independent joints and shader depth
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aig33-http.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          node tests/aig-implicit-digit-raymarch-3-3.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-Real3D-3-3-Actual-NonTriangle-SDF-Skin-Phone-Desktop
+          path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-real3d-3-3-implicit-sdf-skin/
+          if-no-files-found: warn
