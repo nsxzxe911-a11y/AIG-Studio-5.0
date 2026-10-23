@@ -255,6 +255,9 @@ export function installAIGStage1DualAdultRuntime({
   // Keep previous gallery PNGs as evidence, but never silently reuse
   // yesterday's hash to satisfy the current session's Stage 1 Gate.
   snapshotsByGender.delete(gender);
+  // Historical 4K thumbnails remain visible, but prior gender/render
+  // evidence must NEVER be attributed to a newly installed model.
+  last4KOutput=null;
   selected=gender;lastAudit=audit;active=true;renderCount=0;session++;
   lastCameraPlan=null;
   if(priorFrame===null){
