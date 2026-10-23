@@ -114,7 +114,8 @@ function rotateAround(point,pivot,axis,degree){
 }
 function jointWeight(joint,p,anchors){
  const {skull,neck,torso,leftArm,rightArm,leftLeg,rightLeg,pivots}=anchors;
- const height=Math.max(.45,skull.maxY-Math.min(leftLeg.minY,rightLeg.minY));
+ const height=Math.max(.45,skull.maxY-Math.min(
+  leftLeg?.minY??torso.minY,rightLeg?.minY??torso.minY,torso.minY));
  const width=.035*height,headBase=pivots.headYaw[1];
  const inHead=p.label===2||p.label===3, inNeck=p.label===4;
  if(joint.startsWith('head')){
