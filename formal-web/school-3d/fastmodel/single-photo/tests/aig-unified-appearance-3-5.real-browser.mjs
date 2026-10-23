@@ -158,6 +158,9 @@ try{
    const pony=JSON.parse(await page.locator('#scan29-proof').textContent());
    assert.equal(pony.real310RemovableHair.originalBodyMeshReconstructed,false);
    assert.equal(pony.real310RemovableHair.physicallyAccurateStrandsAndCollisions,false);
+   await page.locator('#viewport').screenshot({
+    path:out+'/'+device.name+'-real3d-3-10-detachable-ponytail.png'
+   });
 
    // Real joint deformation must propagate to REAL independent garment 3D
    // vertex attributes. A static clothing shell over a moving body is a FAIL.
@@ -186,6 +189,9 @@ try{
    assert.ok(posedClothes.real39GarmentActuallyFollowingBodyPose
     .realHairVerticesMoved>0,
     'actual separate ponytail geometry must follow real joint vertex movements');
+   await page.locator('#viewport').screenshot({
+    path:out+'/'+device.name+'-real3d-3-10-posed-hair-and-clothes.png'
+   });
    await page.locator('#rig31-reset').click();
    await page.waitForFunction(()=>{
     const layer=JSON.parse(document.getElementById('scan29-proof').textContent)
