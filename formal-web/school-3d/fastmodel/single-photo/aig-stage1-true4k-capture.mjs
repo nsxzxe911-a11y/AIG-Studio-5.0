@@ -44,8 +44,10 @@ export async function renderAIGStage1True4KPNG({
   oldScissor=renderer.getScissor(new THREE.Vector4()).clone(),
   oldScissorTest=renderer.getScissorTest();
  // Only one framebuffer is ever created, even for four sequential views.
- const samples=renderer.capabilities.isWebGL2&&
-  gl.getParameter(gl.MAX_SAMPLES)>=4?4:0;
+ // A full 4K MSAAx4 buffer can exhaust smaller GPUs/SwiftShader.
+ // Prefer exact 8.3M native pixels and stable readback; avoid pretending
+ // MSAA exists unless a later separate measured multi-sample Gate passes.
+ const samples=0;
  const target=new THREE.WebGLRenderTarget(width,height,{
   type:THREE.UnsignedByteType,format:THREE.RGBAFormat,
   colorSpace:THREE.SRGBColorSpace,
