@@ -122,6 +122,10 @@ try{
        proof.actualFourKOutput?.height===2160&&
        proof.actualFourKOutput.realGPUFramebufferReadback===true;
      },null,{timeout:100000});
+     await page.waitForFunction(()=>{
+      const img=document.querySelector('#stage1-4k-gallery img');
+      return img?.complete&&img.naturalWidth===3840&&img.naturalHeight===2160;
+     },null,{timeout:20000});
      const pngState=await page.locator('#stage1-4k-gallery img').first().evaluate(img=>
       ({naturalWidth:img.naturalWidth,naturalHeight:img.naturalHeight}));
      assert.deepEqual(pngState,{naturalWidth:3840,naturalHeight:2160});
