@@ -200,6 +200,24 @@ try{
    assert.ok(Number.isInteger(contacts.remainingCoarseProxyPenetrations));
    assert.equal(contacts.originalBodyAndRestGarmentUnmodified,true);
    assert.equal(contacts.fullSelfCollisionOrNaturalPhysicsCertified,false);
+   const secondary=posedClothes.real312ContinuousSecondaryMovement;
+   assert.equal(secondary.schema,
+    'AIG_REAL3D_3_12_FIXED_STEP_SECONDARY_HAIR_SKIRT');
+   assert.ok(secondary.actuallySimulatedIndependentMeshes>=2);
+   assert.ok(secondary.actualSecondaryVertices>0);
+   assert.equal(secondary.rootsPinnedToRealBodyPose,true);
+   assert.equal(secondary.originalRestAndSourceArraysUnchanged,true);
+   assert.equal(secondary.fullHairStrandAndFabricPhysicsCertified,false);
+   assert.equal(secondary.actualFrameSequenceDrivenBySingleRenderer,true);
+   await page.waitForFunction(()=>{
+    const p=JSON.parse(document.getElementById('scan29-proof').textContent)
+     .real312ContinuousSecondaryMovement;
+    return p?.simulatedFrames>=12;
+   },null,{timeout:20000});
+   const continuous=JSON.parse(await page.locator('#scan29-proof').textContent());
+   assert.ok(continuous.real312ContinuousSecondaryMovement.simulatedFrames>=12);
+   assert.equal(continuous.real312ContinuousSecondaryMovement.fullHairStrandAndFabricPhysicsCertified,false);
+
    assert.ok(contacts.actualContactCandidates>=contacts.actualCorrected3DVertices);
 
    await page.locator('#viewport').screenshot({
@@ -216,6 +234,12 @@ try{
    assert.equal(restContact.actuallyProcessedSeparateMeshes,0,
     'zero joint pose must not permanently displace rest clothing or hair');
    assert.equal(restContact.safeRestPoseRecovery,true);
+   const secondaryRest=JSON.parse(await page.locator('#scan29-proof').textContent())
+    .real312ContinuousSecondaryMovement;
+   assert.equal(secondaryRest.simulatedFrames,0);
+   assert.equal(secondaryRest.actualSecondaryVertices,0);
+   assert.equal(secondaryRest.underlyingPoseHasMovedVertices,false);
+
 
    await page.locator('#scan310-hair').selectOption('short');
    await page.waitForFunction(()=>{
