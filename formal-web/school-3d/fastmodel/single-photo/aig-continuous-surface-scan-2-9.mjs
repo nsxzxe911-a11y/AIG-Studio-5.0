@@ -89,7 +89,7 @@ function verticesAndNormals(positions,indices){
  }
  return {normals,zeroArea};
 }
-function makeSurface(profile,width,height,{bodyHeightUnits,depthRatio,radialSegments,sliceStep},labels,pixels){
+function makeSurface(profile,width,height,{bodyHeightUnits,depthRatio,radialSegments,sliceStep,hostProfile},labels,pixels){
  // True 3D world uses x-horizontal, y-height, z-depth. The RGB projection
  // defines visible x and y only. Back and z-depth remain prior-based.
  const profileHeight=Math.max(8,profile.bottom-profile.top+1);
@@ -109,7 +109,21 @@ function makeSurface(profile,width,height,{bodyHeightUnits,depthRatio,radialSegm
    const k=Math.exp(-offset*offset/24);
    mid+=sample.mid*k;widthPx+=sample.width*k;weight+=k;
   }
-  const smoothedMid=mid/weight,smoothedWidth=widthPx/weight;
+  let smoothedMid=mid/weight;
+  let smoothedWidth=widthPx/weight;
+  // An arm starts beside the torso; disjoint straight up/down cylinders
+  // look amputated. Blend only its shoulder-end projected center towards
+  // the actually present torso contour, never fake a measured bone joint.
+  if(hostProfile&&(profile.label===6||profile.label===7)){
+   const shoulder=interpolate(hostProfile.rows,
+    clamp(profile.top+8,hostProfile.top,hostProfile.bottom));
+   const target=profile.label===6?
+    shoulder.min+shoulder.width*.12:
+    shoulder.max-shoulder.width*.12;
+   const bridge=(1-Math.min(1,t/.20))**2;
+   smoothedMid+=(target-smoothedMid)*bridge;
+   smoothedWidth*=1+.45*bridge;
+  }
   // A joint must NOT shrink down to a tiny pin at a body connection.
   // Caps still seal the original indexed shell; this is an explicit
   // anatomical continuity PRIOR, not a true photographic measurement.
@@ -168,6 +182,7 @@ function makeSurface(profile,width,height,{bodyHeightUnits,depthRatio,radialSegm
   real3DSurface:true,continuousCrossSections:true,
   indexedEndCapsClosed:true,
   measuredAnatomicalJointFusionVerified:false,
+  shoulderConnectionIsAnInferredSurfacePrior:true,
   connectedSectionTaperPrior:true,
   sourcePixelStaircaseSmoothed:true,
   actuallyMeasuredBackSurface:false
@@ -183,12 +198,15 @@ export function buildAIG29ContinuousSurface({
   bodyHeightUnits,depthRatio,radialSegments,sliceStep});
  const ids=[...new Set(labels)].filter(x=>allowed.has(x)).sort((a,b)=>a-b);
  if(!ids.length||ids.length>16)fail('SOURCE_HAS_NO_USABLE_HUMAN_OR_ENVIRONMENT_CLASSES');
- const surfaces=[];
+ const surfaces=[],profiles=ids.map(id=>profileForClass(labels,width,height,id)).filter(Boolean);
  for(const id of ids){
   const p=profileForClass(labels,width,height,id);
   if(!p)continue;
+  const hostProfile=profiles.find(q=>q.label===14)||
+   profiles.find(q=>q.label===5)||
+   profiles.find(q=>q.label===1)||null;
   surfaces.push(makeSurface(p,width,height,{
-   bodyHeightUnits,depthRatio,radialSegments,sliceStep
+   bodyHeightUnits,depthRatio,radialSegments,sliceStep,hostProfile
   },labels,pixels));
  }
  if(!surfaces.length)fail('NO_ACTUAL_VISIBLE_SILHOUETTE_TO_RECONSTRUCT');
