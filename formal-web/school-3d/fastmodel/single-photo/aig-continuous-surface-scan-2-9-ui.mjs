@@ -29,6 +29,8 @@ import {buildAIG314BodyTriangleGrid,resolveAIG314TriangleContacts}
 import {getAIG314VerifiedAuthorityPalette,
  applyAIG314ObservedPaletteToBody}
  from './aig-heroine-authority-3-14.mjs';
+import {auditAIG314ActualTriangleIntersections}
+ from './aig-triangle-intersection-audit-3-14.mjs';
 const $=id=>document.getElementById(id);
 export function installAIG29ContinuousScan({
  getImage,getSegmentation,getSharedViewer,getBodyPose=()=>null
@@ -44,7 +46,7 @@ export function installAIG29ContinuousScan({
  let hair310Layer=null,hair310Proof=null;
  let contact311Proof=null,motion312Proof=null,contact314Proof=null;
  let poseGrid314=null,poseGrid314Source=null;
- let heroine314Proof=null;
+ let heroine314Proof=null,triangleIntersect314Proof=null;
  const dynamics312=new Map();
  let simulation312Frame=null,simulation312Id=0;
  const cancelSimulation312=()=>{
@@ -80,7 +82,7 @@ export function installAIG29ContinuousScan({
   hair310Layer=null;hair310Proof=null;contact311Proof=null;
   motion312Proof=null;contact314Proof=null;
   poseGrid314=null;poseGrid314Source=null;
-  heroine314Proof=null;
+  heroine314Proof=null;triangleIntersect314Proof=null;
   if(restore36Lighting){restore36Lighting();restore36Lighting=null}
   const label=$('scan36-visible');
   if(label)label.textContent='尚未建立 3D 曲面；原照片與其他 GLB 保留。';
@@ -105,6 +107,7 @@ export function installAIG29ContinuousScan({
    real311CoarseRealContactConstraints:contact311Proof,
    real314ActualTriangleContact:contact314Proof,
    real314HeroineApprovedVisualReferenceFit:heroine314Proof,
+   real314ExactBodyGarmentTriangleIntersections:triangleIntersect314Proof,
    real312ContinuousSecondaryMovement:motion312Proof,
    real310OneKernel19200LogicalWorkProfile:core36Proof?{
     configuredLogicalSlots:core36Proof.plan.logicalSlotsConfigured,
@@ -349,6 +352,44 @@ export function installAIG29ContinuousScan({
    ' 個獨立真 3D 技術髮型網格，跟隨頭骨移動；尚未有真髮絲物理。';
   proof();
  };
+ const audit314ActualTriangles=()=>{
+  if(!scan?.manifoldAudit?.closedManifold||!overlay?.parent||
+   !rendererSource||rendererSource.movieMode||rendererSource.reviewBusy)
+   throw Error('需要先產生真 3D 人體，再驗證髮型／裙擺三角面');
+  const base=scan.fusedOnePieceMesh,pose=getBodyPose?.();
+  const actualBody=pose?.positions instanceof Float32Array&&
+   pose.positions.length===base.positions.length?
+   pose.positions:base.positions;
+  const attachments=[];
+  for(const mesh of wardrobe37Layer?.children??[])
+   if(mesh.isMesh&&mesh.name.includes('PLEATED_UNIFORM_SKIRT'))
+    attachments.push({
+     mode:'skirt',name:mesh.name,
+     positions:new Float32Array(mesh.geometry.attributes.position.array),
+     indices:new Uint32Array(mesh.geometry.index.array)
+    });
+  for(const mesh of hair310Layer?.children??[])
+   if(mesh.isMesh&&mesh.name.includes('HAIR_FOLLOW_TAILS'))
+    attachments.push({
+     mode:'hair',name:mesh.name,
+     positions:new Float32Array(mesh.geometry.attributes.position.array),
+     indices:new Uint32Array(mesh.geometry.index.array)
+    });
+  if(!attachments.length)throw Error('尚無真 3D 裙擺或長髮束可供三角面驗證');
+  triangleIntersect314Proof=auditAIG314ActualTriangleIntersections({
+   bodyPosed:actualBody,bodyIndices:base.indices,
+   sourceLabels:base.vertexSourceLabelIds,attachments
+  });
+  const verdict=triangleIntersect314Proof;
+  $('scan314-contact-status').textContent=
+   '已實際比對 '+verdict.exactTrianglePairsTested+' 對真三角面；'+
+   verdict.confirmedBodyClothHairTriangleIntersections+
+   ' 對發生幾何交錯。'+
+   (verdict.sampledContactRiskDetected?'穿模仍存在，BLOCK。':
+    verdict.sampledSourceDataComplete?'此姿勢離散樣本無交錯，仍需動態全程驗證。':
+    '缺少來源人體區域，不能判定 PASS。');
+  proof();return verdict;
+ };
  const apply314HeroineColourFit=()=>{
   if(!scan?.manifoldAudit?.closedManifold||!overlay?.parent||
    !rendererSource||rendererSource.movieMode||rendererSource.reviewBusy)
@@ -426,6 +467,7 @@ export function installAIG29ContinuousScan({
   return heroine314Proof;
  };
  const apply39BodyPose=(value,{secondaryTick=false}={})=>{
+  if(!secondaryTick)triangleIntersect314Proof=null;
   if(!scan?.manifoldAudit?.closedManifold||!overlay?.parent||
    !wardrobe37Layer?.parent||!scan.sourceSha256)
    return null;
@@ -801,7 +843,7 @@ export function installAIG29ContinuousScan({
    cancelSimulation312();dynamics312.clear();
    motion39Proof=null;lastPose39=null;contact311Proof=null;
    contact314Proof=null;poseGrid314=null;poseGrid314Source=null;
-   heroine314Proof=null;
+   heroine314Proof=null;triangleIntersect314Proof=null;
    motion312Proof=null;
    appearanceProof=newAppearanceProof;
    probeLines=null;scanStamp=scan.sourceSha256;
@@ -902,6 +944,16 @@ export function installAIG29ContinuousScan({
  });
  $('scan38-next').addEventListener('click',()=>{
   browse38Offset+=8;refresh38Browser();
+ });
+ $('scan314-audit-triangle').addEventListener('click',()=>{
+  try{audit314ActualTriangles()}
+  catch(e){
+   triangleIntersect314Proof=null;
+   $('scan314-contact-status').textContent=
+    '檢測尚未通過：'+String(e?.message||e)+
+    '；不把缺少證據當成零碰撞。';
+   proof();
+  }
  });
  $('scan314-apply-reference').addEventListener('click',()=>{
   try{apply314HeroineColourFit()}
