@@ -236,6 +236,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
+          name: AIG-Real3D-Stage1-Website-Translated-Executable-Bundle-NOT-DEPLOYED
+          path: |
+            formal-web/real3d-stage1-review.html
+            formal-web/school-3d/fastmodel/single-photo/dist/
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
           name: AIG-Stage1-Male-Briefs-Female-Onepiece-Real-WebGL-16-Views
           path: formal-web/school-3d/fastmodel/single-photo/artifacts/aig-stage1-adult-male-female-swim-geometry/
           if-no-files-found: warn
