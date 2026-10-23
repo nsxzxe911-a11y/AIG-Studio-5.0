@@ -25,7 +25,8 @@ export function inspectAIG26SemanticLabels({
  width,height,sourceSha256,labels,regions=[],producer='UNVERIFIED',
  modelSha256=null,humanReviewed=false
 }={}){
- if(!validImage(width,height)||!sha(sourceSha256)||
+ if(!validImage(width,height)||width*height>2_000_000||
+  !sha(sourceSha256)||
   !(labels instanceof Uint8Array)||labels.length!==width*height||
   !Array.isArray(regions)||regions.length<1||regions.length>25||
   !['UNVERIFIED','MODEL_INFERENCE','HUMAN_ANNOTATION'].includes(producer)||
