@@ -6,7 +6,7 @@
 export const AIG_STORYBOARD_SCHEMA='AIG_STARJOURNEY_LOCAL_SCRIPT_TO_STORYBOARD_V1';
 const SCENES=[
  {key:'GATE',regex:/星門|傳送|躍遷|穿越|蟲洞/,label:'星門穿越',camera:'dolly-in',fx:'ring-pulse'},
- {key:'PORT',regex:/太空港|基地|城市|港口|月台|站台/,label:'太空港',camera:'pan-right',fx:'city-lights'},
+ {key:'PORT',regex:/太空港|基地|未來都市|港口|月台|站台/,label:'太空港',camera:'pan-right',fx:'city-lights'},
  {key:'FLEET',regex:/艦|飛船|船隊|戰鬥|追逐|飛行|出發|啟航/,label:'星艦遠航',camera:'tracking',fx:'engine-glow'},
  {key:'PLANET',regex:/星球|行星|大地|家園|地表|草原|山脈|宇宙/,label:'行星探索',camera:'orbit',fx:'planet-glow'},
  {key:'NEBULA',regex:/星雲|星空|銀河|星際|繁星|未知|星系/,label:'銀河星雲',camera:'slow-zoom',fx:'nebula-shimmer'}
