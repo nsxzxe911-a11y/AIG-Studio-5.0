@@ -190,6 +190,19 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <label>自動推論最小信心<select id="vision28-threshold"><option value="0.60">60%（研究）</option><option value="0.70" selected>70%（建議）</option><option value="0.85">85%（保守）</option><option value="0.95">95%（嚴格）</option></select></label>
 <label>實際本機迭代<select id="vision28-epochs"><option value="80">80 次（快）</option><option value="160" selected>160 次（標準）</option><option value="250">250 次（細緻）</option></select></label>
 </div>
+<div id="real3d28b-dataset" style="background:#081e2b;border:1px solid #397f86;border-radius:10px;padding:12px;margin:10px 0">
+<h3>Real3D 2.8-B｜多照片學習／頭髮與頸部遮擋證據</h3>
+<p>每張照片先由 2.6 核對 SHA、2.7 標註並人工檢查，再加入訓練集。換下一張照片重複操作；最多 8 張、總 300 萬像素。模型類別清單必須一致，沒有標註的隱藏部位不得當作真值。第三張未參與訓練的照片可用於獨立測試。</p>
+<button type="button" id="vision28b-add">A｜將目前人工審核的照片＋遮罩加入多來源訓練集</button>
+<button type="button" id="vision28b-train">B｜用至少兩張不同來源照片真正重新訓練</button>
+<button type="button" id="vision28b-audit">C｜檢查可見頭髮／頸部邊界及未知遮擋</button>
+<button type="button" id="vision28b-evaluate">D｜用第三張已審核照片逐類 IoU 測試</button>
+<button type="button" id="vision28b-clear">清除本輪暫存訓練資料（已保存模型不刪）</button>
+<output id="vision28b-status" role="status" aria-live="polite" style="display:block;padding:6px;color:#adf2e6">目前尚無多照片審核資料。</output>
+<details><summary>查看來源清單、類別計數、髮頸邊界與獨立驗收證據</summary>
+<pre id="vision28b-proof" style="max-height:300px;overflow:auto;white-space:pre-wrap;font:12px/1.5 ui-monospace,monospace">尚無多照片證據。</pre>
+</details>
+</div>
 <button type="button" id="vision28-train">01｜從已人工審核的 2.7 遮罩真正訓練本機模型</button>
 <button type="button" id="vision28-infer">02｜用已學權重自動辨識目前 2.6 照片</button>
 <button type="button" id="vision28-evaluate">03｜另一張已審核 2.7 照片進行跨照片 IoU 驗證</button>
