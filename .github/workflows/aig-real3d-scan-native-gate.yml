@@ -1,0 +1,80 @@
+name: AIG Real3D Scan-Native Mesh Source / Four View Pipeline BLOCK Gate
+on:
+  push:
+    branches:
+      - verify/real3d-scan-native-anatomy-gate-20261024
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-scan-native-*'
+      - 'formal-web/shared-3d/aig-real3d-glb-native-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-scan-native-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-glb-native-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-full-figure-legacy-glb.real-browser.mjs'
+      - '.github/workflows/aig-real3d-scan-native-gate.yml'
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-scan-native-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-scan-native-*'
+      - '.github/workflows/aig-real3d-scan-native-gate.yml'
+  workflow_dispatch:
+jobs:
+  source-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    name: Real raw OBJ anatomy source, watertight topology and explicit UNAPPROVED gate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Real source parser syntax and Node tests
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-scan-native-mesh.mjs
+          node --check formal-web/shared-3d/aig-real3d-glb-native-mesh.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-glb-native-mesh.real-browser.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-full-figure-legacy-glb.real-browser.mjs
+          node --check formal-web/shared-3d/aig-real3d-scan-native-lab.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-scan-native-mesh.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-scan-native-mesh.test.mjs formal-web/shared-3d/tests/aig-real3d-glb-native-mesh.test.mjs
+      - name: Preserve AIG RGB homepage CNC and retired candidate state
+        run: |
+          grep -q '3ax-nc-workbench.html' formal-web/aig-new-home.html
+          grep -q 'aig-download-center.html' formal-web/aig-new-home.html
+          grep -q 'stage1ReleasePASS:false' formal-web/shared-3d/aig-real3d-scan-native-mesh.mjs
+          grep -q 'sourceNotProvenHumanScan:true' formal-web/shared-3d/aig-real3d-scan-native-mesh.mjs
+          grep -q 'Scan-Native' formal-web/shared-3d/aig-real3d-scan-native-lab.html
+  browser-gate:
+    runs-on: ubuntu-latest
+    needs: source-gate
+    timeout-minutes: 20
+    name: Four actual GPU views - explicitly synthetic NONHUMAN pipeline fixture
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Verify local OBJ import and native front side back oblique PNG pipeline
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/scan-native-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-scan-native-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-scan-native-mesh.real-browser.mjs
+          node formal-web/shared-3d/tests/aig-real3d-glb-native-mesh.real-browser.mjs
+          node formal-web/shared-3d/tests/aig-real3d-full-figure-legacy-glb.real-browser.mjs
+          test -s artifacts/aig-real3d-scan-native-pipeline-fixture-only/manifest.json
+          test -s artifacts/aig-real3d-glb-native-synthetic-only/manifest.json
+          test -s artifacts/aig-real3d-full-human-legacy-qa-not-accepted/manifest.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIG-REAL3D-SCAN-NATIVE-SYNTHETIC-PIPELINE-QA-NOT-HUMAN-UNAPPROVED
+          path: |
+            artifacts/aig-real3d-scan-native-pipeline-fixture-only/
+            artifacts/aig-real3d-glb-native-synthetic-only/
+            artifacts/aig-real3d-full-human-legacy-qa-not-accepted/
+          if-no-files-found: warn
