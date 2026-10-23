@@ -216,6 +216,10 @@ export function installAIGStage1DualAdultRuntime({
    originalObject.object.dispose();
   }
   model={source,object:next};
+  // Each newly installed model must take NEW actual WebGL snapshots.
+  // Keep previous gallery PNGs as evidence, but never silently reuse
+  // yesterday's hash to satisfy the current session's Stage 1 Gate.
+  snapshotsByGender.delete(gender);
   selected=gender;lastAudit=audit;active=true;renderCount=0;session++;
   lastCameraPlan=null;
   if(priorFrame===null){
