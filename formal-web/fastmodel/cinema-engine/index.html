@@ -72,6 +72,7 @@
    <div class="timeline-other"><span>字幕軌</span><output id="subtitle-short">尚無字幕</output></div>
    <div class="timeline-other audio-track"><span>音樂軌</span><output id="audio-short">尚無音樂</output></div>
    <div class="timeline-other audio-track"><span>音效軌</span><output id="sfx-short">尚無音效</output></div>
+   <div class="timeline-other audio-track"><span>對白軌</span><output id="voice-short">尚無錄音</output></div>
   </section>
   <div id="feedback" role="status" aria-live="polite">選擇本機素材開始。AI 人物生成、完整 3D 動畫和音訊混音輸出仍待開發。</div>
  </div>
@@ -96,11 +97,16 @@
    <label for="sfx-preview">音效（從影片開頭播放一次）</label>
    <button id="sfx-button" class="outline-button">✧ 放入本機音效</button>
    <audio id="sfx-preview" controls preload="metadata"></audio>
+   <label for="voice-preview">對白音軌（本機錄音，從片頭播放）</label>
+   <button id="voice-button" class="outline-button">◉ 放入本機對白錄音</button>
+   <audio id="voice-preview" controls preload="metadata"></audio>
+   <label for="voice-volume">對白音量 <output id="voice-volume-value">95%</output></label>
+   <input id="voice-volume" type="range" min="0" max="100" value="95">
    <label for="music-volume">配樂音量 <output id="music-volume-value">65%</output></label>
    <input id="music-volume" type="range" min="0" max="100" value="65">
    <label for="sfx-volume">音效音量 <output id="sfx-volume-value">75%</output></label>
    <input id="sfx-volume" type="range" min="0" max="100" value="75">
-   <p>支援本機音樂與音效實際解碼，Canvas WebM 可混入雙音軌。影片原始聲音、AI 配音與 TTS 尚未混音，未實測前不得宣稱完整電影。</p>
+   <p>支援本機配樂／音效／真人錄音的 PCM 混音與單條 WebM Opus 音軌。影片原始聲音、AI 文字轉語音與聲道自動同步尚未完成。</p>
   </section>
   <section id="render-options" class="setting"><h2>動畫輸出</h2>
    <label for="fps">影格率</label>
@@ -122,5 +128,6 @@
 <input type="file" id="glb-file" accept=".glb,model/gltf-binary" hidden>
 <input type="file" id="audio-file" accept="audio/mpeg,audio/ogg,audio/wav,audio/webm" hidden>
 <input type="file" id="sfx-file" accept="audio/mpeg,audio/ogg,audio/wav,audio/webm" hidden>
+<input type="file" id="voice-file" accept="audio/mpeg,audio/ogg,audio/wav,audio/webm" hidden>
 <script type="module" src="./app.mjs"></script>
 </body></html>
