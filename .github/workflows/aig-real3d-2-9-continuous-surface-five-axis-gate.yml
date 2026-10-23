@@ -5,6 +5,8 @@ on:
       - verify/real3d-true-world-movie-2-5-20261023
     paths:
       - 'formal-web/school-3d/fastmodel/single-photo/aig-continuous-surface-scan-2-9*'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-fused-manifold-surface-3-0*'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-fused-manifold-surface-3-0*'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-continuous-surface-scan-2-9*'
       - 'formal-web/school-3d/fastmodel/single-photo/scene-runtime-studio.*'
       - '.github/workflows/aig-real3d-2-9-continuous-surface-five-axis-gate.yml'
@@ -29,6 +31,8 @@ jobs:
           node --check aig-continuous-surface-scan-2-9-ui.mjs
           node --check tests/aig-continuous-surface-scan-2-9.real-browser.mjs
           node --test tests/aig-continuous-surface-scan-2-9.test.mjs
+          node --check aig-fused-manifold-surface-3-0.mjs
+          node --test tests/aig-fused-manifold-surface-3-0.test.mjs
           node --check scene-runtime-studio.mjs
       - name: Same formal WebGL renderer and original source/GLB/CNC bundles
         run: |
