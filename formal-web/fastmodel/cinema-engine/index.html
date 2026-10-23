@@ -74,7 +74,7 @@
    <div class="timeline-other audio-track"><span>音效軌</span><output id="sfx-short">尚無音效</output></div>
    <div class="timeline-other audio-track"><span>對白軌</span><output id="voice-short">尚無錄音</output></div>
   </section>
-  <div id="feedback" role="status" aria-live="polite">選擇本機素材開始。AI 人物生成、完整 3D 動畫和音訊混音輸出仍待開發。</div>
+  <div id="feedback" role="status" aria-live="polite">選擇本機素材開始。AI 人物生成和完整 3D 動畫仍待開發。可於控制頁建立本機劇情分鏡。</div>
  </div>
  <aside class="inspector" id="mobile-control">
   <div class="section-title">工具與參數 <span>真實控制</span></div>
@@ -84,6 +84,17 @@
    <label for="camera-motion">鏡頭位移 <output id="camera-motion-value">25%</output></label>
    <input id="camera-motion" type="range" min="0" max="100" value="25">
    <p>2D：平面鏡頭動畫；2.5D：單層視差練習，尚未重建隱藏的真 3D。</p>
+  </section>
+  <section id="story-options" class="setting"><h2>劇情 → 分鏡 · 本機規劃</h2>
+   <label for="story-script">星際之旅故事／角色對白（繁體中文）</label>
+   <textarea id="story-script" rows="6" maxlength="6000" placeholder="逐行輸入劇情，例如：女主角：星門就在前方！"></textarea>
+   <div class="story-buttons">
+    <button id="story-sample" type="button" class="outline-button">載入《星際之旅》範例</button>
+    <button id="story-plan" type="button" class="outline-button">建立分鏡與真動畫</button>
+    <button id="story-export" type="button" class="outline-button" disabled>匯出分鏡 JSON</button>
+   </div>
+   <output id="story-stats" aria-live="polite">尚未規劃分鏡</output>
+   <p>使用本機劇情規則解析，將場景、字幕、秒數、鏡頭與轉場寫入真時間軸；無需上傳，非大型 AI 模型生成。星門／太空港／星艦／行星背景由 Canvas 2D 繪製，不冒充實拍、真人或 3D。</p>
   </section>
   <section id="dialogue-options" class="setting"><h2>對話／字幕</h2>
    <label for="subtitle">片段字幕</label>
