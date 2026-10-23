@@ -72,8 +72,15 @@ export function reviewAIG315HeroineGeometry({
  const actualHairTriangles=hair.reduce((sum,x)=>
   sum+(x.geometry?.triangleCount??x.geometry?.indices?.length/3??
    x.indices?.length/3??0),0);
- const allHair=[...hair.flatMap(x=>positionsOf(x))];
- const hairDepth=allHair.length?xyzBounds(new Float32Array(allHair)).size[2]:0;
+ let minHairZ=Infinity,maxHairZ=-Infinity;
+ for(const h of hair){
+  const positions=positionsOf(h);
+  for(let i=2;i<positions.length;i+=3){
+   minHairZ=Math.min(minHairZ,positions[i]);
+   maxHairZ=Math.max(maxHairZ,positions[i]);
+  }
+ }
+ const hairDepth=hair.length?maxHairZ-minHairZ:0;
  const actualFaceTriangles=explicitFaceMesh?.verifiedSourceFaceLandmarkTopology===true?
   explicitFaceMesh.actualSourceFitTriangles??0:0;
  const sameSourceIdentityCertified=false;
