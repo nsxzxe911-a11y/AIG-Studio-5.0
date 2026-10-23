@@ -1,4 +1,4 @@
-name: AIG Real3D 3.13 Multi Character Crowd Actual FPS Gate
+name: AIG Real3D 3.14 Triangle Collision and Heroine Appearance Gate
 on:
   push:
     branches:
@@ -12,6 +12,8 @@ on:
       - 'formal-web/school-3d/fastmodel/single-photo/aig-contact-constraints-3-11.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-secondary-motion-3-12.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-classmate-crowd-3-13.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/aig-triangle-contact-3-14.mjs'
+      - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-triangle-contact-3-14.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/aig-classmates-crowd-3-13-ui.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-classmate-crowd-3-13.test.mjs'
       - 'formal-web/school-3d/fastmodel/single-photo/tests/aig-secondary-motion-3-12.test.mjs'
@@ -57,6 +59,8 @@ jobs:
           node --check aig-contact-constraints-3-11.mjs
           node --check aig-secondary-motion-3-12.mjs
           node --check aig-classmate-crowd-3-13.mjs
+          node --check aig-triangle-contact-3-14.mjs
+          node --test tests/aig-triangle-contact-3-14.test.mjs
           node --check aig-classmates-crowd-3-13-ui.mjs
           node --test tests/aig-classmate-crowd-3-13.test.mjs
           node --test tests/aig-secondary-motion-3-12.test.mjs
@@ -99,6 +103,7 @@ jobs:
           grep -q 'scan313-count' dist/scene-runtime-studio.html
           grep -q 'scan313-bench' dist/scene-runtime-studio.html
           grep -q 'AIG_REAL3D_3_13_SOURCED_CLASSMATES_AND_CROWD_BENCH' dist/scene-runtime-studio.js
+          grep -q 'AIG_REAL3D_3_14_SOURCE_BODY_TRIANGLE_CONTACT' dist/scene-runtime-studio.js
           grep -q 'REAL3D_19200_LOGICAL_WORK_SLOTS' dist/scene-runtime-studio.js
       - name: Install Chromium QA for actual phone/desktop rendered geometry
         run: |
