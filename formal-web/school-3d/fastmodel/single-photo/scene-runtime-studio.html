@@ -189,8 +189,8 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <details><summary>真像素分割結果／未知遮擋／防假 AI 來源證據</summary><pre id="vision27-proof" style="max-height:330px;overflow:auto;white-space:pre-wrap;font:12px/1.55 ui-monospace,monospace">尚無真實分割結果。</pre></details>
 </section>
 <section class="panel" id="real3d29-surface" style="margin:14px 0;background:#081b2a;border:1px solid #4aaab9">
-<h2>Real3D 2.9｜真實 3D 曲面掃描／仿 CNC 五軸角度檢查</h2>
-<p>用上方原照片的可見輪廓與 2.7 標籤，<strong>從頭到腳建立真正連續的三維 XYZ 曲面和法線</strong>，直接顯示在同一個 WebGL 3D 視窗。可旋轉 360°，檢查斷面及曲面法線，不能再拿色塊或平面圖片充當 3D。</p>
+<h2>Real3D 3.0｜單一融合封閉人體曲面／虛擬 CNC 五軸檢查</h2>
+<p>用原始照片可見輪廓和 2.7 的逐像素標籤，先形成頭、頸、肩、軀幹、四肢形體，再透過<strong>體積 SDF 平滑融合與共用索引曲面重建成單一連通封閉表面</strong>，送到原 WebGL 視窗。這才是改善圓管拼接的實際建模，不是只換材質。</p>
 <p>注意：單張 RGB 照片沒有實測的前後深度。背面橢圓厚度是<strong>明確標示的幾何推估</strong>；仿五軸掃描只是幾何法線的虛擬探頭，不是真實雷射、超聲波回波、量測儀或 Fanuc 真機加工指令。已量測的平面 mm 也不能直接假冒整個立體人體精度。</p>
 <div class="world-grid">
 <label>曲面環向細度 <select id="scan29-radial"><option value="24">24（省記憶體）</option><option value="48" selected>48（平衡）</option><option value="64">64（細緻）</option><option value="96">96（高細度）</option></select></label>
@@ -198,10 +198,15 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <label>未量測前後深度比例 <input id="scan29-depth" type="range" min="0.3" max="1.2" step=".05" value=".60"></label>
 <label>五軸虛擬探頭距離（模型相對單位）<input id="scan29-standoff" type="number" min=".01" max=".3" step=".01" value=".09"></label>
 </div>
-<button type="button" id="scan29-build">01｜以真照片輪廓生成連續 3D 曲面並顯示</button>
+<div class="world-grid">
+<label>融合曲面解析度（越高越吃記憶體）<select id="scan30-resolution"><option value="64">64（手機快速）</option><option value="84">84（手機平衡）</option><option value="96" selected>96（建議）</option><option value="120">120（細緻）</option></select></label>
+<label>幾何接縫融合程度（技術相對單位）<select id="scan30-blend"><option value="0.045">0.045（保留形狀）</option><option value="0.075" selected>0.075（平衡）</option><option value="0.105">0.105（強接合）</option></select></label>
+</div>
+<p class="hint">形體融合的封閉網格需通過「每條邊恰好 2 面」、「單一連通」、「非退化三角面」及「正向封閉體積」驗證。這仍是來源輪廓約束的幾何估計，未做實體厚度、碰撞、毫米 1:1 或可列印檔案認證。</p>
+<button type="button" id="scan29-build">01｜建立真正融合的單一 3D 人體曲面並顯示</button>
 <button type="button" id="scan29-probe">02｜顯示五軸 A/B 法線掃描路徑</button>
 <button type="button" id="scan29-hide">只移除這次曲面預覽（保留原 GLB 與場景）</button>
-<output id="scan29-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#adefe7">目前未建立連續 3D 曲面；先在 2.6 載入真照片、2.7 完成來源像素分割。</output>
+<output id="scan29-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#adefe7">目前尚未建立單一封閉 3D 曲面。先完成原照片 SHA 和身體部位可見像素標籤。</output>
 <details><summary>查看真正 3D 曲面三角形、XYZ 法線、A/B 虛擬探頭、深度推估標記與 GPU 繪製證據</summary>
 <pre id="scan29-proof" style="white-space:pre-wrap;max-height:340px;overflow:auto;font:12px/1.5 ui-monospace,monospace">尚未掃描。</pre>
 </details>
