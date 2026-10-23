@@ -405,7 +405,11 @@ export function installAIG29ContinuousScan({
     Math.max(...dynamicsMeasured.map(x=>x.result.framesSimulated)):0,
    maxMeasuredSecondaryLagUnits:dynamicsMeasured.length?
     Math.max(...dynamicsMeasured.map(x=>x.result.actualMaxLagUnits)):0,
-   rootsPinnedToRealBodyPose:true,
+   actuallyPinnedRootVertices:dynamicsMeasured.reduce(
+    (s,x)=>s+(x.result.truePinnedRootVertices??0),0),
+   rootsPinnedToRealBodyPose:dynamicsMeasured.every(
+    x=>(x.result.truePinnedRootVertices??1)>0||
+       x.result.stableRestPoseReturned===true),
    originalRestAndSourceArraysUnchanged:true,
    actualFrameSequenceDrivenBySingleRenderer:true,
    fullHairStrandAndFabricPhysicsCertified:false,
