@@ -229,5 +229,17 @@ export function installAIG28LocalLearning({getImage,getSegmentation,getLibrary}=
  // During boot the vault opens asynchronously; refresh after init without
  // turning a transient closed vault into a permanent page failure.
  const warmup=()=>getLibrary()?.list?refreshSaved().catch(()=>{}):null;
+ // 2.8-B is an extension of this exact original model session, not a
+ // competing fake model; original infer/save/import callbacks remain intact.
+ state.applyReviewedModel=(model,digest)=>{
+  assertAIG28Model(model);
+  if(!model.reviewedMultiSourceTraining||typeof digest!=='string'||
+   !/^sha256:[a-f0-9]{64}$/.test(digest))
+   throw Error('AIG28B_REVIEWED_MULTI_SOURCE_MODEL_REQUIRED');
+  state.model=model;state.modelSha256=digest;
+  state.inference=null;state.inferenceSource=null;
+  state.evaluation=null;state.lastSave=null;
+  proof();
+ };
  warmup();return state;
 }
