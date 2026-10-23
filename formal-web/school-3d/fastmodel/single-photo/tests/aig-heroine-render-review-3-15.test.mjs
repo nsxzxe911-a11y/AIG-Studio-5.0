@@ -23,7 +23,8 @@ const hair={geometry:{
 const outfit={geometry:{positions:new Float32Array([
  -.25,1,0,.25,1,0,0,.5,-.15
  ]),triangleCount:1}};
-const params=()=>({...source(),
+const params=()=>({bodyPositions:source().positions,
+ sourceLabels:source().sourceLabels,
  sourcePhotoSha256:'demo-source-sha256-not-certified',
  approvedReferenceSha256:ref,hairMeshes:[hair],outfitMeshes:[outfit,outfit],
  recordedMultiViewScreenshots:[]});
