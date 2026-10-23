@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#020407">
+<title>AIG｜Real3D 人體比例實測工作入口</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,"Noto Sans TC",sans-serif}
+*{box-sizing:border-box}
+body{background:#020407;color:#cceef8;margin:0}
+header{padding:15px max(16px,calc((100vw - 1080px)/2));border-bottom:1px solid #315c79;background:#07111b}
+a{color:#7cdeff}main{max-width:1080px;margin:auto;padding:20px}
+h1{font-size:clamp(1.4rem,3vw,2rem)}
+section{border:1px solid #295775;border-radius:12px;background:#07111b;padding:18px;margin:15px 0}
+dl{display:grid;grid-template-columns:minmax(110px,1fr) 2fr;gap:9px}
+dt{color:#8fb9cb}dd{margin:0}
+#start{display:inline-block;border:1px solid #68cef3;border-radius:8px;padding:12px 16px;background:#062840;font-weight:700}
+#start[aria-disabled="true"]{opacity:.48;pointer-events:none}
+.warn{color:#ffc978}
+small{color:#a9bfc9}
+</style></head>
+<body><header><strong>AIG｜Real3D</strong>　<a href="./index.html">返回 AIG 原網站</a>　<a href="./ai-updates.html">AI 更新</a></header>
+<main><h1>Real3D｜成人男、女基礎人體比例檢查</h1>
+<p>原 AIG 網站內的 Stage 1 工作入口；使用原本的 FastModel 網頁引擎，並非額外開發一套低階模擬器。正式外觀驗收仍為 <strong class="warn">FAIL / BLOCK</strong>。</p>
+<section><h2>真正編譯／執行入口</h2>
+<p>GitHub 的模組原始碼必須先經 <code>esbuild</code> 編譯為網頁 JavaScript，才會在下方工作區執行。網站不會僅靠文字「翻譯」就自動產生正確人體，也不會編出未驗收的 APK／EXE。</p>
+<a id="start" aria-disabled="true" href="./school-3d/fastmodel/single-photo/dist/scene-runtime-studio.html">檢查網頁建置結果中…</a>
+<p id="real3d-deploy-proof" role="status" aria-live="polite">等待驗證打包網頁是否真正存在。</p></section>
+<section><h2>目前施工 Gate</h2>
+<dl><dt>本輪只做</dt><dd>成人男：貼身泳褲；成人女：貼身連身泳衣；基礎頭頸、肩、骨盆、雙腿、關節</dd>
+<dt>世界尺寸</dt><dd>mm，座標精度 0.001 mm；同一來源與同一單核 WebGL</dd>
+<dt>外觀檢查</dt><dd>正面／側面／背面／45° 真 WebGL 快照，檢查左右大腿根部間距、頭部長寬比例、肩部接合</dd>
+<dt>解析度</dt><dd>原生 4K／3K／2K／1080P，依 GPU 限制自動向下相容</dd>
+<dt>正式驗收</dt><dd class="warn">人體外觀仍 FAIL，無法自動核准女主角或上機／Release</dd></dl>
+<p><small>來源圖片只在使用者裝置處理，不會因開啟本頁而上傳私人照片。現有 CNC／CAD／CAM／NC 資料及已核准 RGB UI 不受此頁影響。</small></p>
+</section>
+</main>
+<script>
+(async()=>{
+ const link=document.getElementById('start');
+ const info=document.getElementById('real3d-deploy-proof');
+ try{
+  const response=await fetch(link.getAttribute('href'),{method:'GET',
+   cache:'no-store'});
+  const js=await fetch('./school-3d/fastmodel/single-photo/dist/scene-runtime-studio.js',
+   {method:'HEAD',cache:'no-store'});
+  if(!response.ok||!js.ok)throw Error('網頁 JS 未編譯或尚未部署');
+  const html=await response.text();
+  if(!html.includes('stage1-adult-baselines')||
+    !html.includes('stage1-gender'))throw Error('目前網站仍是較舊的 Runtime 版本');
+  link.setAttribute('aria-disabled','false');
+  link.textContent='開啟 Real3D 真正 3D 人體比例工作區 ↗';
+  info.textContent='已偵測到網站上的 Stage1 工作頁與編譯 JS；請在工作區內執行實際模型與四視角驗收。';
+ }catch(e){
+  link.textContent='Stage1 工作區尚未上線';
+  info.textContent='BLOCK：'+e.message+'。目前只有 GitHub 開發分支時，不可宣稱原網站已更新。';
+ }
+})();
+</script></body></html>
