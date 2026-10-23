@@ -82,6 +82,13 @@ try{
    await page.locator('#vision28-save').click();
    await page.waitForFunction(()=>document.getElementById('vision28-status')
     .textContent.includes('通過 SHA 回讀'),null,{timeout:15000});
+   const persisted=await page.locator('#vision28-saved-model').inputValue();
+   assert.ok(persisted,'actual IndexedDB model must be discoverable via UI');
+   await page.locator('#vision28-restore').click();
+   await page.waitForFunction(()=>document.getElementById('vision28-status')
+    .textContent.includes('已從本機素材庫驗證重載真正模型權重'));
+   const reloaded=JSON.parse(await page.locator('#vision28-proof').textContent());
+   assert.equal(reloaded.modelSha256,learned.modelSha256);
    const newSHA=await prepare(5);
    assert.notEqual(newSHA,trainingSHA);
    await page.locator('#vision28-threshold').selectOption('0.60');
