@@ -16,7 +16,7 @@ code{color:#a4d8ff;overflow-wrap:anywhere}
 #gallery,#reference-gallery,#anatomy-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 figure{border:1px solid #2a6c85;border-radius:11px;padding:9px;margin:0;background:#06111f;min-width:0}
 figure img{width:100%;height:400px;max-height:52vh;object-fit:contain;display:block;background:#020407}
-#profile-table,#anatomy-region-table{overflow-x:auto;margin-top:12px}#profile-table table,#anatomy-region-table table{width:100%;border-collapse:collapse;min-width:520px;font-size:12px}#profile-table td,#profile-table th,#anatomy-region-table td,#anatomy-region-table th{padding:8px 6px;text-align:left;border-bottom:1px solid #2d4059}#profile-table th{color:#a3deed}#profile-table tr[data-worst=true]{background:#4f331d88}#local-width-review{padding-top:12px}
+#profile-table,#anatomy-region-table,#surface-table{overflow-x:auto;margin-top:12px}#profile-table table,#anatomy-region-table table,#surface-table table{width:100%;border-collapse:collapse;min-width:520px;font-size:12px}#profile-table td,#profile-table th,#anatomy-region-table td,#anatomy-region-table th,#surface-table td,#surface-table th{padding:8px 6px;text-align:left;border-bottom:1px solid #2d4059}#profile-table th{color:#a3deed}#profile-table tr[data-worst=true]{background:#4f331d88}#local-width-review{padding-top:12px}
 #reference-stats{display:block;margin:11px 0;padding:8px;border:1px solid #8f683d;border-radius:8px;color:#efcca5}
 figcaption{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:9px}
 a{color:#7fe7fb}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:290px;overflow-y:auto;font-size:11px}
@@ -71,6 +71,12 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <div class="status" id="anatomy-stats" role="status" aria-live="polite">來源標記尚未通過網格對應驗證。不得自動辨識頭頸、肩膀、骨盆與四肢。</div>
 <div id="anatomy-gallery"></div>
 <div id="anatomy-region-table" role="region" aria-label="來源標記界定的影像高度區段誤差"></div>
+</section>
+<section class="panel" id="source-topology">
+<h2>真三角面局部接合／破洞檢查</h2>
+<p>只檢查已提供、通過網格貼合的 OBJ 標記附近：頭頸、左手、右手、左腳、右腳。檢查開放邊、錯誤面片方向與標記所屬相連元件。**不會把合成測試體或貼了標記的橢圓認證為真人**。</p>
+<div class="status" id="surface-stats" role="status" aria-live="polite">尚無經標記審核的真 OBJ 網格，局部接合檢查 BLOCK。</div>
+<div id="surface-table" role="region" aria-label="五個原始網格局部接合品質檢查"></div>
 </section>
 <section class="panel"><h2>原始三維網格／來源聲明／解剖標記 Gate 報告</h2><pre id="evidence">尚無來源。</pre></section>
 <section class="panel"><h2>真正 WebGL 畫面證據（不是 AI 示意圖）</h2><div id="gallery"></div></section>
