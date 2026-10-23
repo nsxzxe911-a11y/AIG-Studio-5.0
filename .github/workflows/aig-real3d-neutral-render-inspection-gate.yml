@@ -7,6 +7,9 @@ on:
       - 'formal-web/shared-3d/aig-real3d-webgl.mjs'
       - 'formal-web/shared-3d/aig-real3d-render-inspection*'
       - 'formal-web/shared-3d/aig-real3d-human-brown-render-lab*'
+      - 'formal-web/shared-3d/aig-real3d-source-review-gate.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-source-review-gate.test.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-brown-obj-source.real-browser.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-human-brown-render.real-browser.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-render-inspection*'
       - 'formal-web/shared-3d/tests/aig-real3d-human-brown-render-contract.test.mjs'
@@ -37,6 +40,9 @@ jobs:
           node --check formal-web/shared-3d/tests/aig-real3d-render-inspection.real-browser.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-human-brown-render.real-browser.mjs
           node --check formal-web/shared-3d/aig-real3d-human-brown-render-lab.mjs
+          node --check formal-web/shared-3d/aig-real3d-source-review-gate.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-brown-obj-source.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-source-review-gate.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-render-inspection.test.mjs formal-web/shared-3d/tests/aig-real3d-human-brown-render-contract.test.mjs
           test -s docs/REAL3D-HUMAN-BROWN-RENDER-V1-FORMAL-20261024.md
           grep -q "setInspectionMode" formal-web/shared-3d/aig-real3d-webgl.mjs
@@ -46,7 +52,7 @@ jobs:
   browser:
     needs: source
     runs-on: ubuntu-latest
-    timeout-minutes: 24
+    timeout-minutes: 29
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -67,6 +73,7 @@ jobs:
           done
           node formal-web/shared-3d/tests/aig-real3d-render-inspection.real-browser.mjs
           node formal-web/shared-3d/tests/aig-real3d-human-brown-render.real-browser.mjs
+          node formal-web/shared-3d/tests/aig-real3d-brown-obj-source.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -74,4 +81,5 @@ jobs:
           path: |
             artifacts/aig-real3d-neutral-geometry-frame/
             artifacts/aig-real3d-brown-4pass-real-gpu/
+            artifacts/aig-real3d-brown-source-obj-review/
           if-no-files-found: warn
