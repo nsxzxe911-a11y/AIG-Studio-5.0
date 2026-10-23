@@ -17,6 +17,8 @@ test('19,200 reserved logical validation slots are ONE kernel, zero added render
  assert.equal(Object.values(AIG_STAGE1_SLOT_BUDGET).reduce((a,b)=>a+b,0),19200);
  assert.equal(plan.rendererImplementationCount,1);
  assert.equal(plan.sharedWebGLRendererCount,1);
+ assert.equal(plan.reusedExistingAIG36UnifiedCore,true);
+ assert.equal(plan.existingCoreWorkProfile,'REAL3D_19200_LOGICAL_WORK_SLOTS');
  assert.equal(plan.extraWebGLContextsCreated,0);
  assert.equal(plan.actualCpuHardwareCoresCreated,0);
  assert.equal(plan.actualWorkersSpawned,0);
