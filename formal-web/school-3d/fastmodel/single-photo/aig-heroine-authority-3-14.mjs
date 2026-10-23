@@ -64,15 +64,21 @@ export function getAIG314VerifiedAuthorityPalette(){
  });
 }
 
-export function analyseAIG314ApprovedHeroineSheet({
- rgba,width,height,sha256
+export async function analyseAIG314ApprovedHeroineSheet({
+ rgba,width,height,originalPNGBytes
 }={}){
  if(!(rgba instanceof Uint8Array||rgba instanceof Uint8ClampedArray)||
   width!==AIG314_HEROINE_SHEET.width||
   height!==AIG314_HEROINE_SHEET.height||
   rgba.length!==width*height*4||
-  sha256!==AIG314_HEROINE_SHEET.sha256)
+  !(originalPNGBytes instanceof Uint8Array)||
+  originalPNGBytes.length<30000||
+  originalPNGBytes.length>20*1024*1024)
   fail('EXACT_USER_AUTHORITY_RGBA_SHA_REQUIRED');
+ const digest=await crypto.subtle.digest('SHA-256',originalPNGBytes);
+ const sha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');
+ if(sha256!==AIG314_HEROINE_SHEET.sha256)
+  fail('ORIGINAL_PRIVATE_REFERENCE_PNG_SHA_MISMATCH');
  const palette={};
  for(const [name,[cx,cy]] of Object.entries(
   AIG314_HEROINE_SHEET.sampleAnchors)){
@@ -85,6 +91,8 @@ export function analyseAIG314ApprovedHeroineSheet({
   const med=samples.map(a=>{
    a.sort((x,y)=>x-y);return a[12];
   });
+  if(med.some((v,i)=>v!==AIG314_OFFLINE_AUTHORITY_COLOURS[name][i]))
+   fail('REFERENCE_PIXELS_CHANGED_FROM_APPROVED_SHEET');
   palette[name]=Object.freeze({
    srgb8:Object.freeze(med),
    srgb01:Object.freeze(med.map(v=>+(v/255).toFixed(5))),
