@@ -4,9 +4,10 @@
  */
 import * as THREE from 'three';
 import {aig26SRGBToLinear} from './aig-vision-metric-color-2-6.mjs';
-import {buildAIG29ContinuousSurface} from './aig-continuous-surface-scan-2-9.mjs';
-import {buildAIG30FusedSDF,inspectAIG30FusedFiveAxisSurface}
+import {inspectAIG30FusedFiveAxisSurface}
  from './aig-fused-manifold-surface-3-0.mjs';
+import {buildAIG35UnifiedAppearance}
+ from './aig-unified-appearance-3-5.mjs';
 const $=id=>document.getElementById(id);
 export function installAIG29ContinuousScan({
  getImage,getSegmentation,getSharedViewer
@@ -15,7 +16,7 @@ export function installAIG29ContinuousScan({
   typeof getSharedViewer!=='function'||!$('scan29-build'))
   throw Error('AIG29_FORMAL_3D_SCAN_CONTRACT_REQUIRED');
  let overlay=null,scan=null,probeLines=null,rendererSource=null;
- let drawProof=null,scanStamp=null;
+ let drawProof=null,scanStamp=null,appearanceProof=null;
  const status=(message,bad=false)=>{
   $('scan29-status').textContent=(bad?'BLOCKED：':'')+message;
   $('scan29-status').style.color=bad?'#ffd298':'#aef5e6';
@@ -32,6 +33,7 @@ export function installAIG29ContinuousScan({
  const removeOverlay=()=>{
   disposeGroup(overlay);overlay=null;probeLines=null;
   scan=null;rendererSource=null;drawProof=null;scanStamp=null;
+  appearanceProof=null;
  };
  const proof=()=>{
   $('scan29-proof').textContent=JSON.stringify({
@@ -41,6 +43,7 @@ export function installAIG29ContinuousScan({
    genuine3DMeshes:scan?.surfaces.length??0,
    realFusedSingleManifold:scan?.manifoldAudit?.closedManifold??false,
    visualAppearanceReleasePassed:scan?.aestheticHumanReviewPassed??false,
+   unifiedReal35AppearancePipeline:appearanceProof,
    visualReleaseBlocker:scan?.visualReleaseGate??'NOT_EVALUATED',
    physical3DPrintScaleCertified:scan?.production3DPrintApproved??false,
    actualSourceManifoldAudit:scan?.manifoldAudit??null,
@@ -75,7 +78,7 @@ export function installAIG29ContinuousScan({
   return {width:a.width,height:a.height,sourceSha256:a.sha,
    pixels:a.original.data,labels:b.segmentation.labels};
  };
- function colorForSourceXYZ(s,data,i,raw,bodyHeightUnits,classId=s.sourceLabelId){
+ function colorForSourceXYZ(s,data,i,raw,bodyHeightUnits,classId=s.sourceLabelId,gain=1){
   const k=i*3,x=s.positions[k],y=s.positions[k+1],z=s.positions[k+2];
   const {width,height,labels,pixels}=data;
   const projectedX=Math.max(0,Math.min(width-1,Math.round(
@@ -90,7 +93,7 @@ export function installAIG29ContinuousScan({
    pixels[lookup*4+2]/255]:raw;
   // Inferred rear material deliberately softened, not invented exact dye.
   return sourceRGB.map(v=>aig26SRGBToLinear(
-   Math.max(0,Math.min(1,front?v:v*.80))));
+   Math.max(0,Math.min(1,(front?v:v*.80)*gain))));
  }
  const buildPreview=async()=>{
   const data=source(),radialSegments=Number($('scan29-radial').value),
@@ -98,15 +101,21 @@ export function installAIG29ContinuousScan({
    depthRatio=Number($('scan29-depth').value);
   status('正在從真正來源輪廓建立 XYZ 曲面、法線與 PBR 材質…');
   await new Promise(resolve=>setTimeout(resolve,0));
-  const sourceSections=buildAIG29ContinuousSurface({
-   ...data,radialSegments,sliceStep,depthRatio
-  });
-  // SDF geometrically FUSES all actual source-constrained body sections.
-  // The old independent tubes are NOT displayed as the outcome.
-  const reconstruction=buildAIG30FusedSDF(sourceSections,{
+  // ONE unified photo -> 2.9 sections -> 3.0 fused SDF -> source XY
+  // silhouette comparison / safe correction / editable appearance.
+  const unified=buildAIG35UnifiedAppearance({
+   source:data,radialSegments,sliceStep,depthRatio,
    resolution:Number($('scan30-resolution').value),
-   blend:Number($('scan30-blend').value)
+   blend:Number($('scan30-blend').value),
+   proportions:{
+    widthScale:Number($('aig35-width').value),
+    heightScale:Number($('aig35-height').value),
+    depthScale:Number($('aig35-depth').value),
+    colourGain:Number($('aig35-colour').value)
+   }
   });
+  const reconstruction=unified.reconstruction;
+  const newAppearanceProof=unified.proof;
   if(!reconstruction.manifoldAudit.closedManifold||
    reconstruction.surfaces.length!==1)
    throw Error('單一人體曲面未符合連通封閉 Gate，保留原 3D 場景');
@@ -124,7 +133,8 @@ export function installAIG29ContinuousScan({
     const classId=shell.vertexSourceLabelIds[i];
     const sourceRGB=shell.sourceClassColorRGB[classId]??[.55,.52,.52];
     const col=colorForSourceXYZ(shell,data,i,sourceRGB,
-     reconstruction.bodyHeightUnits,classId);
+     reconstruction.bodyHeightUnits,classId,
+     newAppearanceProof.finalControls.colourGain);
     vertexColours.set(col,i*3);
    }
    geometry.setAttribute('color',new THREE.BufferAttribute(vertexColours,3));
@@ -149,6 +159,7 @@ export function installAIG29ContinuousScan({
    // Never reset scene, source GLBs, bone mixer, vault or textures.
    const prev=overlay;
    overlay=group;scan=reconstruction;rendererSource=viewer;
+   appearanceProof=newAppearanceProof;
    probeLines=null;scanStamp=scan.sourceSha256;
    viewer.controls.target.set(0,1,0);
    viewer.camera.position.set(2.15,1.4,3.4);
@@ -166,10 +177,11 @@ export function installAIG29ContinuousScan({
     compositorNotBillboard:true
    };
    proof();
-   status('3.0 網格連通／封閉驗收 PASS：'+
-    reconstruction.continuousTriangleCount+' 個真正 XYZ 三角面。'+
-    '但人體擬真外觀 Gate 仍 BLOCKED：臉、雙手、雙腳及背面深度未經實測與人工核准；'+
-    '不可當作真實人體掃描、3D 列印成品或 1:1 模型。');
+   status('統一外觀引擎已建立真實 3D 曲面，採用 '+
+    unified.selectedMode+'；照片 XY 輪廓平均誤差 '+
+    unified.proof.source2DEdgeErrorAfterPx+' px（只評估可見 2D 輪廓）。'+
+    '原照片色彩仍取自來源像素；臉／髮／服裝擬真與隱藏深度尚未通過，'+
+    '不得宣稱 100% 相似或解除動畫外觀 Gate。');
   }catch(e){
    if(overlay!==group)disposeGroup(group);
    throw e;
