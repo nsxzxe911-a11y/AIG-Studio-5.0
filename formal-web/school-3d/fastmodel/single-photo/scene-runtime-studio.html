@@ -50,6 +50,16 @@ button:disabled{opacity:.45;cursor:not-allowed}
 </section>
 <section class="panel" id="stage" aria-label="真正 WebGL 工作視窗">
 <canvas id="viewport" aria-label="可旋轉縮放的真實 GLB 3D 場景"></canvas>
+<div id="real3d31-camera-bar" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:space-around;padding:7px;background:#071a27;border:1px solid #28596a;border-radius:8px">
+<button id="rig31-camera-front" type="button" style="flex:1;min-width:66px">正面</button>
+<button id="rig31-camera-left" type="button" style="flex:1;min-width:66px">左 90°</button>
+<button id="rig31-camera-back" type="button" style="flex:1;min-width:66px">背面 180°</button>
+<button id="rig31-camera-right" type="button" style="flex:1;min-width:66px">右 90°</button>
+<button id="rig31-camera-top" type="button" style="flex:1;min-width:66px">頭頂</button>
+<button id="rig31-camera-underside" type="button" style="flex:1;min-width:66px">腳底往上</button>
+</div>
+<output id="rig31-camera-status" role="status" aria-live="polite" style="display:block;font-size:12px;color:#b6e4e8">Real3D 3.1｜左右 180° 是相機繞頭／身體，不是把真人脖子扭轉 180°。</output>
+
 <p>3D 场景優先佔用畫面空間；控制面板縮於周邊。單場景切換不重新初始化 Real3D 工作區。</p>
 </section>
 </div>
@@ -209,6 +219,61 @@ style="display:block;padding:9px;color:#aee7e6">選擇照片後自動辨識光�
 <output id="scan29-status" role="status" aria-live="polite" style="display:block;padding:8px;color:#adefe7">目前尚未建立單一封閉 3D 曲面。先完成原照片 SHA 和身體部位可見像素標籤。</output>
 <details><summary>查看真正 3D 曲面三角形、XYZ 法線、A/B 虛擬探頭、深度推估標記與 GPU 繪製證據</summary>
 <pre id="scan29-proof" style="white-space:pre-wrap;max-height:340px;overflow:auto;font:12px/1.5 ui-monospace,monospace">尚未掃描。</pre>
+</details>
+</section>
+<section id="real3d31-articulated" class="panel" style="margin:14px 0;background:#071926;border:1px solid #4c9ca4">
+<h2>Real3D 3.1｜頭／頸獨立活動 · 全身 16 關節 · 多角度掃描</h2>
+<p>接在上方 Real3D 3.0 <strong>同一個封閉曲面</strong>，使用原來源照片可見的頭、頸、胸、左右手臂和左右腿位置，建立可動關節的平滑權重；不是旋轉整個模型假裝轉頭。現有 GLB／人物動畫／NC 均保持原樣。</p>
+<p style="font-size:12px;color:#f5d6a4">頭部＋頸部各自有安全幅度，實際真人頸椎不能硬轉 180°；要看左後方、右後方或頭頂腳底，請使用上方 3D 視窗旁的相機按鈕。這是來源像素推定的技術關節位置，不是人體醫療角度或真正量測的骨骼。</p>
+<button type="button" id="rig31-activate">01｜把 3.0 真曲面接上 3.1 頭頸與全身關節控制</button>
+<button type="button" id="rig31-reset">02｜關節全部回正（保留 3D 曲面與素材）</button>
+<div class="world-grid">
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頸部左右（<output id="rig31-value-neckYaw">0°</output>）
+<input type="range" id="rig31-neckYaw" min="-30" max="30" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頸部俯仰（<output id="rig31-value-neckPitch">0°</output>）
+<input type="range" id="rig31-neckPitch" min="-20" max="20" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頭部左右（<output id="rig31-value-headYaw">0°</output>）
+</div>
+<details><summary>展開肩膀／手肘／髖部／膝蓋／腳踝等全身關節（實際可動）</summary>
+<div class="world-grid"><input type="range" id="rig31-headYaw" min="-40" max="40" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頭部點頭（<output id="rig31-value-headPitch">0°</output>）
+<input type="range" id="rig31-headPitch" min="-25" max="25" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">頭部側傾（<output id="rig31-value-headRoll">0°</output>）
+<input type="range" id="rig31-headRoll" min="-20" max="20" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">胸椎前後（<output id="rig31-value-spineBend">0°</output>）
+<input type="range" id="rig31-spineBend" min="-20" max="20" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左肩活動（<output id="rig31-value-leftShoulder">0°</output>）
+<input type="range" id="rig31-leftShoulder" min="-75" max="75" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右肩活動（<output id="rig31-value-rightShoulder">0°</output>）
+<input type="range" id="rig31-rightShoulder" min="-75" max="75" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左肘彎曲（<output id="rig31-value-leftElbow">0°</output>）
+<input type="range" id="rig31-leftElbow" min="0" max="120" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右肘彎曲（<output id="rig31-value-rightElbow">0°</output>）
+<input type="range" id="rig31-rightElbow" min="0" max="120" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左髖活動（<output id="rig31-value-leftHip">0°</output>）
+<input type="range" id="rig31-leftHip" min="-45" max="60" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右髖活動（<output id="rig31-value-rightHip">0°</output>）
+<input type="range" id="rig31-rightHip" min="-45" max="60" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左膝彎曲（<output id="rig31-value-leftKnee">0°</output>）
+<input type="range" id="rig31-leftKnee" min="0" max="125" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右膝彎曲（<output id="rig31-value-rightKnee">0°</output>）
+<input type="range" id="rig31-rightKnee" min="0" max="125" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">左踝活動（<output id="rig31-value-leftAnkle">0°</output>）
+<input type="range" id="rig31-leftAnkle" min="-25" max="25" step="1" value="0" style="width:100%;min-width:0"></label>
+<label style="display:flex;flex-direction:column;min-width:0;gap:5px">右踝活動（<output id="rig31-value-rightAnkle">0°</output>）
+<input type="range" id="rig31-rightAnkle" min="-25" max="25" step="1" value="0" style="width:100%;min-width:0"></label></div>
+</details>
+<div class="world-grid">
+<label>左右環繞查看（相機 ±180°，非關節）
+<input type="range" min="-180" max="180" value="0" step="5" id="rig31-camera-azimuth" style="width:100%"></label>
+<label>抬頭／低頭看（相機仰俯）
+<input type="range" min="-89" max="89" value="0" step="1" id="rig31-camera-elevation" style="width:100%"></label>
+</div>
+<button type="button" id="rig31-focus-head">頭部特寫／可 180° 環繞</button>
+<button type="button" id="rig31-focus-body">全身檢查／可頭頂及腳底查看</button>
+<output id="rig31-status" role="status" aria-live="polite" style="display:block;color:#aef0e1">先用 2.6／2.7 產生具來源 SHA 的人體輪廓，再按上方 3.0 建立融合曲面，最後啟用此 3.1 關節層。</output>
+<details><summary>實際關節變形頂點數、頭／頸分離、相機方位與來源不變證據</summary>
+<pre id="rig31-proof" style="white-space:pre-wrap;max-height:340px;overflow:auto;font:12px/1.5 ui-monospace,monospace">目前沒有頭頸分離動作證據。</pre>
 </details>
 </section>
 <section id="real3d28-learning" class="panel" style="margin:14px 0;padding:14px;background:#071928;border:1px solid #5992a7">
