@@ -101,7 +101,10 @@ try{
    assert.ok(Number.isFinite(proof.independentlyEvaluatedMeanIoU));
    assert.ok(proof.independentlyEvaluatedMeanIoU>.6,
     'synthetic heldout fixture only, not real-life benchmark');
-   assert.ok(proof.independentReviewIoU.length>=3);
+   assert.equal(proof.independentReviewIoU.length,4);
+   // Overall mIoU can hide a completely missed class. Reject that.
+   assert.ok(proof.independentReviewIoU.every(r=>r.IoU!==null&&r.IoU>.60),
+    'Every individual synthetic-class IoU must pass; no neck/hair omission');
    assert.deepEqual(errors,[]);
    await page.screenshot({path:out+'/'+device.name+'-novel-photo-auto-ml.png',
     fullPage:true});
@@ -112,6 +115,7 @@ try{
     actualLearnedWeights:learned.actualLearnedWeights,
     trainingLoss:[learned.trainingLossInitial,learned.trainingLossFinal],
     novelSourcePixelIoUOnSyntheticFixture:proof.independentlyEvaluatedMeanIoU,
+    perClassHeldoutIoU:proof.independentReviewIoU,
     automaticMLInferenceActuallyExecuted:true,
     firstPartyLearningNotGenericPretrainedModel:true,
     semanticNaturalPhotoAccuracyCertified:false,
