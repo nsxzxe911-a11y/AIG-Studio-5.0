@@ -44,6 +44,19 @@ try{
  assert.equal(bytes.readUInt32BE(16),960);
  assert.equal(bytes.readUInt32BE(20),540);
  await copyFile(await pic.path(),path+'/STARJOURNEY-TRUE-CANVAS-OUTPUT.png');
+ let webmExportPASS=false,webmSize=0;
+ if(await page.evaluate(()=>typeof MediaRecorder!=='undefined'&&
+    typeof HTMLCanvasElement.prototype.captureStream==='function'&&
+    ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm']
+      .some(m=>MediaRecorder.isTypeSupported(m)))){
+  const promise=page.waitForEvent('download',{timeout:45000});
+  await page.locator('#export-webm').click();
+  const file=await promise,video=await readFile(await file.path());
+  assert.equal(video.readUInt32BE(0),0x1a45dfa3);
+  assert.ok(video.length>1000);
+  await copyFile(await file.path(),path+'/STARJOURNEY-REAL-CANVAS-VIDEO-ONLY.webm');
+  webmExportPASS=true;webmSize=video.length;
+ }
  await page.screenshot({path:path+'/desktop-real-runtime-with-asset.png',fullPage:true});
  screens.push('desktop-real-runtime-with-asset.png');
  // Verify runtime responsive view, not scaled mockup.
@@ -76,7 +89,9 @@ try{
   responsiveMobileThreeTabsPASS:true,
   aiGenerationImplemented:false,
   videoImportBehaviorNotTested:true,
-  webmExportNotTested:true,
+  webmExportNotTested:!webmExportPASS,
+  webmVideoOnlyExportPASS:webmExportPASS,
+  webmBytes:webmSize,
   human3DPhotoReconstructionPASS:false,
   fullMovieWithAudioPASS:false,
   deployedToRender:false
