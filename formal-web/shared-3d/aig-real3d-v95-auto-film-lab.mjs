@@ -55,6 +55,7 @@ function proof(){
   currentMotionSeconds:frame/100,
   sourceSceneNeverPromotedToFormalIdentity:true,
   cachedResources:scheduler.snapshot(),
+  currentSDRColorPipeline:renderer?.getColorPipeline?.()??null,
   lastGPUFrameCostMs:lastDrawMs,
   twoHourFilmActuallyProduced:false,formalReleasePASS:false
  },null,2);
@@ -109,6 +110,7 @@ async function build(){
    background:[.017,.034,.058,1]});
   if(renderer.status!=='READY')throw Error('真正的 WebGL GPU 未啟用，不能用假貼圖替代');
   renderer.setInspectionMode('LIT');
+  renderer.setColorPipeline($('colorPipeline').value);
   frame=0;render(0);setReady(true);proof();
  }finally{busy=false;}
 }
@@ -244,6 +246,7 @@ function qualityDiagnostics(){
   outputPixelsAreActual4KIfNativeCaptureSucceeds:false,
   photoBasedAnatomical1to1PASS:false,
   native4KMaterialPBRPASS:false,
+  selectedSDRColorPipeline:renderer.getColorPipeline(),
   fourK60FPSMoviePASS:false,releasePASS:false};
  $('quality-report').textContent=JSON.stringify(last4KReport,null,2);
  return last4KReport;
@@ -293,6 +296,14 @@ $('capture4k').addEventListener('click',async()=>{
    '，女主角身份與高擬真材質仍 BLOCK');
  }catch(e){status('BLOCK：'+String(e?.message??e));}
  finally{busy=false;$('capture4k').disabled=!out;}
+});
+$('colorPipeline').addEventListener('change',()=>{
+ if(!out||!renderer||busy)return;
+ try{
+  renderer.setColorPipeline($('colorPipeline').value);
+  render(frame);
+  qualityDiagnostics();
+ }catch(e){status('BLOCK：'+e.message);}
 });
 $('output').addEventListener('change',()=>{
  if(out&&!busy){
