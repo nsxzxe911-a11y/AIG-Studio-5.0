@@ -18,6 +18,8 @@ import {pickAIGReal3DDefectEdge,canvasClickToAIGSourcePixel}
 import {compareAIGNativeSourceDefects}
  from './aig-real3d-immutable-defect-diff.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
+import {reviewAIGReal3DSourceEnvelope,compareAIGReal3DSourceEnvelopes}
+ from './aig-real3d-source-envelope-review.mjs';
 import {
  auditAIG3DSourceSilhouette,validateAIGInspectionCapturePlan,
  AIG_INSPECTION_FRAME_SCHEMA
@@ -131,6 +133,8 @@ $('inspect').addEventListener('click',async()=>{
  currentNativeReview=null;$('compare-source').disabled=true;
  $('defect-edge-list').replaceChildren();
  $('defect-selected').textContent='尚未選取；匯入來源 OBJ 後可點選真異常邊。';
+ $('shape-envelope-stats').textContent='正面/背面寬幅尚未量測；不允許把合成橢球作人體成品。';
+ $('shape-envelope-metrics').replaceChildren();
  $('repair-compare-table').replaceChildren();
  $('repair-compare-gallery').replaceChildren();
  $('repair-compare-stats').textContent='需先完成修復前 OBJ 的來源網格審核。';
@@ -172,6 +176,28 @@ $('inspect').addEventListener('click',async()=>{
     bytes,heightMm,sourceName:file.name,sourceSha256:hash
   });
   const audit=auditAIG3DSourceSilhouette(scene);
+  const shapeEnvelope=reviewAIGReal3DSourceEnvelope({
+   geometry:audit,sourceName:file.name,sourceSha256:hash
+  });
+  const a=shapeEnvelope.boundingMillimeters,q=shapeEnvelope.ratios;
+  $('shape-envelope-stats').textContent=
+   (shapeEnvelope.fixtureExplicitlySyntheticNonhuman?
+    'BLOCK：這是明確標示的非人體合成橢球 QA，不是可驗收的人體模型。':
+    shapeEnvelope.wideFrontEnvelopeNeedsPoseAndReferenceReview?
+    '外型警示：來源正面外包絡偏寬，請先核對姿勢與原始參考圖；不自動縮身。':
+    '已量測來源原始三維 XYZ 包圍盒；仍未驗證真人外型。')+
+   ' 資料不能推論胖瘦或真實體重。';
+  const dimension=document.createElement('p');
+  dimension.textContent='來源真尺寸：高度 '+a.heightY.toFixed(0)+
+   ' mm ｜ 正面/背面最大寬度 '+a.frontMaxWidthX.toFixed(0)+
+   ' mm ｜ 側面最大厚度 '+a.sideMaxDepthZ.toFixed(0)+
+   ' mm ｜ 正面寬幅為側面 '+q.frontMaxWidthToSideDepth.toFixed(2)+' 倍'+
+   ' ｜ 正面寬高比 '+(q.frontMaxWidthToHeight*100).toFixed(1)+'%。';
+  $('shape-envelope-metrics').append(dimension);
+  const detail=document.createElement('p');
+  detail.textContent='這是原始頂點的軸向極值（包圍盒），可能包含伸展手臂或裝飾物，' +
+    '不等於肩寬、腰圍，也不代表人體重量。陰影不會改變任何原始尺寸。';
+  $('shape-envelope-metrics').append(detail);
   const nativeGeometryGatePASS=isOBJ?evidence.geometryPASS:evidence.renderGeometryPASS;
   // A flawed OBJ with REAL indexed source triangles may still be inspected
   // read-only to expose broken seams. It must NEVER be called release-ready.
@@ -227,7 +253,7 @@ $('inspect').addEventListener('click',async()=>{
    sourceMeshGeometryErrors:isOBJ?(evidence.geometricErrors??[]):[],
    userSourceName:file.name,sourceSha256:hash,
    measuredHeightMm:heightMm,
-   geometry:audit,originalGLB:evidence,
+   geometry:audit,originalGLB:evidence,sourceShapeEnvelope:shapeEnvelope,
    sevenRealBrownGPUPasses:proofs,
    sharedWebGLBloomPresent:false,baseSourceUnchanged:true,
    brownFullBodyColorOverrideApplied:true,
@@ -481,12 +507,14 @@ $('inspect').addEventListener('click',async()=>{
   }};
   $('evidence').textContent=JSON.stringify(report,null,2);
   $('report-download').disabled=false;
-  setStatus((nativeGeometryGatePASS?'來源 ':'BLOCK：來源 ')+file.name+' 完成 7 張唯讀 GPU 診斷圖；'+
+  setStatus((shapeEnvelope.fixtureExplicitlySyntheticNonhuman?
+    'BLOCK：合成非人體 QA 模型 ':nativeGeometryGatePASS?
+    '來源 ':'BLOCK：來源 ')+file.name+' 完成 7 張唯讀 GPU 診斷圖；'+
    (!nativeGeometryGatePASS?'【原始幾何 FAIL：禁止正式發布】'+
      (evidence.geometricErrors??[]).join('、')+'。':
     (sourceReview.readyForHumanReferenceReview?
      '已具備人工外觀核對前置資料。':'來源或人體標記仍有 Gate 缺口。'))+
-   ' 自然人體／照片一比一始終 BLOCK。',nativeGeometryGatePASS);
+   ' 自然人體／照片一比一始終 BLOCK。',nativeGeometryGatePASS&&!shapeEnvelope.fixtureExplicitlySyntheticNonhuman);
  }catch(e){
   setStatus('BLOCK：'+(e?.message||String(e)));
   $('evidence').textContent='檢查未通過；已顯示的圖片不得作為完整證據。';
@@ -542,6 +570,13 @@ $('compare-source').addEventListener('click',async()=>{
    sourceName:afterFile.name
   });
   const beforeSource=original.localSurface,afterSource=after;
+  const beforeEnvelope=previousReport.sourceShapeEnvelope;
+  if(!beforeEnvelope)throw Error('修復前原始 XYZ 外型尺寸未記錄');
+  const afterEnvelope=reviewAIGReal3DSourceEnvelope({
+   geometry:auditAIG3DSourceSilhouette(built.scene),
+   sourceName:afterFile.name,sourceSha256:sha256
+  });
+  const shapeDiff=compareAIGReal3DSourceEnvelopes(beforeEnvelope,afterEnvelope);
   if(JSON.stringify(built.evidence.geometryPASS)!==
    JSON.stringify(afterSource.sourceGeometryGatePASS))
    throw Error('修復後 GPU 幾何與原生拓樸 Gate 不一致');
@@ -600,7 +635,7 @@ $('compare-source').addEventListener('click',async()=>{
    });
   }
   const record={
-   ...diff,afterSourceName:afterFile.name,
+   ...diff,afterSourceName:afterFile.name,sourceShapeBeforeAfter:shapeDiff,
    fourPairedRealGPUViews:pairs,
    bothSourceModelsRemainUnmodified:true,
    visualHumanAppearanceApproved:false,
@@ -614,7 +649,10 @@ $('compare-source').addEventListener('click',async()=>{
    '… → 新 SHA '+sha256.slice(0,16)+'…。開放邊全域：'+
    diff.globalBefore.openEdges+' → '+diff.globalAfter.openEdges+
    '；消失的局部已知異常邊 '+diff.previousDefectEdgesAbsentInAfter+
-   '，新增 '+diff.newDefectEdgesNotPresentInBefore+
+   '；寬度 '+shapeDiff.before.frontMaxWidthX+'→'+shapeDiff.after.frontMaxWidthX+
+   ' mm；側面厚度 '+shapeDiff.before.sideMaxDepthZ+'→'+shapeDiff.after.sideMaxDepthZ+
+   ' mm'+(shapeDiff.sameVisibleBoundingEnvelopeAcrossSources?
+     '（外型最大寬厚未改變）':'（包圍盒有變化，還須四視角參考比對）')+
    '。僅代表原始拓樸差異，真人／修復成品 Gate 一律 BLOCK。';
  }catch(err){
   $('repair-compare-stats').textContent='BLOCK：'+(err?.message||String(err));
