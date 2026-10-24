@@ -1,6 +1,6 @@
 <!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Real3D V114｜已驗證重疊曲面去重與五軸 GPU</title>
+<title>Real3D V115｜來源開放邊界量測地圖與五軸 GPU</title>
 <style>
 :root{color-scheme:dark;background:#020407;color:#e4f3ff;font:15px/1.6 system-ui,"Microsoft JhengHei",sans-serif}
 body{margin:0;padding:16px}main{max-width:1380px;margin:auto}
@@ -18,7 +18,7 @@ canvas{display:block;width:100%;height:auto;background:#020407;border-radius:10p
 pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:520px;overflow:auto;font:12px/1.5 ui-monospace,monospace}
 #status{color:#f5d5a4}
 </style></head><body><main>
-<h1>FastModel Real3D V114｜可追溯雙視角曲面整合與真五軸 GPU</h1>
+<h1>FastModel Real3D V115｜雙視角來源曲面邊界與裂縫稽核</h1>
 <p>本階要有兩張<strong>獨立相機圖片</strong>、與圖片像素一一對應的<strong>實測毫米深度 JSON</strong>、兩組相機內外參，以及至少三組非共線共享特徵點。若只有單張照片、沒有測得深度或校正，就不能假造背面立體幾何。</p>
 <section><h2>兩個獨立來源</h2><div class="row">
 <label>相機 1｜原始 PNG <input id="v112-photo-0" type="file" accept="image/png"></label>
@@ -57,6 +57,14 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:520px;overflow:auto;f
 <label>容許 RGB 重疊頂點色差 <input type="number" id="v114-color-threshold" min="1" max="150" step="1" value="38"></label>
 <label>最少排除重複三角面 <input type="number" id="v114-min-removed" min="1" max="200000" step="1" value="1"></label>
 </div>
+</section>
+<section id="v115-boundary-panel">
+<h2>V115｜去重後新增裂縫的實測來源 Gate</h2>
+<p>檢查原 GLB 與工作副本的三角面拓樸、所有開放邊、孤立頂點和來源 SHA。新增邊界的端點及中點都必須受到另一個相機原始深度及 RGB 支持；不符合則 BLOCK，<strong>不縫合、不中途假補面。</strong></p>
+<label>新開放邊界跨視角證據比例門檻 <input id="v115-min-edge-fraction" type="number" min="0.8" max="1" step=".01" value="1"></label>
+<p><small>只有啟用 V114 去重時才執行此 Gate。預設 V112 原模型不變。</small></p>
+<canvas id="v115-edge-map" width="320" height="320" style="max-width:500px;image-rendering:pixelated" aria-label="綠色：跨視角已驗證開放邊；紅色：未驗證新增開放邊"></canvas>
+<pre id="v115-report">尚無已驗證去重曲面的邊界資料。</pre>
 </section>
 <div class="row"><button id="v112-build">驗證雙來源 → 配準 → 真 GLB → GPU</button>
 <button id="v112-download" disabled>下載來源驗證 GLB 工作副本</button>

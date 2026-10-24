@@ -1,3 +1,5 @@
+import {auditAIGReal3DV115ObservedBoundaryAtlas}
+ from './aig-real3d-v115-observed-boundary-atlas.mjs';
 import {deduplicateAIGReal3DV114VerifiedOverlapGLB}
  from './aig-real3d-v114-verified-overlap-dedup.mjs';
 import {auditAIGReal3DV113TwoViewOverlap}
@@ -46,6 +48,20 @@ async function readDepth(file,width,height){
   throw Error('V112_REAL_DEPTH_SENSOR_DECLARATION_REQUIRED');
  return {depthValuesMM:new Float32Array(body.valuesMM),depthSha};
 }
+function drawV115OpenEdges(receipt,view){
+ const canvas=$('v115-edge-map'),ctx=canvas.getContext('2d');
+ canvas.width=view.width;canvas.height=view.height;
+ ctx.fillStyle='#07111b';ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.lineWidth=1;
+ for(const edge of receipt.newOpenEdgeSourceWitness){
+  const pair=edge.secondCameraSourcePixelEndpoints;
+  if(!pair?.length)continue;
+  ctx.beginPath();ctx.moveTo(pair[0][0]+.5,pair[0][1]+.5);
+  ctx.lineTo(pair[1][0]+.5,pair[1][1]+.5);
+  ctx.strokeStyle=edge.supportedByCamera0MeasuredSource?'#29f3b5':'#ff514e';
+  ctx.stroke();
+ }
+}
 function drawV113Mismatch(source){
  const canvas=$('v113-seam-mask');
  const {width,height,firstViewMismatchMask}=source;
@@ -91,7 +107,7 @@ function draw(){
 $('v112-build').addEventListener('click',async()=>{
  if(busy)return;
  busy=true;$('v112-build').disabled=true;$('v112-download').disabled=true;
- status('V114：正在核對來源 SHA、V113 接縫與可選重疊面整合…');
+ status('V115：正在核對雙來源、深度接縫、去重拓樸與新開放邊界…');
  try{
   if(!$('v112-calibration-confirm').checked)
    throw Error('V112_CALIBRATED_PHYSICAL_DEPTH_DECLARATION_NOT_CONFIRMED');
@@ -136,6 +152,19 @@ $('v112-build').addEventListener('click',async()=>{
   const workingSHA=integrated?await sha256AIGReal3DBytes(workingGLB):modelSHA;
   if(integrated&&workingSHA===modelSHA)
    throw Error('V114_NEW_WORKING_COPY_SHA_MUST_DIFFER');
+  const boundary=integrated?await auditAIGReal3DV115ObservedBoundaryAtlas({
+   originalGLBBytes:built.glbBytes,workingGLBBytes:workingGLB,
+   originalGLBSha256:modelSHA,workingGLBSha256:workingSHA,views,
+   depthToleranceMM:Number($('v113-depth-mm').value),
+   maxRawColorDifference:Number($('v114-color-threshold').value),
+   minimumVerifiedNewEdgeFraction:Number($('v115-min-edge-fraction').value)
+  }):null;
+  if(boundary){
+   $('v115-report').textContent=JSON.stringify(boundary,null,2);
+   drawV115OpenEdges(boundary,views[1]);
+   if(boundary.researchGate!=='PASS_SOURCE_OPEN_EDGE_ATLAS')
+    throw Error('V115_'+boundary.measuredOpenSeamTopologyGate);
+  }
   const result=await ingestAIGReal3DNativeGeneratedGLB({
    glbBytes:workingGLB,referenceImageBytes:photo[0].bytes,
    declaredImageSha256:photo[0].sha,declaredGLBSha256:workingSHA,
@@ -162,6 +191,8 @@ $('v112-build').addEventListener('click',async()=>{
   report({...built.receipt,v113OverlapSeamAndMaterial:v113Summary,
    v114VerifiedOverlapIntegration:integrated?.receipt??null,
    v114IntegrationRequested:useV114,
+   v115MeasuredOpenBoundaryAtlas:boundary,
+   v115OriginalSourceNoWelding:true,
    untouchedV112OriginalGLBSha256:modelSHA,
    actualModelSourceSha256:workingSHA,
    originalFirstPhotoSha256:photo[0].sha,

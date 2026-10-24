@@ -1,0 +1,64 @@
+name: Real3D V115 Measured Open Seam Boundary Atlas and True 5AX GPU Gate
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v115-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v115-*'
+      - 'formal-web/shared-3d/aig-real3d-v112-calibrated-multiview-ui.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v112-calibrated-multiview-lab.html'
+      - 'formal-web/shared-3d/tests/aig-real3d-v114-verified-overlap-dedup.real-browser.mjs'
+      - 'docs/REAL3D-V115-*'
+      - '.github/workflows/aig-real3d-v115-observed-boundary-atlas-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: real3d-v115-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  verified-multi-view-topology:
+    runs-on: ubuntu-latest
+    timeout-minutes: 13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Original GLB SHA, byte provenance, no non-manifold, true open-edge measured support
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-v115-observed-boundary-atlas.mjs
+          node --check formal-web/shared-3d/aig-real3d-v112-calibrated-multiview-ui.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-v114-verified-overlap-dedup.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v115-observed-boundary-atlas.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v114-verified-overlap-dedup.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v113-overlap-seam.test.mjs
+  native-source-glb-chromium-5ax:
+    needs: verified-multi-view-topology
+    runs-on: ubuntu-latest
+    timeout-minutes: 27
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install Chromium WebGL ANGLE SwiftShader
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install chromium
+      - name: V115 measured boundary atlas, V114 native reduced triangles GLB, V107 A/B GPU
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v115-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v112-calibrated-multiview-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v114-verified-overlap-dedup.real-browser.mjs
+          node formal-web/shared-3d/tests/aig-real3d-v112-calibrated-multiview.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V115-Grounded-Open-Boundaries-GLB-5AX-GPU
+          path: |
+            artifacts/aig-real3d-v114/
+            artifacts/aig-real3d-v112/
+          if-no-files-found: warn
