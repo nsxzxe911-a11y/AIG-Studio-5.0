@@ -70,6 +70,10 @@ test('real original source 3D defect midpoint is selectable with correct vertex 
  assert.equal(hit.edge.type,'OPEN_BOUNDARY');
  assert.equal(hit.edge.startVertexIndex,e.startVertexIndex);
  assert.deepEqual(hit.edge.startWorldMeters,e.startWorldMeters);
+ assert.equal(hit.edge.startWorldMeters.length,3);
+ assert.equal(hit.edge.endWorldMeters.length,3);
+ assert.ok(hit.edge.startWorldMeters.every(Number.isFinite));
+ assert.ok(hit.edge.endWorldMeters.every(Number.isFinite));
  assert.equal(hit.noSourceMeshChanges,true);
  assert.equal(pickAIGReal3DDefectEdge({projection:p,x:-9000,y:-9000}).selected,false);
 });
