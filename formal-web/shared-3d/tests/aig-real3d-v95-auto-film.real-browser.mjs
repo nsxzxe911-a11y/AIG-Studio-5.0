@@ -48,7 +48,7 @@ try{
  assert.equal(panel.actualJointCount,6);
  await page.locator('#side').click();
  await page.locator('#frame').evaluate(el=>{
-  el.value='70';el.dispatchEvent(new Event('input',{bubbles:true}));
+  el.value='80';el.dispatchEvent(new Event('input',{bubbles:true}));
  });
  const progress=JSON.parse(await page.locator('#evidence').textContent());
  assert.ok(progress.currentMotionSeconds>=.6);
