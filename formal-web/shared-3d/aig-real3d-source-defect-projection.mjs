@@ -55,7 +55,10 @@ export function projectAIGSourceDefectEdges({localSurface,angle='front',width=10
    edges.push({
     type:edge.type,regionId:region.id,
     startVertexIndex:edge.startVertexIndex,
-    endVertexIndex:edge.endVertexIndex,start,end,
+    endVertexIndex:edge.endVertexIndex,
+    startWorldMeters:[...edge.startWorldMeters],
+    endWorldMeters:[...edge.endWorldMeters],
+    start,end,
     originalSourceEdgeNotSmoothed:true
    });
   }
