@@ -137,7 +137,12 @@ try{
  assert.equal(repaired.trainedNeuralRepairModelActuallyCalled,false);
  // Snapshot native GPU 4K before/after from the SAME original GLB source.
  const download=async()=>{
-  const pending=page.waitForEvent('download',{timeout:90000});
+  const pending=page.waitForEvent('download',{timeout:40000}).catch(async error=>{
+  const status=await page.locator('#status').textContent().catch(()=>'(status unavailable)');
+  const proof=await page.locator('#proof').textContent().catch(()=>'(proof unavailable)');
+  throw Error('V102_DOWNLOAD_DIAGNOSTIC '+String(error.message??error)+
+   ' STATUS='+status+' PROOF='+String(proof).slice(-950));
+ });
   await page.locator('#png4k').click();
   const result=await pending;
   const bytes=await readFile(await result.path());
