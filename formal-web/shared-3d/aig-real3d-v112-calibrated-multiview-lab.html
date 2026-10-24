@@ -1,6 +1,6 @@
 <!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Real3D V115｜來源開放邊界量測地圖與五軸 GPU</title>
+<title>Real3D V116｜來源可信度、曲面法線與遮擋分類</title>
 <style>
 :root{color-scheme:dark;background:#020407;color:#e4f3ff;font:15px/1.6 system-ui,"Microsoft JhengHei",sans-serif}
 body{margin:0;padding:16px}main{max-width:1380px;margin:auto}
@@ -18,7 +18,7 @@ canvas{display:block;width:100%;height:auto;background:#020407;border-radius:10p
 pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:520px;overflow:auto;font:12px/1.5 ui-monospace,monospace}
 #status{color:#f5d5a4}
 </style></head><body><main>
-<h1>FastModel Real3D V115｜雙視角來源曲面邊界與裂縫稽核</h1>
+<h1>FastModel Real3D V116｜掃描來源紀錄與曲面法線稽核</h1>
 <p>本階要有兩張<strong>獨立相機圖片</strong>、與圖片像素一一對應的<strong>實測毫米深度 JSON</strong>、兩組相機內外參，以及至少三組非共線共享特徵點。若只有單張照片、沒有測得深度或校正，就不能假造背面立體幾何。</p>
 <section><h2>兩個獨立來源</h2><div class="row">
 <label>相機 1｜原始 PNG <input id="v112-photo-0" type="file" accept="image/png"></label>
@@ -65,6 +65,23 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:520px;overflow:auto;f
 <p><small>只有啟用 V114 去重時才執行此 Gate。預設 V112 原模型不變。</small></p>
 <canvas id="v115-edge-map" width="320" height="320" style="max-width:500px;image-rendering:pixelated" aria-label="綠色：跨視角已驗證開放邊；紅色：未驗證新增開放邊"></canvas>
 <pre id="v115-report">尚無已驗證去重曲面的邊界資料。</pre>
+</section>
+<section id="v116-scan-evidence">
+<h2>V116｜真掃描來源紀錄、法線連續性與遮擋候選區域</h2>
+<p>本 Gate 需要 V114 去重及 V115 接縫已經驗證。每個相機須有獨立拍攝 ID、標定文件 SHA、拍攝時間與測量方式。這些是<strong>使用者提供的來源聲明</strong>，不會被當成外部已認證掃描儀。</p>
+<label><input type="checkbox" id="v116-enable"> 執行 V116 雙視角局部法線與來源紀錄 Gate（預設關閉以保留 V112～V115 工作流）</label>
+<p>以下 JSON 預設只是<strong>合成測試示例</strong>。真掃描必須自行填入真實設備、拍攝 ID、校正文件 SHA 和時間，並將 sourceClass 改成 DECLARED_SENSOR_CAPTURE、depthMethod 改成 MEASURED_DEPTH_SENSOR。原照片和深度檔 SHA 會由程式實際計算填入，不可冒用另一來源。</p>
+<textarea id="v116-captures" aria-label="兩相機拍攝與校準來源紀錄 JSON">[
+ {"sourceClass":"SYNTHETIC_FIXTURE","depthMethod":"SIMULATED_RAY_DEPTH","captureId":"SYNTH_V116_0","deviceId":"BENCH_0","capturedAtUTC":"2026-10-25T00:00:00Z","calibrationDocumentSha256":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"},
+ {"sourceClass":"SYNTHETIC_FIXTURE","depthMethod":"SIMULATED_RAY_DEPTH","captureId":"SYNTH_V116_1","deviceId":"BENCH_1","capturedAtUTC":"2026-10-25T00:00:01Z","calibrationDocumentSha256":"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"}
+]</textarea>
+<div class="row">
+<label>曲面法線容許角度（°）<input id="v116-normal-deg" type="number" min="1" max="45" step=".5" value="12"></label>
+<label>兩相機 3D 位置容差（mm）<input id="v116-point-mm" type="number" min=".01" max="20" step=".1" value="2"></label>
+<label>局部深度跳變警戒（mm）<input id="v116-jump-mm" type="number" min=".1" max="100" step="1" value="15"></label>
+</div>
+<pre id="v116-report">尚無來源法線測量報告。</pre>
+<p><small>Frame Edge 是影像裁切界，Missing Depth 是感測資料缺失，Discontinuity 是可能遮擋或深度跳變；僅憑深度跳變不表示已經證明實際遮擋。未觀測背面不補面。</small></p>
 </section>
 <div class="row"><button id="v112-build">驗證雙來源 → 配準 → 真 GLB → GPU</button>
 <button id="v112-download" disabled>下載來源驗證 GLB 工作副本</button>
