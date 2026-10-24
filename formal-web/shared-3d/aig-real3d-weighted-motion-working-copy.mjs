@@ -18,7 +18,7 @@ const pos=(v,i)=>[v[i*3],v[i*3+1],v[i*3+2]];
 const distance=(v,a,b)=>magnitude(v[a*3]-v[b*3],v[a*3+1]-v[b*3+1],v[a*3+2]-v[b*3+2]);
 const cross=(x,y,z,a,b,c)=>[y*c-z*b,z*a-x*c,x*b-y*a];
 const round=n=>Math.round(n*1000)/1000;
-const p95=arr=>{if(!arr.length)return 0;arr.sort();return round(arr[Math.ceil(arr.length*.95)-1]);};
+const p95=arr=>{if(!arr.length)return 0;arr.sort((a,b)=>a-b);return round(arr[Math.ceil(arr.length*.95)-1]);};
 function originalWorld(raw,geo,axis){
  const p=axis==='Z'?[raw[0],raw[2],-raw[1]]:raw;
  const lo=geo.rotatedSourceBoundsMin,hi=geo.rotatedSourceBoundsMax,s=geo.metersPerRawUnit;
