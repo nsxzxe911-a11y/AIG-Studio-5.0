@@ -1,0 +1,57 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FastModel Real3D V109｜照片來源幾何 → 五軸 GPU</title>
+<style>
+:root{color-scheme:dark;font:15px/1.55 system-ui,"Microsoft JhengHei",sans-serif;
+background:#020407;color:#d8efff}
+body{margin:0;padding:14px}
+main{max-width:1280px;margin:auto}
+section{background:#07111b;border:1px solid #25617a;border-radius:14px;padding:14px;margin:12px 0}
+h1{font-size:23px}h2{font-size:18px}
+p,small{color:#a9c7d6}
+.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0}
+label{display:flex;gap:6px;flex-direction:column;color:#a9d2e7}
+button,input{font:inherit;border:1px solid #3778a1;border-radius:8px;padding:8px;background:#102a3e;color:#e8f8ff;min-height:44px}
+button{cursor:pointer;background:linear-gradient(95deg,#0b4867,#34387b)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:12px}
+@media(max-width:850px){.grid{grid-template-columns:1fr}}
+canvas{display:block;width:100%;height:auto;border-radius:10px;background:#020407}
+pre{overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,monospace;max-height:580px}
+#status{color:#ffdfa4}
+img{max-width:100%;max-height:320px;object-fit:contain}
+</style></head><body><main>
+<h1>FastModel Real3D V109｜照片 → 來源表面 → 五軸 GPU 渲染</h1>
+<p>透明 PNG 可直接建立真正帶原圖貼圖的三角面 GLB；另提供獨立量測的深度圖才能得到可觀測的曲面深度。<strong>沒有深度資料時只有平面 2.5D，不會捏造人體背面、臉型或衣服內部。</strong></p>
+<section>
+<div class="row">
+<label>一張透明前景 PNG <input id="photo" type="file" accept="image/png"></label>
+<label>獨立深度 PNG（可選，灰階）<input id="depth" type="file" accept="image/png"></label>
+<label>來源圖片寬度（mm）<input id="width-mm" type="number" min="1" max="20000" value="100" step="0.1"></label>
+</div><div class="row">
+<label><input id="width-verified" type="checkbox"> 寬度來自實際量測（否則只是預覽比例）</label>
+<label><input id="depth-confirm" type="checkbox"> 這張深度圖是獨立實測資料，而非從照片亮度猜測</label>
+<label>深度近端 mm <input id="depth-near" type="number" value="0" step=".1"></label>
+<label>深度遠端 mm <input id="depth-far" type="number" value="20" step=".1"></label>
+</div><div class="row">
+<button id="build">建立來源表面並以 GPU 顯示</button>
+<button id="save" disabled>下載真 GLB 工作副本</button>
+<a href="./aig-real3d-v99-native-source-lab.html" style="color:#8ddaff">原始 GLB 品質與六面工作頁</a>
+</div>
+<div id="status" role="status">待上傳透明 PNG。一般不透明照片需要可靠的前景遮罩，不能假裝自動辨識完成。</div>
+</section>
+<div class="grid"><section><h2>真 WebGL 五軸預覽</h2>
+<canvas id="gl" width="960" height="660"></canvas>
+<div class="row">
+<label>A 軸 <input id="a" type="range" min="-180" max="180" value="0"><output id="a-value">0°</output></label>
+<label>B 軸（A 子軸）<input id="b" type="range" min="0" max="360" value="0"><output id="b-value">0°</output></label>
+<label>由底到頂 <input id="progress" type="range" min="0" max="100" value="100"><output id="progress-value">100%</output></label>
+<button id="reset" disabled>五軸歸零／全部顯示</button>
+</div>
+<p>使用 V107 真 GPU A/B 變換與原始高度裁切；旋轉後的背面若沒有量測，仍屬未知表面。</p>
+</section>
+<section><h2>原始照片</h2><img id="photo-preview" alt="使用者來源圖片">
+<h2>來源／精度／可信度證據</h2><pre id="receipt">尚未建立來源幾何。</pre></section></div>
+</main>
+<script type="module" src="./aig-real3d-v109-photo-surface-ui.mjs"></script>
+</body></html>
