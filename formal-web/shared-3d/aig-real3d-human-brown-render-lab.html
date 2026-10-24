@@ -20,7 +20,7 @@ figure img{width:100%;height:400px;max-height:52vh;object-fit:contain;display:bl
 .diagnostic-inner{margin:12px 0;border-color:#705338}#defect-edge-list button{min-height:38px;background:#2d201b;max-width:100%;word-break:break-word}
 #defect-selected{white-space:pre-wrap;overflow-wrap:anywhere}#repair-compare-gallery .compare-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 #repair-compare-gallery figure img{height:280px}#defect-gallery figure img[data-pickable=true]{cursor:crosshair;touch-action:manipulation}
-#dense-anatomy-gallery img{max-width:260px;height:auto}#dense-source-image{width:100%;height:auto;max-height:65vh;object-fit:contain}#dense-source-figure{max-width:650px}
+#weighted-motion-image{max-width:650px;width:100%;height:auto;max-height:65vh;object-fit:contain}#dense-anatomy-gallery img{max-width:260px;height:auto}#dense-source-image{width:100%;height:auto;max-height:65vh;object-fit:contain}#dense-source-figure{max-width:650px}
 #native-output-image{width:100%;height:auto;max-height:65vh;object-fit:contain}#native-output-figure{max-width:650px}
 #native-resolution-export select{max-width:100%}
 #shape-envelope-metrics{margin-top:8px;color:#ecd2b6}#shape-envelope-metrics strong{font-size:16px}#shape-envelope-review .status{border-color:#b37d43}
@@ -75,6 +75,23 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <div id="dense-anatomy-table" role="region" aria-label="五區原始索引三角面檢查數據"></div>
 <div id="dense-anatomy-gallery" class="gallery" aria-label="原始高密度網格四視角真 GPU 來源影像"></div>
 <pre id="dense-anatomy-evidence">尚無原始五區與四視角來源證據。</pre>
+</section>
+<section class="panel" id="weighted-motion-source">
+<h2>真原始 XYZ 加權關節工作副本｜頂點位移與 GPU 預覽</h2>
+<p>只有原始 OBJ 網格已匯入、47 點解剖標記及與相同來源 SHA 綁定的明確頂點權重 JSON 齊全，才能執行。這不是自動生成骨架，原 OBJ 完全保留。只檢驗一個指定手指關節的可重現動作，檢查實際位移、皮膚拉伸/壓縮、三角面翻面與塌陷；即使幾何測試沒有警報也不等於擬真或動畫可發布。</p>
+<div class="row">
+<label>本機頂點權重 JSON <input id="weighted-motion-weights" type="file" accept=".json,application/json"></label>
+<label>關節角度（-45° 到 +45°） <input id="weighted-motion-angle" type="number" min="-45" max="45" step="1" value="20"></label>
+<button id="weighted-motion-run" disabled type="button">執行原始網格真頂點變形與 GPU 擷取</button>
+<button id="weighted-motion-download" disabled type="button">下載位移／拉伸／GPU SHA 報告</button>
+</div>
+<div id="weighted-motion-status" class="status" role="status" aria-live="polite">BLOCK：尚未有來源綁定的原始 OBJ／權重。</div>
+<figure id="weighted-motion-figure" hidden>
+<img id="weighted-motion-image" alt="真原始 Indexed XYZ 工作副本加權變形 GPU 擷取">
+<figcaption><span>非破壞性工作副本：需人工驗證真人皮膚、手指關節及動畫。</span>
+<a id="weighted-motion-png-download" hidden download="Real3D-WEIGHTED-POSE-GPU.png">下載原生 GPU PNG</a></figcaption>
+</figure>
+<pre id="weighted-motion-evidence">缺少來源原始網格及真實頂點權重，保持 BLOCK。</pre>
 </section>
 <section class="panel" id="native-resolution-export">
 <h2>真 GPU 原生解析度｜1080p / 2K / 手機原生 / 4K</h2>
