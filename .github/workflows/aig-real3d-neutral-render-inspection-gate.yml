@@ -35,6 +35,7 @@ on:
       - 'formal-web/shared-3d/aig-real3d-gpu-stress-cycles.mjs'
       - 'formal-web/shared-3d/aig-real3d-persistent-gpu-pose-pool.mjs'
       - 'formal-web/shared-3d/aig-real3d-virtual-processor.mjs'
+      - 'formal-web/shared-3d/aig-real3d-persistent-vpu.mjs'
       - 'formal-web/shared-3d/aig-sixdof-geoglobe-*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-dense-source*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-dense-anatomy-*.mjs'
@@ -51,6 +52,7 @@ on:
       - 'formal-web/shared-3d/tests/aig-real3d-gpu-stress-cycles.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-persistent-gpu-pose-pool.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-virtual-processor.test.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-persistent-vpu.test.mjs'
       - 'formal-web/shared-3d/tests/aig-sixdof-geoglobe-space.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-fast-sparse-fk.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs'
@@ -202,6 +204,8 @@ jobs:
           node --test formal-web/shared-3d/tests/aig-real3d-persistent-gpu-pose-pool.test.mjs
           node --check formal-web/shared-3d/aig-real3d-virtual-processor.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-virtual-processor.test.mjs
+          node --check formal-web/shared-3d/aig-real3d-persistent-vpu.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-persistent-vpu.test.mjs
           node --test formal-web/shared-3d/tests/aig-sixdof-geoglobe-space.test.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-dense-source.real-browser.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs
