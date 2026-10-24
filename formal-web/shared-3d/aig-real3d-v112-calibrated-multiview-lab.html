@@ -1,6 +1,6 @@
 <!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Real3D V113｜多視角接縫深度與色彩 Gate</title>
+<title>Real3D V114｜已驗證重疊曲面去重與五軸 GPU</title>
 <style>
 :root{color-scheme:dark;background:#020407;color:#e4f3ff;font:15px/1.6 system-ui,"Microsoft JhengHei",sans-serif}
 body{margin:0;padding:16px}main{max-width:1380px;margin:auto}
@@ -18,7 +18,7 @@ canvas{display:block;width:100%;height:auto;background:#020407;border-radius:10p
 pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:520px;overflow:auto;font:12px/1.5 ui-monospace,monospace}
 #status{color:#f5d5a4}
 </style></head><body><main>
-<h1>FastModel Real3D V113｜雙視角曲面接縫與原圖材質一致性</h1>
+<h1>FastModel Real3D V114｜可追溯雙視角曲面整合與真五軸 GPU</h1>
 <p>本階要有兩張<strong>獨立相機圖片</strong>、與圖片像素一一對應的<strong>實測毫米深度 JSON</strong>、兩組相機內外參，以及至少三組非共線共享特徵點。若只有單張照片、沒有測得深度或校正，就不能假造背面立體幾何。</p>
 <section><h2>兩個獨立來源</h2><div class="row">
 <label>相機 1｜原始 PNG <input id="v112-photo-0" type="file" accept="image/png"></label>
@@ -49,8 +49,17 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:520px;overflow:auto;f
 <div class="row"><label>重疊深度容許差（mm）<input id="v113-depth-mm" type="number" value="2" min="0.001" max="20" step=".1"></label>
 <label>原圖色彩警報界線（RGB RMS）<input id="v113-color-rms" type="number" value="38" min="5" max="150" step="1"></label></div>
 </section>
+<section id="v114-integration-panel">
+<h2>V114｜建立獨立、可回復的去重整合 GLB 工作副本</h2>
+<p>先經 V113 雙向深度 Gate。只對第二視角逐三角面確認三個頂點都與第一視角的實測深度及原圖 RGB 一致，才排除重複三角面。缺少任何來源、材質不同、未知側面則繼續保留。<strong>並非跨視角真正縫合、補背面或建立密閉人體。</strong></p>
+<label><input id="v114-dedup" type="checkbox"> 啟用 V114 已驗證重疊面去重（輸出新的 GLB 工作副本；預設保留 V112 原版）</label>
+<div class="row">
+<label>容許 RGB 重疊頂點色差 <input type="number" id="v114-color-threshold" min="1" max="150" step="1" value="38"></label>
+<label>最少排除重複三角面 <input type="number" id="v114-min-removed" min="1" max="200000" step="1" value="1"></label>
+</div>
+</section>
 <div class="row"><button id="v112-build">驗證雙來源 → 配準 → 真 GLB → GPU</button>
-<button id="v112-download" disabled>下載兩視角真 GLB 工作副本</button>
+<button id="v112-download" disabled>下載來源驗證 GLB 工作副本</button>
 <a style="color:#8ee1ff" href="./aig-real3d-v109-photo-surface-lab.html">返回 V111 前景工作頁</a>
 </div>
 <div id="status" role="status">尚未匯入兩份真實測量來源；沒有實測深度時此處不會合成立體面。</div>
@@ -63,7 +72,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:520px;overflow:auto;f
 <label>高度切片<input type="range" id="v112-slice" min="0" max="100" value="100"><output id="v112-slice-label">100%</output></label>
 <button id="v112-reset" disabled>歸零 A/B／全部表面</button>
 </div>
-<p>雙視角輸出是同一世界座標下的<strong>兩片實測可見曲面</strong>；尚未銲接成閉合人體或補齊未知表面。角度或切片不改動 GLB 來源。</p>
+<p>雙視角輸出是同一世界座標下的<strong>兩片實測可見曲面</strong>；可選 V114 保守排除第二視角已重疊三角面，不移動任何原始頂點、不銲接成閉合人體或補齊未知表面。</p>
 </section>
 <section><h2>V113 重疊誤差診斷（相機 1）</h2>
 <canvas id="v113-seam-mask" width="320" height="320" aria-label="深度超差點以紅色標示"></canvas>
