@@ -125,6 +125,72 @@ try{
  assert.equal(archive.sourceSha256,inputSha);
  assert.equal(archive.releasePASS,false);
  await copyFile(await d.path(),dir+'/DENSE-ORIGINAL-ANATOMY-FOURVIEW-BLOCK.json');
+ // Genuine posed high-density source: explicit local labels + source-SHA weights.
+ assert.equal(await page.locator('#weighted-motion-run').isDisabled(),false);
+ await page.locator('#weighted-motion-run').click();
+ assert.match(await page.locator('#weighted-motion-status').textContent(),/BLOCK/);
+ assert.equal(await page.locator('#weighted-motion-download').isDisabled(),true);
+ const sourceMarkers={};
+ for(const key of ['headTop','chin','noseTip','neckBase','leftShoulder',
+  'rightShoulder','leftElbow','rightElbow','leftWrist','rightWrist','pelvis',
+  'leftKnee','rightKnee','leftHeel','rightHeel','leftToe','rightToe'])
+  sourceMarkers[key]=[.14,0,0];
+ for(const side of ['left','right'])for(const finger of [
+  'Thumb','Index','Middle','Ring','Pinky']){
+  sourceMarkers[side+finger+'Base']=[.14,0,0];
+  sourceMarkers[side+finger+'Middle']=[.14,0,0];
+  sourceMarkers[side+finger+'Tip']=[.14,0,0];
+ }
+ await page.locator('#landmark-file').setInputFiles({
+  name:'NONHUMAN_47_SOURCE_MARKERS.json',mimeType:'application/json',
+  buffer:Buffer.from(JSON.stringify(sourceMarkers))
+ });
+ const weights={
+  schema:'AIG_REAL3D_EXPLICIT_VERTEX_WEIGHTS_V1',
+  sourceSha256:inputSha,sourceVertexCount:vertices,
+  side:'left',finger:'Index',joint:'Middle',
+  pivotSourceXYZ:[.14,0,0],axisWorld:[0,1,0],
+  vertexWeights:Array.from({length:12},(_,i)=>[i+1,.35])
+ };
+ await page.locator('#weighted-motion-weights').setInputFiles({
+  name:'NONHUMAN_EXPLICIT_WEIGHTS.json',mimeType:'application/json',
+  buffer:Buffer.from(JSON.stringify(weights))
+ });
+ await page.locator('#weighted-motion-run').click();
+ await page.waitForFunction(()=>{
+  const button=document.getElementById('weighted-motion-run'),
+   msg=document.getElementById('weighted-motion-status')?.textContent||'';
+  return !button?.disabled&&(msg.includes('原始網格權重姿勢已計算')||msg.startsWith('BLOCK'));
+ },null,{timeout:240000});
+ const motionStatus=await page.locator('#weighted-motion-status').textContent();
+ assert.match(motionStatus,/原始網格權重姿勢已計算/,motionStatus);
+ const motion=JSON.parse(await page.locator('#weighted-motion-evidence').textContent());
+ assert.equal(motion.sourceSha256,inputSha);
+ assert.equal(motion.sourceTrianglesUnchanged,triangles);
+ assert.equal(motion.baseline.movedOriginalVertices,0);
+ assert.ok(motion.posed.movedOriginalVertices>=3);
+ assert.equal(motion.posed.sourceTrianglesAdded,0);
+ assert.equal(motion.posed.sourceTrianglesRemoved,0);
+ assert.equal(motion.gpuEvidence.originalTriangles,triangles);
+ assert.equal(motion.gpuEvidence.nativeGpuReadback,true);
+ assert.equal(motion.animationRigPASS,false);
+ assert.equal(motion.releasePASS,false);
+ const motionPNGDownload=page.waitForEvent('download',{timeout:15000});
+ await page.locator('#weighted-motion-png-download').click();
+ const motionPNG=await motionPNGDownload;
+ const motionBytes=await readFile(await motionPNG.path());
+ assert.equal(motionBytes.readUInt32BE(16),1080);
+ assert.equal(motionBytes.readUInt32BE(20),1920);
+ assert.equal(createHash('sha256').update(motionBytes).digest('hex'),
+  motion.gpuEvidence.sha256);
+ await copyFile(await motionPNG.path(),dir+'/NONHUMAN-DENSE-WEIGHTED-POSE-GPU.png');
+ const motionJsonDownload=page.waitForEvent('download',{timeout:15000});
+ await page.locator('#weighted-motion-download').click();
+ const motionFile=await motionJsonDownload;
+ const motionJSON=JSON.parse(await readFile(await motionFile.path()));
+ assert.equal(motionJSON.sourceSha256,inputSha);
+ assert.equal(motionJSON.releasePASS,false);
+ await copyFile(await motionFile.path(),dir+'/NONHUMAN-DENSE-WEIGHTED-POSE-EVIDENCE.json');
  assert.deepEqual(errors,[]);
  await page.screenshot({path:dir+'/DENSE-SOURCE-ORIGINAL-GPU-INTAKE.png',fullPage:true});
  await writeFile(dir+'/proof.json',JSON.stringify({
@@ -135,7 +201,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_DENSE_NATIVE_FOURVIEW_ANATOMY_GPU_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_DENSE_NATIVE_FOURVIEW_WEIGHTED_3D_POSE_GPU_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;
