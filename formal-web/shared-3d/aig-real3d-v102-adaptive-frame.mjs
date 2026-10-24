@@ -220,3 +220,45 @@ export function createAIGReal3DAdaptivePreviewGate({
   maxQueuedFullMeshSnapshots:1,sourceMeshUnchanged:true};}
  return {enqueue,pump,setAIRebuilderBusy,snapshot};
 }
+
+/**
+ * Native UHD is 16:9, but original artwork may be 9:16/3:2/1:1.
+ * Fit the artwork inside real 3840×2160 without stretching the subject.
+ * Its image ROI is mapped into the true letterboxed/pillarboxed content box,
+ * then original actual 3D scene is re-framed by camera ONLY.
+ */
+export function planAIGReal3DNativeOutputWithinArtwork({
+ scene,artworkWidth,artworkHeight,subjectROI=null,
+ outputWidth=3840,outputHeight=2160,yaw=.58,pitch=.2,
+ marginFraction=.07,originalImageSha256=null,sourceRevision=0
+}={}){
+ if(!Number.isInteger(outputWidth)||!Number.isInteger(outputHeight)||
+  outputWidth<640||outputHeight<480||
+  outputWidth>7680||outputHeight>4320||
+  !Number.isInteger(artworkWidth)||!Number.isInteger(artworkHeight)||
+  artworkWidth<96||artworkHeight<96||artworkWidth>7680||artworkHeight>4320)
+  fail('OUTPUT_AND_SOURCE_FRAME_INVALID');
+ const roi=subjectROI??{x:0,y:0,width:artworkWidth,height:artworkHeight};
+ validateROI(roi,artworkWidth,artworkHeight);
+ const contain=Math.min(outputWidth/artworkWidth,outputHeight/artworkHeight);
+ const contentRect={x:(outputWidth-artworkWidth*contain)/2,
+  y:(outputHeight-artworkHeight*contain)/2,
+  width:artworkWidth*contain,height:artworkHeight*contain};
+ const mappedROI={
+  x:contentRect.x+roi.x*contain,y:contentRect.y+roi.y*contain,
+  width:roi.width*contain,height:roi.height*contain};
+ const frame=planAIGReal3DAdaptiveArtworkFrame({
+  scene,artworkWidth:outputWidth,artworkHeight:outputHeight,
+  subjectROI:mappedROI,yaw,pitch,marginFraction,
+  originalImageSha256,sourceRevision});
+ return {...frame,
+  schema:'AIG_REAL3D_V102_NATIVE_OUTPUT_PRESERVE_ORIGINAL_ARTWORK_COMPOSITION_V1',
+  originalArtworkWidth:artworkWidth,originalArtworkHeight:artworkHeight,
+  nativeOutputFrameContentRect:contentRect,
+  actualContentROIInOutputPixels:mappedROI,
+  pillarboxOrLetterboxNeeded:contentRect.width<outputWidth||
+   contentRect.height<outputHeight,
+  originalArtworkAspectNeverStretched:true,
+  nativeFrameDidNotInventMissingBorderPixels:true,
+  sourceGeometryUnaffected:true,releasePASS:false};
+}
