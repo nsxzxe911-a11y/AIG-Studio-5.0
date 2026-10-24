@@ -366,6 +366,7 @@ try{
  assert.equal(triple.incrementalNativeSourceNormalsVerified,true);
  assert.equal(triple.nonDisplayFullXYZScratchBuffersAllocated,2);
  assert.equal(await page.locator('#three-joint-stress-run').isDisabled(),false);
+ assert.equal(await page.locator('#three-joint-pool-run').isDisabled(),false);
  assert.equal(triple.adaptiveRealSourceGPUFrameBudget.schema,
   'AIG_REAL3D_SOURCE_POSE_ADAPTIVE_RAF_BUDGET_V1');
  assert.equal(triple.adaptiveRealSourceGPUFrameBudget.requestedMode,'AUTO');
@@ -561,6 +562,20 @@ try{
    const heapAfter=typeof performance.memory?.usedJSHeapSize==='number'?
     performance.memory.usedJSHeapSize:null;
 
+   const persistentLib=await import('./aig-real3d-persistent-gpu-pose-pool.mjs');
+   const poolCanvas=document.createElement('canvas');
+   poolCanvas.width=640;poolCanvas.height=480;
+   const poolRenderer=lib.createAIG3DRenderer(poolCanvas,{
+    quality:'balanced',pixelRatio:1,maxTriangles:200000,
+    background:[0,0,0,1]
+   });
+   if(poolRenderer.status!=='READY')throw Error('PERSISTENT_TRUE_GPU_REQUIRED');
+   poolRenderer.setInspectionMode('LIT');
+   const persistentPool=await persistentLib.inspectAIGReal3DPersistentGPUPosePool({
+    renderer:poolRenderer,poseScenes:[build(original),build(moved),build(original)],
+    segments:3,rafCallbacksPerSegment:72,mode:'AUTO',
+    maxOwnedGPUBuffers:12,maxFullGPUUploadBytes:100000000
+   });
    const stressLib=await import('./aig-real3d-gpu-stress-cycles.mjs');
    const multiCycleStress=await stressLib.stressAIGReal3DGPUResourceCycles({
     cycles:3,rafCallbacksPerCycle:36,mode:'AUTO',
@@ -577,7 +592,7 @@ try{
     }
    });
    return {
-    multiCycleStress,
+    multiCycleStress,persistentPool,
     baselineSha:baseline.sha256,deltaSha:changed.sha256,
     fullRebuildSha:reference.sha256,stats:update,
     exactGPUFrameMatch:changed.sha256===reference.sha256,
@@ -592,6 +607,27 @@ try{
    };
   }finally{one.destroy();two.destroy();}
  });
+ assert.equal(deltaProof.persistentPool.schema,
+  'AIG_REAL3D_V80_PERSISTENT_INDEXED_GPU_POSE_POOL_V1');
+ assert.equal(deltaProof.persistentPool.segmentsCompleted,3);
+ assert.equal(deltaProof.persistentPool.requestedRafCallbacksTotal,216);
+ assert.ok(deltaProof.persistentPool.genuineSourceIndexedGPUDraws>10);
+ assert.equal(deltaProof.persistentPool.gpuPoolInitiallyAllocatedBuffers,3);
+ assert.equal(deltaProof.persistentPool.fullGPUBufferReallocationsAfterWarmup,0);
+ assert.ok(deltaProof.persistentPool.realGPUBufferSubDataUpdates>0);
+ assert.ok(deltaProof.persistentPool.segments.every(x=>
+  x.realSourceIndexedGPUFrames>=2&&
+  x.indexVBOsAllocatedSinceLastSegment===0&&
+  x.fullGPUBufferUploadsSinceLastSegment===0&&
+  x.actualIncrementalSubDataCalls>0));
+ assert.equal(deltaProof.persistentPool.ownedGPUResourceAccountAfterDestroy.activeTrackedOwnedGPUBufferCount,0);
+ assert.equal(deltaProof.persistentPool.ownedGPUResourceAccountAfterDestroy.ownedGPUBufferAllocationBalance,0);
+ assert.equal(deltaProof.persistentPool.originalPoseReferencesUnmodified,true);
+ assert.equal(deltaProof.persistentPool.realGPUDriverVRAMUsageBytes,null);
+ assert.equal(deltaProof.persistentPool.actualDeviceTemperatureCelsius,null);
+ assert.equal(deltaProof.persistentPool.realAndroidWindowsFPSAndSustainedThermalGatePASS,false);
+ await writeFile(dir+'/NONHUMAN-V80-216RAF-PERSISTENT-WEBGL-ORIGINAL-GPU-POOL.json',
+  JSON.stringify(deltaProof.persistentPool,null,2));
  assert.equal(deltaProof.multiCycleStress.cyclesCompleted,3);
  assert.equal(deltaProof.multiCycleStress.callbacksRequested,108);
  assert.ok(deltaProof.multiCycleStress.actualSourceIndexedDraws>5);
@@ -656,7 +692,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_GPU_THREE_CYCLE_BUFFER_LIFECYCLE_STRESS_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_V80_PERSISTENT_SOURCE_GPU_POOL_216_RAF_NO_REUPLOAD_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;

@@ -11,6 +11,8 @@ import {benchmarkAIGReal3DNativePosePlayback}
  from './aig-real3d-adaptive-pose-playback.mjs';
 import {stressAIGReal3DGPUResourceCycles}
  from './aig-real3d-gpu-stress-cycles.mjs';
+import {inspectAIGReal3DPersistentGPUPosePool}
+ from './aig-real3d-persistent-gpu-pose-pool.mjs';
 import {buildAIGReal3DWeightedFingerGPUPreview} from './aig-real3d-weighted-motion-working-copy.mjs';
 import {createAIGReal3DSparseNormalCache,evaluateAIGReal3DSparseNormals}
  from './aig-real3d-sparse-source-normals.mjs';
@@ -20,11 +22,14 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
  let source=null,report=null,stressScenes=null;
  const run=$('three-joint-run'),download=$('three-joint-download'),
   stressButton=$('three-joint-stress-run'),stressStatus=$('three-joint-stress-status'),
+  poolButton=$('three-joint-pool-run'),poolStatus=$('three-joint-pool-status'),
   status=$('three-joint-status'),evidence=$('three-joint-evidence'),
   gallery=$('three-joint-gallery');
  const reset=()=>{
   source=null;report=null;stressScenes=null;run.disabled=true;download.disabled=true;
-  stressButton.disabled=true;stressStatus.textContent='等待同來源三節關節真 GPU 驗證。';
+  stressButton.disabled=true;poolButton.disabled=true;
+  poolStatus.textContent='等待真來源 OBJ 與三節關節 GPU 驗證。';
+  stressStatus.textContent='等待同來源三節關節真 GPU 驗證。';
   gallery.replaceChildren();
   status.textContent='BLOCK：尚無原始 OBJ 與真三關節來源索引權重。';
   evidence.textContent='等待來源 SHA／本機權重。';
@@ -40,7 +45,7 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
    source.upAxis!==$('up-axis').value){
    status.textContent='BLOCK：原始 OBJ 或校準參數變動，需重新匯入。';return;
   }
-  setBusy(true);run.disabled=true;download.disabled=true;stressButton.disabled=true;
+  setBusy(true);run.disabled=true;download.disabled=true;stressButton.disabled=true;poolButton.disabled=true;
   stressScenes=null;report=null;
   gallery.replaceChildren();let renderer;
   try{
@@ -198,7 +203,8 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
    };
    stressScenes=playbackScenes;
    evidence.textContent=JSON.stringify(report,null,2);download.disabled=false;
-   stressButton.disabled=false;
+   stressButton.disabled=false;poolButton.disabled=false;
+   poolStatus.textContent='原始三節關節 GPU 姿勢已驗證，可測試共用一套 GPU buffer 的 3×72 排程。';
    stressStatus.textContent='來源三個真 GPU 姿勢已通過，可進行獨立三輪緩衝清理壓力驗證。';
    status.textContent='真三關節極速模式：每幀僅處理 '+timeline.sparseSourceTopology.activeWeightedGlobalVertexCount+
     '/'+timeline.sparseSourceTopology.inputSourceVertexCount+
@@ -249,6 +255,40 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
   }catch(error){
    stressStatus.textContent='BLOCK：'+String(error?.message||error);
   }finally{setBusy(false);stressButton.disabled=!stressScenes;}
+ });
+ poolButton.addEventListener('click',async()=>{
+  if(isBusy()||!source||!stressScenes||!report){
+   poolStatus.textContent='BLOCK：來源或 GPU 姿勢尚未通過驗證。';return;
+  }
+  setBusy(true);poolButton.disabled=true;stressButton.disabled=true;
+  let renderer;
+  try{
+   const canvas=document.createElement('canvas');
+   canvas.width=640;canvas.height=480;
+   renderer=createAIG3DRenderer(canvas,{
+    quality:'balanced',pixelRatio:1,maxTriangles:700000,
+    background:[.769,.745,.702,1]
+   });
+   if(renderer.status!=='READY')throw Error('真 WebGL 工作區不可用');
+   renderer.setInspectionMode('LIT');
+   const evidencePool=await inspectAIGReal3DPersistentGPUPosePool({
+    renderer,poseScenes:stressScenes,segments:3,
+    rafCallbacksPerSegment:72,mode:$('three-joint-playback-hz').value,
+    maxOwnedGPUBuffers:12,maxFullGPUUploadBytes:100000000
+   });
+   report.persistentGPUResourcePool=evidencePool;
+   evidence.textContent=JSON.stringify(report,null,2);
+   poolStatus.textContent='真 GPU 資源池完成 3×72 rAF：'+
+    evidencePool.genuineSourceIndexedGPUDraws+
+    ' 張原 Indexed 3D 幀，首次建立後新增 GPU 緩衝 0，關閉後歸零。'+
+    '本次不能作為 Android／Windows 連續 FPS 與溫度認證。';
+  }catch(error){
+   poolStatus.textContent='BLOCK：'+String(error?.message||error);
+  }finally{
+   renderer?.destroy?.();
+   setBusy(false);poolButton.disabled=!stressScenes;
+   stressButton.disabled=!stressScenes;
+  }
  });
  download.addEventListener('click',()=>{
   if(!report)return;
