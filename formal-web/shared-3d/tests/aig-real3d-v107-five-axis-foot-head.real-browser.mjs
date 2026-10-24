@@ -92,7 +92,7 @@ try{
 
 
 
- ass assert.equal(await page.locator('#v107-step').isEnabled(),true);
+ assert.equal(await page.locator('#v107-step').isEnabled(),true);
  const modelSha=createHash('sha256').update(binary).digest('hex');
  let report=JSON.parse(await page.locator('#v107-stage-report').textContent());
  assert.equal(report.status,'READY_NOT_YET_RENDERED');
@@ -176,4 +176,4 @@ try{
   JSON.stringify({triangles:12,sourceGLBSha256:modelSha,
    gpuDraw:true,sourceHeightClipping:true,footHeadFromRealIndexedXYZ:true,
    upperXYZAndABIndependent:true,realCNCNotControlled:true}));
-ally{await browser.close();}
+}finally{await browser.close();}
