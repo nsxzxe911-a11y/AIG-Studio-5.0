@@ -20,7 +20,7 @@ figure img{width:100%;height:400px;max-height:52vh;object-fit:contain;display:bl
 .diagnostic-inner{margin:12px 0;border-color:#705338}#defect-edge-list button{min-height:38px;background:#2d201b;max-width:100%;word-break:break-word}
 #defect-selected{white-space:pre-wrap;overflow-wrap:anywhere}#repair-compare-gallery .compare-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 #repair-compare-gallery figure img{height:280px}#defect-gallery figure img[data-pickable=true]{cursor:crosshair;touch-action:manipulation}
-#dense-source-image{width:100%;height:auto;max-height:65vh;object-fit:contain}#dense-source-figure{max-width:650px}
+#dense-anatomy-gallery img{max-width:260px;height:auto}#dense-source-image{width:100%;height:auto;max-height:65vh;object-fit:contain}#dense-source-figure{max-width:650px}
 #native-output-image{width:100%;height:auto;max-height:65vh;object-fit:contain}#native-output-figure{max-width:650px}
 #native-resolution-export select{max-width:100%}
 #shape-envelope-metrics{margin-top:8px;color:#ecd2b6}#shape-envelope-metrics strong{font-size:16px}#shape-envelope-review .status{border-color:#b37d43}
@@ -61,6 +61,20 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <div id="dense-source-status" class="status" role="status" aria-live="polite">從上方選擇原始 OBJ 並輸入實際身高後，才可執行真來源分塊匯入；自然人體驗收仍 BLOCK。</div>
 <figure id="dense-source-figure" hidden><img id="dense-source-image" alt="不加細分、不減面之原始高密度來源正面 GPU 畫面"><figcaption id="dense-source-caption">尚無高密度來源 GPU 證據。</figcaption></figure>
 <pre id="dense-source-evidence">尚無原始來源 SHA。</pre>
+</section>
+<section class="panel" id="dense-native-anatomy">
+<h2>高密度原始 3D 解剖五區＋四視角 GPU 檢查</h2>
+<p>先按上方高密度 OBJ 真匯入，再提供本機 21 點解剖 JSON（五指檢查另需左右手的 MiddleTip、RingTip、PinkyTip 六點）。
+直接從原始 OBJ 全域三角面檢查頭頸、左右手五指與左右腳；GPU 分塊交界不等於原始裂縫。
+依來源正／側／背／45° 透明 PNG 做四方向輪廓比對。幾何詳細或輪廓吻合都不能自動認證真人。</p>
+<div class="row">
+<button id="dense-anatomy-run" disabled type="button">檢查原始五區立體細節＋四視角真 GPU</button>
+<button id="dense-anatomy-download" disabled type="button">下載解剖／四視角報告 JSON</button>
+</div>
+<div id="dense-anatomy-status" class="status" role="status" aria-live="polite">尚未完成高密度原始 OBJ GPU 匯入，人體自然外觀 BLOCK。</div>
+<div id="dense-anatomy-table" role="region" aria-label="五區原始索引三角面檢查數據"></div>
+<div id="dense-anatomy-gallery" class="gallery" aria-label="原始高密度網格四視角真 GPU 來源影像"></div>
+<pre id="dense-anatomy-evidence">尚無原始五區與四視角來源證據。</pre>
 </section>
 <section class="panel" id="native-resolution-export">
 <h2>真 GPU 原生解析度｜1080p / 2K / 手機原生 / 4K</h2>
