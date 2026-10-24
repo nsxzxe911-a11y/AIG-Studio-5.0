@@ -77,6 +77,37 @@ try{
  assert.equal(record.sourceSha256,inputSha);
  assert.equal(record.releasePASS,false);
  await copyFile(await j.path(),dir+'/DENSE-SOURCE-ORIGINAL-SHA-PACKET.json');
+ // New high-density ORIGINAL source-index anatomy and FOUR actual GPU angles.
+ assert.equal(await page.locator('#dense-anatomy-run').isDisabled(),false);
+ await page.locator('#dense-anatomy-run').click();
+ await page.waitForFunction(()=>{
+  const button=document.getElementById('dense-anatomy-run');
+  const message=document.getElementById('dense-anatomy-status')?.textContent||'';
+  return !button?.disabled&&(message.includes('GPU 已分析')||message.startsWith('BLOCK'));
+ },null,{timeout:240000});
+ const anatomyStatus=await page.locator('#dense-anatomy-status').textContent();
+ assert.match(anatomyStatus,/GPU 已分析/,anatomyStatus);
+ const anatomy=JSON.parse(await page.locator('#dense-anatomy-evidence').textContent());
+ assert.equal(anatomy.sourceSha256,inputSha);
+ assert.equal(anatomy.anatomy.originalVertices,vertices);
+ assert.equal(anatomy.anatomy.originalTriangles,triangles);
+ assert.equal(anatomy.anatomy.requiredBase21LandmarksPresent,false);
+ assert.equal(anatomy.anatomy.missingRequiredMarkers.length,27);
+ assert.equal(anatomy.anatomy.regionsRequiringReview,5);
+ assert.equal(anatomy.anatomy.gpuChunksExcludedFromTopologyAnalysis,true);
+ assert.equal(anatomy.fourView.fourRealGPUViewsCaptured,true);
+ assert.equal(anatomy.fourView.fourReferenceContoursCompared,false);
+ assert.equal(anatomy.fourView.views.length,4);
+ assert.equal(anatomy.fourView.missingValidatedReferenceComparisons.length,4);
+ assert.equal(anatomy.naturalHumanAppearancePASS,false);
+ assert.equal(anatomy.releasePASS,false);
+ assert.equal(await page.locator('#dense-anatomy-gallery img').count(),4);
+ const anatomyDownload=page.waitForEvent('download',{timeout:15000});
+ await page.locator('#dense-anatomy-download').click();
+ const d=await anatomyDownload,archive=JSON.parse(await readFile(await d.path()));
+ assert.equal(archive.sourceSha256,inputSha);
+ assert.equal(archive.releasePASS,false);
+ await copyFile(await d.path(),dir+'/DENSE-ORIGINAL-ANATOMY-FOURVIEW-BLOCK.json');
  assert.deepEqual(errors,[]);
  await page.screenshot({path:dir+'/DENSE-SOURCE-ORIGINAL-GPU-INTAKE.png',fullPage:true});
  await writeFile(dir+'/proof.json',JSON.stringify({
@@ -87,7 +118,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_DENSE_NATIVE_113400_VERTICES_226080_FACES_GPU_PASS_NONHUMAN');
+ console.log('REAL3D_DENSE_NATIVE_FOURVIEW_ANATOMY_GPU_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;
