@@ -106,6 +106,20 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <div class="gallery" id="dual-motion-gallery" aria-label="真原始網格三幀姿勢 GPU 圖片"></div>
 <pre id="dual-motion-evidence">尚未執行真實三維序列。</pre>
 </section>
+<section class="panel" id="hierarchical-fk">
+<h2>真原始網格 Base→Middle 父子關節 FK｜三幀 GPU + 中間取樣</h2>
+<p>在明確權重及 47 點來源標記齊全後，以父關節帶動子關節旋轉中心及旋轉軸，真正更新原始 XYZ。每一取樣幀檢查原始三角面拉伸、翻面、塌陷與可辨認的非共面面片穿插；這是手工授權資料的幾何實驗，尚非自動人體 Rig，也不宣稱取樣間或全身零碰撞。</p>
+<div class="row">
+<label>父子關節原始來源權重 JSON <input id="hierarchical-fk-weights" type="file" accept=".json,application/json"></label>
+<label>Base 角度 <input id="hierarchical-fk-parent-angle" type="number" min="-45" max="45" step="1" value="24"></label>
+<label>Middle 角度 <input id="hierarchical-fk-child-angle" type="number" min="-45" max="45" step="1" value="24"></label>
+<button id="hierarchical-fk-run" type="button" disabled>真父子關節 3D 變形與三幀 GPU</button>
+<button id="hierarchical-fk-download" type="button" disabled>下載 FK／取樣碰撞／GPU SHA JSON</button>
+</div>
+<div id="hierarchical-fk-status" class="status" role="status" aria-live="polite">BLOCK：未匯入來源 OBJ／來源關節權重。</div>
+<div id="hierarchical-fk-gallery" class="gallery" aria-label="父子關節實際三幀原始三維 GPU"></div>
+<pre id="hierarchical-fk-evidence">尚未執行父子關節來源 3D 診斷。</pre>
+</section>
 <section class="panel" id="native-resolution-export">
 <h2>真 GPU 原生解析度｜1080p / 2K / 手機原生 / 4K</h2>
 <p>原本七視角的 1080×1920 仍是同尺度幾何驗收圖。下方可另外輸出一張真正的高解析度 PNG，不是放大小圖；高解析度只讓可見邊緣更清楚，不會增加原 OBJ／GLB 的三角形，也不會補出臉部或手指。</p>
