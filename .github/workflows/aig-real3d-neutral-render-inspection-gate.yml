@@ -311,6 +311,8 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-v94-cinema-quality-budget.mjs
           node --check formal-web/shared-3d/aig-real3d-v94-obj-structure-intake.mjs
           node --check formal-web/shared-3d/aig-real3d-v94-precision-review.mjs
+          node --check formal-web/shared-3d/aig-real3d-v94-measured-geometry-working-copy.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v94-measured-correction.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-v94-source-geometry-quality.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-v94-obj-intake.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-v90-obj-vt-bvh-film.test.mjs
