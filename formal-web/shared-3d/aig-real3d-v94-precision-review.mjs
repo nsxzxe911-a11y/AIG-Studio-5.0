@@ -5,10 +5,12 @@ import {auditAIGReal3DOriginalStructure}
  from './aig-real3d-v94-source-structure-audit.mjs';
 import {evaluateAIGReal3DCinemaGeometryFirst}
  from './aig-real3d-v94-cinema-quality-budget.mjs';
+import {buildAIGReal3DMeasuredGeometryWorkingCopy}
+ from './aig-real3d-v94-measured-geometry-working-copy.mjs';
 import {createAIG3DRenderer}
  from './aig-real3d-webgl.mjs';
 const $=id=>document.getElementById(id);
-let incoming=null,report=null,cinema=null,renderer=null,
+let incoming=null,report=null,cinema=null,corrected=null,renderer=null,
  observations=[],photoURL=null,auditURL=null;
 const angles={front:[0,.13],side:[Math.PI/2,.16],
  back:[Math.PI,.13],oblique:[Math.PI/4,.38]};
@@ -32,7 +34,7 @@ function view(key='oblique'){
  renderer.setCamera({projection:'orthographic',yaw,pitch,
   distance:Math.max(1,bounds.orthoSpan*2),focus:bounds.focus,
   orthoSpan:bounds.orthoSpan});
- const r=renderer.render(incoming.scene);
+ const r=renderer.render(corrected?.workingScene??incoming.scene);
  if(r.status!=='WEBGL_XYZ_TRIANGLES_RENDERED')
   throw Error('必須先通過真 WebGL 原始 indexed XYZ 畫面');
  status('真 3D '+key+'／原始三角面 '+r.triangles+
@@ -55,6 +57,8 @@ function validate(){
   originalTriangleCount:report.originalTriangleCount,
   originalTrianglesAdded:report.originalTrianglesAdded,
   sourceTopologyGatePASS:report.sourceTopologyGatePASS,
+  measuredCorrectionWorkingCopyVertices:corrected?.actualSourceVerticesMoved??0,
+  measuredCorrectionRequiresIndependentVerification:true,
   independent1to1AccuracyPASS:report.precision1to1IndependentlyCertified,
   measuredDimensionsAndThicknessPASS:report.measurementsWithinTolerance,
   evidenceUploadedCount:report.observationChecks.length,
@@ -116,6 +120,7 @@ async function load(){
   objText:text,sourceSha256,verifiedFileSha256:sourceSha256,
   sourceUnits:$('units').value
  });
+ corrected=null;
  observations=[];
  const evidenceFile=$('measure').files?.[0];
  if(evidenceFile){
@@ -142,13 +147,43 @@ for(const key of Object.keys(angles))
  $(key).addEventListener('click',()=>{
   try{view(key);}catch(e){status('BLOCK：'+String(e?.message??e));}
  });
+$('refine').addEventListener('click',()=>{
+ if(!incoming){status('BLOCK：請先上傳原始 OBJ');return;}
+ if(incoming.scene.units!=='METERS'){
+  status('BLOCK：量測局部 XYZ 工作副本目前只支援來源座標使用 METERS；不可猜測尺寸。');return;
+ }
+ const list=[];
+ for(const o of observations.filter(x=>x.kind==='POINT_3D')){
+  const part=incoming.parts.find(p=>p.id===o.partId);
+  if(!part||!Array.isArray(o.sourceVertexIds)||o.sourceVertexIds.length!==1||
+   !Array.isArray(o.measuredXYZMeters))continue;
+  list.push({nodeId:part.nodeId,originalVertexIndex:o.sourceVertexIds[0],
+   measuredLocalXYZMeters:o.measuredXYZMeters,evidenceSha256:o.evidenceSha256});
+ }
+ if(list.length<3){
+  status('BLOCK：需要至少三個同源 OBJ 原始頂點的真 POINT_3D 量測，不能憑顏色自動補形狀。');
+  return;
+ }
+ try{
+  corrected=buildAIGReal3DMeasuredGeometryWorkingCopy({
+   sourceScene:incoming.scene,sourceSha256:incoming.sourceSha256,
+   measurements:list,maxDisplacementMm:2});
+  validate();view('oblique');
+  status('已建立實測點稀疏修正 WORKING COPY：'+
+   corrected.actualSourceVerticesMoved+' 點；原始 OBJ 完全不改，未知幾何仍 BLOCK。');
+ }catch(e){corrected=null;status('BLOCK：'+String(e?.message??e));}
+});
 $('download').addEventListener('click',()=>{
  if(!report){status('BLOCK：沒有真原始來源，不能輸出空假報告');return;}
  if(auditURL)URL.revokeObjectURL(auditURL);
  const data=JSON.stringify({intake:{
   schema:incoming.schema,sourceSha256:incoming.sourceSha256,
   groups:incoming.groups,originalTriangleCount:incoming.originalTriangleCount
- },geometry:report,cinematicCandidate:cinema},null,2);
+ },geometry:report,workingCopyCorrection:corrected?{
+  schema:corrected.schema,changedVertices:corrected.actualSourceVerticesMoved,
+  originalMeshImmutable:corrected.originalSourceMeshesNeverMutated,
+  externalSourceMeasurementIndependentlyCertified:false
+ }:null,cinematicCandidate:cinema},null,2);
  auditURL=URL.createObjectURL(new Blob([data],{type:'application/json'}));
  const a=document.createElement('a');a.href=auditURL;
  a.download='Real3D-V94-SOURCE-PRECISION-GATES.json';a.click();
@@ -160,7 +195,7 @@ $('gpu').addEventListener('click',async()=>{
    ' 個真三角面，未達電影 GPU PNG 的 2,000 面證據門檻。');return;
  }
  try{
-  const shot=await renderer.captureNativePNG(incoming.scene,{
+  const shot=await renderer.captureNativePNG(corrected?.workingScene??incoming.scene,{
    width:960,height:640});
   if(!shot.genuineGpuReadback)throw Error('真 GPU RGBA 讀回不存在');
   if(photoURL)URL.revokeObjectURL(photoURL);
