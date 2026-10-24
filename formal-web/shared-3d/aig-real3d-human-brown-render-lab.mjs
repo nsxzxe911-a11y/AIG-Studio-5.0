@@ -22,6 +22,8 @@ import {reviewAIGReal3DSourceEnvelope,compareAIGReal3DSourceEnvelopes}
  from './aig-real3d-source-envelope-review.mjs';
 import {auditAIGReal3DSceneCrossSections}
  from './aig-real3d-native-body-cross-sections.mjs';
+import {planAIGReal3DNativeResolution}
+ from './aig-real3d-native-resolution.mjs';
 import {createAIGReal3DOBJLocalPatchWorkingCopy}
  from './aig-real3d-local-hole-working-copy.mjs';
 import {
@@ -30,7 +32,7 @@ import {
 }from './aig-real3d-render-inspection.mjs';
 const $=id=>document.getElementById(id),gallery=$('gallery'),status=$('status');
 const urlPool=new Set();
-let running=false,report=null,profiles=[],currentNativeReview=null;
+let running=false,report=null,profiles=[],currentNativeReview=null,lastResolutionSource=null;
 function showDefectSelection(hit){
  if(!hit?.selected){
   $('defect-selected').textContent='未選到異常邊。請點圖上的異常線段或下面的來源邊編號。';return;
@@ -134,6 +136,11 @@ $('inspect').addEventListener('click',async()=>{
   setStatus('BLOCK：需輸入 900–2200 mm 的來源實測身高。');return;
  }
  running=true;$('inspect').disabled=true;$('report-download').disabled=true;report=null;
+ lastResolutionSource=null;
+ $('native-output-render').disabled=true;
+ $('native-output-download').hidden=true;
+ $('native-output-figure').hidden=true;
+ $('native-output-status').textContent='尚無來源驗證圖，解析度輸出 BLOCK。';
  currentNativeReview=null;$('compare-source').disabled=true;
  $('make-local-working-copy').disabled=true;
  $('local-working-copy-stats').textContent='先匯入原始 OBJ 並執行來源檢查。原檔案不會被修改。';
@@ -552,6 +559,10 @@ $('inspect').addEventListener('click',async()=>{
    anatomicalVisualApproval:false,personLikenessVerified:false
   }};
   $('evidence').textContent=JSON.stringify(report,null,2);
+  lastResolutionSource={file,sha256:hash,heightMm,upAxis:axis,landmarks,
+   format:isOBJ?'OBJ':'GLB',sourceGeometryAudit:audit};
+  $('native-output-render').disabled=false;
+  $('native-output-status').textContent='來源已完成 1080×1920 固定 QA。另選高解析度真正 GPU 輸出；4K 只做單張，不影響原始 XYZ／正式人體 BLOCK。';
   $('report-download').disabled=false;
   setStatus((sliceFlag?'BLOCK：下半身只有單一 3D 連續截面 ':shapeEnvelope.fixtureExplicitlySyntheticNonhuman?
     'BLOCK：合成非人體 QA 模型 ':nativeGeometryGatePASS?
@@ -767,5 +778,103 @@ $('make-local-working-copy').addEventListener('click',async()=>{
    '。不符合安全補面條件時不產生工作副本，也不會修改原始 OBJ。';
  }finally{
   running=false;$('make-local-working-copy').disabled=!currentNativeReview;
+ }
+});
+
+
+$('native-output-render').addEventListener('click',async()=>{
+ const source=lastResolutionSource;
+ if(running||!source||!report){
+  $('native-output-status').textContent='BLOCK：請先完成來源原始網格七視圖檢查。';
+  return;
+ }
+ running=true;$('native-output-render').disabled=true;
+ $('native-output-download').hidden=true;
+ $('native-output-figure').hidden=true;
+ $('native-output-status').textContent='硬體預檢及真正 GPU 像素擷取中…';
+ let captureRenderer;
+ try{
+  captureRenderer=createAIG3DRenderer($('native-webgl'),{
+   quality:'balanced',pixelRatio:1,background:[.769,.745,.702,1]
+  });
+  if(captureRenderer.status!=='READY')throw Error('此裝置沒有可用的 WebGL GPU 畫面');
+  const preset=$('native-output-preset').value,
+   orientation=$('native-output-orientation').value,
+   angle=$('native-output-angle').value;
+  const plan=planAIGReal3DNativeResolution({
+   preset,orientation,gpuLimit:captureRenderer.getGpuLimit(),
+   deviceMemoryGB:Number.isFinite(navigator.deviceMemory)?navigator.deviceMemory:null,
+   devicePixelRatio:window.devicePixelRatio||1,
+   autoCssWidth:window.innerWidth,autoCssHeight:window.innerHeight
+  });
+  if(!plan.permitted)throw Error('此裝置不能安全擷取 '+plan.width+
+   '×'+plan.height+'：'+plan.limitReasons.join('、')+
+   '；請選 1080p 或 2K，沒有以放大小圖冒充高解析度。');
+  const bytes=await source.file.arrayBuffer();
+  const sha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),
+   x=>x.toString(16).padStart(2,'0')).join('');
+  if(sha256!==source.sha256)
+   throw Error('來源 OBJ／GLB SHA 與初次檢查不一致');
+  const original=source.format==='OBJ'?
+   buildAIGReal3DScanNative({
+    objText:new TextDecoder('utf-8',{fatal:true}).decode(bytes),
+    heightMm:source.heightMm,upAxis:source.upAxis,
+    landmarks:source.landmarks,sourceName:source.file.name,sourceSha256:sha256
+   }):
+   buildAIGReal3DGLBStatic({
+    bytes,heightMm:source.heightMm,sourceName:source.file.name,
+    sourceSha256:sha256
+   });
+  const before=auditAIG3DSourceSilhouette(original.scene);
+  const camera=validateAIGInspectionCapturePlan({
+   heightMeters:source.heightMm/1000,angle,mode:'ALBEDO'
+  });
+  captureRenderer.setCamera(camera.camera);
+  captureRenderer.setInspectionMode('BROWN_VOLUME');
+  const result=await captureRenderer.captureNativePNG(original.scene,{
+   width:plan.width,height:plan.height
+  });
+  const after=auditAIG3DSourceSilhouette(original.scene);
+  if(JSON.stringify(before)!==JSON.stringify(after))
+   throw Error('GPU 高解析度擷取期間來源網格改變：BLOCK');
+  if(result.width!==plan.width||result.height!==plan.height||
+    result.nativeOutputPixels!==plan.pixels||result.resampledFromSmallerImage!==false)
+   throw Error('輸出 PNG 原生尺寸與規劃不一致，禁止偽稱 2K／4K');
+  const href=URL.createObjectURL(result.blob);urlPool.add(href);
+  const name='AIG-Real3D-NATIVE-'+plan.selectedPreset+'-'+angle+'-'+orientation+'.png';
+  $('native-output-download').href=href;
+  $('native-output-download').download=name;
+  $('native-output-download').hidden=false;
+  $('native-output-image').src=href;
+  $('native-output-figure').hidden=false;
+  $('native-output-caption').textContent=plan.width+'×'+plan.height+
+   ' 原生 GPU 像素 '+plan.pixels.toLocaleString()+
+   '；此圖不代表增加模型三角面。';
+  const evidence={
+   schema:'AIG_REAL3D_NATIVE_GPU_RESOLUTION_EXPORT_V1',
+   ...plan,angle,sourceSha256:sha256,pngSha256:result.sha256,
+   nativePNGWidth:result.width,nativePNGHeight:result.height,
+   actualGPUReadback:result.genuineGpuReadback,
+   noUpscale:result.resampledFromSmallerImage===false,
+   baseGeometryUnchanged:true,sourceTriangles:original.evidence.actualTriangles,
+   sourceHumanAppearanceApproved:false,releasePASS:false
+  };
+  if(!Array.isArray(report.nativeGpuExports))report.nativeGpuExports=[];
+  report.nativeGpuExports.push(evidence);
+  $('evidence').textContent=JSON.stringify(report,null,2);
+  $('native-output-status').textContent=
+   '真正 GPU '+plan.selectedPreset+' '+plan.width+'×'+plan.height+
+   ' PNG 已產生、可下載；SHA '+result.sha256.slice(0,20)+
+   '…；估計峰值記憶體約 '+plan.approximatePeakCaptureMemoryMiB+
+   ' MiB。1080p 七視角原始驗收和模型三角面都未改變。真人外觀仍 BLOCK。';
+ }catch(e){
+  $('native-output-download').hidden=true;
+  $('native-output-figure').hidden=true;
+  $('native-output-status').textContent='BLOCK：'+(e?.message||String(e))+
+   '。硬體支援不足不得冒稱已輸出原生高解析度。';
+ }finally{
+  captureRenderer?.destroy?.();
+  running=false;
+  $('native-output-render').disabled=!lastResolutionSource;
  }
 });
