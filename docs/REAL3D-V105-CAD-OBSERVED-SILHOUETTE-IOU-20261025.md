@@ -15,6 +15,14 @@
 
 原 `formal-web/shared-3d/aig-real3d-v99-native-source-lab.html` 新增 V105 對照，使用與 V104 共通的 CNC XY 點列／OBSERVED 選擇，可按「V105 計算真輪廓差異」，顯示綠＝重合、黃＝模型多出、紫＝CAD 缺失。允許 explicit checkbox 在差異有足夠改善時只平移工作副本；和既有真 WebGL/4K 共用單一 GLB，預覽實際更新。若不確定測量來源，請保持 OBSERVED 未勾選，程序不產生定位副本。
 
+## 同輪修復 CNC MM 與 V96 4K 單位契約
+
+真 Chromium GLB 測試第一次發現 `REAL3D_V96_4K_SOURCE_GEOMETRY_CAMERA_OR_RESOLUTION_INVALID`：原先 V104 允許 CNC 原始 `MM` 單位，但 V96 4K 幾何證據需要 `METERS`，載入時被舊來源品質 Gate 擋下。不能為了測試假裝毫米其實是公尺。
+
+V105 新增 `aig-real3d-v105-metric-4k-adapter.mjs`，只建立**臨時供 4K 審核及輸出的物理公尺工作視圖**：在場景樹根節點縮放 1/1000 並轉換根位置，原始 node 本地 Indexed XYZ mesh、面、UV、GLB SHA 與 CNC mm 工作場景完全不動；相機 focus/orthoSpan/distance 也同步轉成公尺，V96 仍以真 3840×2160 audit / GPU 擷取。子節點跟隨父節點的 metric scale 而保持真運動結構，避免單純改 `units` 標籤造成 1,000 倍的物理錯誤。原生公尺場景則原樣直通，不影響 V99/V102/V103。
+
+`aig-real3d-v105-metric-4k-adapter.test.mjs` 測試有父子軸與旋轉角度的真原 mesh 世界座標，變換後正好 1/1000，且 V96 真 4K 來源契約可接受，原場景 JSON 不改。
+
 ## 驗收與限制
 
 Node 單元測試：相同輪廓 IoU 接近 1；具有相同 bounding box、但真 L 型凹槽不同不能叫 1:1；m/MM 準度一致；實測 CAD 平移可提升 IoU、原頂點/面數/UV 不變；AI 推估來源 BLOCK。真 Chromium 測試：上傳具來源 SHA 的二進位 GLB 及圖片，CNC 單位 MM，測未觀測、無授權的 Gate，再在授權情況下取得真 Working Copy、真 GPU 重新繪製和來源 SHA 保持。
