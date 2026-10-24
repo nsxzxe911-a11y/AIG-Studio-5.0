@@ -285,6 +285,7 @@ $('png4k').addEventListener('click',async()=>{
  if(!ready||busy)return;
  busy=true;$('png4k').disabled=true;
  const originalPreviewCamera=renderer.getCamera();
+ const originalV107Stage=renderer.getVirtualStageV107();
  try{
   const [yaw,pitch]=views[mode];
   const nativeArtworkFrame=planAIGReal3DNativeOutputWithinArtwork({
@@ -297,11 +298,10 @@ $('png4k').addEventListener('click',async()=>{
   const metric4K=createAIGReal3DMetric4KWorkingScene(activeScene()),
    metricCamera=createAIGReal3DMetric4KCamera(nativeArtworkFrame.camera,{
     sceneUnits:activeScene().units});
-  const V107PreviewStage=renderer.getVirtualStageV107();
-  if(V107PreviewStage&&activeScene().units==='MM'){
-   const m=[...V107PreviewStage.matrix];
+  if(originalV107Stage&&activeScene().units==='MM'){
+   const m=[...originalV107Stage.matrix];
    for(const i of [12,13,14])m[i]*=.001;
-   renderer.setVirtualStageV107({...V107PreviewStage,matrix:m});
+   renderer.setVirtualStageV107({...originalV107Stage,matrix:m});
   }
   renderer.setCamera(metricCamera);
   const out=await captureAIGReal3DNative4K({
@@ -328,6 +328,7 @@ $('png4k').addEventListener('click',async()=>{
  finally{
   if(renderer&&ready){
    try{
+    renderer.setVirtualStageV107(originalV107Stage);
     renderer.setCamera(originalPreviewCamera);
     renderer.render(activeScene());
    }catch(e){status('BLOCK：V102預覽相機復原失敗 '+String(e?.message??e));}
