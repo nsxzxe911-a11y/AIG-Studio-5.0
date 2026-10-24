@@ -52,6 +52,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-biomechanical-attachments.mjs'
       - 'formal-web/shared-3d/aig-real3d-v93-qa-fixture.mjs'
       - 'formal-web/shared-3d/aig-real3d-four-species-film.mjs'
+      - 'formal-web/shared-3d/aig-real3d-four-species-film-lab.html'
+      - 'formal-web/shared-3d/aig-real3d-four-species-film-lab.mjs'
       - 'formal-web/shared-3d/aig-real3d-rig-sport-film*.mjs'
       - 'formal-web/shared-3d/aig-real3d-rig-sport-film-lab.html'
       - 'formal-web/shared-3d/aig-real3d-v92-qa-fixture.mjs'
@@ -118,6 +120,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-biomechanical-attachments.mjs'
       - 'formal-web/shared-3d/aig-real3d-v93-qa-fixture.mjs'
       - 'formal-web/shared-3d/aig-real3d-four-species-film.mjs'
+      - 'formal-web/shared-3d/aig-real3d-four-species-film-lab.html'
+      - 'formal-web/shared-3d/aig-real3d-four-species-film-lab.mjs'
       - 'formal-web/shared-3d/aig-real3d-rig-sport-film*.mjs'
       - 'formal-web/shared-3d/aig-real3d-rig-sport-film-lab.html'
       - 'formal-web/shared-3d/aig-real3d-v92-qa-fixture.mjs'
@@ -292,6 +296,7 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-biomechanical-attachments.mjs
           node --check formal-web/shared-3d/aig-real3d-v93-qa-fixture.mjs
           node --check formal-web/shared-3d/aig-real3d-four-species-film.mjs
+          node --check formal-web/shared-3d/aig-real3d-four-species-film-lab.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-four-species-film.real-browser.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-biomechanical-attachments.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-four-species-film.test.mjs
