@@ -285,7 +285,7 @@ export async function coordinateAIGReal3DStages({
   if(ended&&(!afterCleanup?.rendererDestroyed||
    afterCleanup.ownedGPUBufferAllocationBalance!==0||
    afterCleanup.activeTrackedOwnedGPUBufferCount!==0||
-   closedWorkers?.liveWorkerObjects!==0))
+   (workerPool!==null&&closedWorkers?.liveWorkerObjects!==0)))
    die('GPU_OR_WORKER_TEARDOWN_INCOMPLETE');
  }
 }
