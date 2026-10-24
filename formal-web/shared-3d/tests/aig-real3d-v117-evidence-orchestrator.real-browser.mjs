@@ -100,7 +100,11 @@ try{
  assert.equal(b.checkedRealGPUFrames,5);
  assert.equal(second.v117ActiveControllerPlan.selectedForegroundModule,
   'ORIGINAL_ALPHA_ALREADY_SEGMENTED');
- assert.notEqual(second.modelSha256,first.modelSha256);
+ // Two different originals can legitimately produce the same normalized
+ // alpha-only working PNG/GLB if their observed foreground is identical.
+ // Always check original-source SHA independence and GPU/source agreement.
+ assert.notEqual(second.originalOpaqueOrAlphaPhotoSha256,
+  first.originalOpaqueOrAlphaPhotoSha256);
  assert.equal(second.v117ActualFivePoseGPUGate.outputGLBSha256,second.modelSha256);
  assert.equal(second.finalReleasePASS,false);
  assert.equal(second.lastActualGPUFrame.sourceSHA,second.modelSha256);
