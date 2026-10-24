@@ -37,7 +37,7 @@ try{
   return status.includes('真 WebGL 3D 影格')||status.startsWith('BLOCK');
  },null,{timeout:30000});
  const status=await page.locator('#status').textContent();
- if(status.startsWith('BLOCK'))throw Error('V95_PROTOTYPE_BLOCK:+status+
+ if(status.startsWith('BLOCK'))throw Error('V95_PROTOTYPE_BLOCK:'+status+
   '; pageerrors='+JSON.stringify(errors));
  const panel=JSON.parse(await page.locator('#evidence').textContent());
  assert.equal(panel.pipeline,'AIG_REAL3D_V95_LOCAL_AUTO_3D_MOVIE_PIPELINE_V1');
