@@ -103,9 +103,9 @@ class V100NativeModelContract(unittest.TestCase):
             v100.parse_glb_mesh(path)
 
     def test_missing_weights_blocks_with_explicit_json(self):
+        args = self.args("--probe")
         (self.model / "model.ckpt").unlink()
-        result = subprocess.run(self.args("--probe"),
-                                capture_output=True, text=True)
+        result = subprocess.run(args, capture_output=True, text=True)
         self.assertEqual(result.returncode, 2)
         self.assertEqual(json.loads(result.stderr)["status"], "BLOCK")
         self.assertFalse(json.loads(result.stderr)["inferenceActuallyExecuted"])
