@@ -16,7 +16,7 @@ code{color:#a4d8ff;overflow-wrap:anywhere}
 #gallery,#reference-gallery,#anatomy-gallery,#defect-gallery,#repair-compare-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 figure{border:1px solid #2a6c85;border-radius:11px;padding:9px;margin:0;background:#06111f;min-width:0}
 figure img{width:100%;height:400px;max-height:52vh;object-fit:contain;display:block;background:#020407}
-#profile-table,#anatomy-region-table,#surface-table,#repair-compare-table,#source-3d-slice-table{overflow-x:auto;margin-top:12px}#profile-table table,#anatomy-region-table table,#surface-table table,#repair-compare-table table,#source-3d-slice-table table{width:100%;border-collapse:collapse;min-width:520px;font-size:12px}#profile-table td,#profile-table th,#anatomy-region-table td,#anatomy-region-table th,#surface-table td,#surface-table th,#repair-compare-table td,#repair-compare-table th,#source-3d-slice-table td,#source-3d-slice-table th{padding:8px 6px;text-align:left;border-bottom:1px solid #2d4059}#profile-table th{color:#a3deed}#profile-table tr[data-worst=true]{background:#4f331d88}#local-width-review{padding-top:12px}
+#profile-table,#anatomy-region-table,#surface-table,#repair-compare-table,#source-3d-slice-table,#detail-geometry-table{overflow-x:auto;margin-top:12px}#profile-table table,#anatomy-region-table table,#surface-table table,#repair-compare-table table,#source-3d-slice-table table,#detail-geometry-table table{width:100%;border-collapse:collapse;min-width:520px;font-size:12px}#profile-table td,#profile-table th,#anatomy-region-table td,#anatomy-region-table th,#surface-table td,#surface-table th,#repair-compare-table td,#repair-compare-table th,#source-3d-slice-table td,#source-3d-slice-table th,#detail-geometry-table td,#detail-geometry-table th{padding:8px 6px;text-align:left;border-bottom:1px solid #2d4059}#profile-table th{color:#a3deed}#profile-table tr[data-worst=true]{background:#4f331d88}#local-width-review{padding-top:12px}
 .diagnostic-inner{margin:12px 0;border-color:#705338}#defect-edge-list button{min-height:38px;background:#2d201b;max-width:100%;word-break:break-word}
 #defect-selected{white-space:pre-wrap;overflow-wrap:anywhere}#repair-compare-gallery .compare-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 #repair-compare-gallery figure img{height:280px}#defect-gallery figure img[data-pickable=true]{cursor:crosshair;touch-action:manipulation}
@@ -117,6 +117,12 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <div class="status" id="anatomy-stats" role="status" aria-live="polite">來源標記尚未通過網格對應驗證。不得自動辨識頭頸、肩膀、骨盆與四肢。</div>
 <div id="anatomy-gallery"></div>
 <div id="anatomy-region-table" role="region" aria-label="來源標記界定的影像高度區段誤差"></div>
+</section>
+<section class="panel" id="source-geometry-detail">
+<h2>真實 3D 曲面幾何精度｜頭頸、雙手、雙腳</h2>
+<p>直接從原始 OBJ 的 XYZ 三角面量測各區域的最長三角邊、相鄰面折角與開放接縫，單位為 mm／度；來源聲明僅為提供者主張，不代表已認證真人掃描。4K PNG 只增加像素，不會補出 3D 曲面或手指。</p>
+<div class="status" id="detail-geometry-status" role="status" aria-live="polite">未取得真來源 OBJ／21 點標記，局部曲面解析度驗證 BLOCK。</div>
+<div id="detail-geometry-table" role="region" aria-label="五個原始三維區域的真三角面幾何精度和接合資料"></div>
 </section>
 <section class="panel" id="source-topology">
 <h2>真三角面局部接合／破洞檢查</h2>
