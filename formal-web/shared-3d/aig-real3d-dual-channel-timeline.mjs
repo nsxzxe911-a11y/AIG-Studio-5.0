@@ -52,7 +52,7 @@ function contacts(positions,first,second,maxPairs=150000){
  // continuous surface neighbors and excluded from self-contact reporting.
  const A=first.map(t=>bounding(t,positions)),B=second.map(t=>bounding(t,positions))
   .sort((x,y)=>x.minimum[0]-y.minimum[0]);
- let pairsBroadphase=0,pairsNarrowphase=0,intersections=0,exhausted=false;
+ let pairsBroadphase=0,pairsNarrowphase=0,intersections=0,exhausted=false,\n  examinedCandidatePairs=0;
  for(const a of A){
   for(const b of B){
    if(b.minimum[0]>a.maximum[0])break;
@@ -71,7 +71,7 @@ function contacts(positions,first,second,maxPairs=150000){
  return {
   firstChannelAffectedSourceTriangles:first.length,
   secondChannelAffectedSourceTriangles:second.length,
-  aabbOverlappingNonadjacentPairs:pairsBroadphase,
+  aabbOverlappingNonadjacentPairs:pairsBroadphase,\n  totalBroadphaseCandidatesVisited:examinedCandidatePairs,
   exactNoncoplanarTrianglePairsTested:pairsNarrowphase,
   observedSourceTriangleIntersections:intersections,
   pairTestBudget:maxPairs,budgetExhausted:exhausted,
@@ -79,6 +79,17 @@ function contacts(positions,first,second,maxPairs=150000){
   observedContactAtSample:intersections>0,
   exhaustiveWholeBodyCollisionFreeProof:false
  };
+}
+export function inspectAIGReal3DLocalSourceTriangleContact({
+ positions,firstTriangles,secondTriangles,maxPairs=150000
+}={}){
+ if(!(positions instanceof Float32Array)||positions.length%3!==0||
+  !Array.isArray(firstTriangles)||!Array.isArray(secondTriangles)||
+  !Number.isInteger(maxPairs)||maxPairs<1||maxPairs>200000||
+  [...firstTriangles,...secondTriangles].some(t=>!Array.isArray(t)||t.length!==3||
+   t.some(i=>!Number.isInteger(i)||i<0||i>=positions.length/3)))
+  fail('TRIANGLE_CONTACT_INPUT_INVALID');
+ return contacts(positions,firstTriangles,secondTriangles,maxPairs);
 }
 function deformation(original,posed,indices){
  let maxStretch=0,maxCompress=0,flipped=0,collapsed=0,changed=0;
