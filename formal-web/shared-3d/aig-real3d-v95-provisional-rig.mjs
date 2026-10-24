@@ -171,6 +171,7 @@ export function buildAIGReal3DProvisionalBody({
   keyframes,wrapMode
  });
  return {schema:AIG_REAL3D_V95_BODY_SCHEMA,scene,rig,mesh,
+  sourceRigManifest:manifest,originalRigKeyframes:keyframes,
   originalSourceImageSha256:sourceImageSha256,
   approvedHeroineReferenceSha256:approvedIdentitySha256,
   authorityImageIsExactlySameBytes:evidenceLocked,
