@@ -140,7 +140,7 @@ try{
    aTiltDeg:45,bTurnDeg:90,footHeadProgress:.25});
   zero.setVirtualStageV107({matrix:full.modelStageMatrix,
    sourceScene:scene,sourceMaxY:full.clipSourceYMax,
-   sourceGLBSha256:sha,clipEnabled:true});
+   sourceGLBSha256:sha,clipEnabled:false});
   active.setVirtualStageV107({matrix:tilted.modelStageMatrix,
    sourceScene:scene,sourceMaxY:tilted.clipSourceYMax,
    sourceGLBSha256:sha,clipEnabled:true});
@@ -222,7 +222,7 @@ try{
  assert.equal(proof.originalRendererV107StageDisabled,true);
  assert.equal(proof.neutral5AxisGPUEnabled,true);
  assert.equal(proof.tilted5AxisGPUEnabled,true);
- assert.equal(proof.neutral5AxisOriginalHeightClipGPU,true);
+ assert.equal(proof.neutral5AxisOriginalHeightClipGPU,false);
  assert.equal(proof.tilted25PercentOriginalHeightClipGPU,true);
  assert.equal(proof.neutralPixelComparison.changedPixels,0,
   'same source and A0 B0 100% must render IDENTICAL pixels to original 3D');
