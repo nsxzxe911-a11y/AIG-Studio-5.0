@@ -84,6 +84,7 @@ class V100NativeModelContract(unittest.TestCase):
                 "--model-dir", str(self.model),
                 "--weights-sha", v100.sha256(self.model / "model.ckpt"),
                 "--upstream-dir", str(self.upstream),
+                "--run-py-sha", v100.sha256(self.upstream / "run.py"),
                 "--output-dir", str(self.root / "result"), *extra]
 
     def test_cube_valid_glb_source_metadata_not_neural_inference(self):
