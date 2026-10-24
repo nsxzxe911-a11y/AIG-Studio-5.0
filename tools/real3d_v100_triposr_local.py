@@ -133,7 +133,7 @@ def preflight(args: argparse.Namespace) -> dict:
         raise InferenceBlocked("ORIGINAL_IMAGE_SHA_MISMATCH")
     if model_hash != sha_literal(args.weights_sha):
         raise InferenceBlocked("TRAINED_WEIGHT_FILE_SHA_MISMATCH")
-    if args.run_py_sha and source_hash != sha_literal(args.run_py_sha):
+    if source_hash != sha_literal(args.run_py_sha):
         raise InferenceBlocked("UPSTREAM_RUNNER_CODE_SHA_MISMATCH")
     if args.device not in {"cpu", "cuda:0"} or not 64 <= args.mc_resolution <= 512:
         raise InferenceBlocked("GPU_DEVICE_OR_MODEL_RESOLUTION_INVALID")
@@ -142,7 +142,7 @@ def preflight(args: argparse.Namespace) -> dict:
         "actualTrainedWeightsSHA256": model_hash,
         "modelConfigSHA256": config_hash,
         "upstreamRunnerSHA256": source_hash,
-        "pretrainedTripoSRRuntimeInstalled": True,
+        "upstreamRunnerSourcePresent": True,\n        "trainedWeightFormatAndArchitectureVerified": False,
         "modelFileBytesActuallyVerified": True,
         "upstreamModelSource": "VAST-AI-Research/TripoSR (MIT, user-installed local)",
         "inferenceActuallyExecuted": False,
@@ -162,7 +162,7 @@ def main() -> int:
     parser.add_argument("--model-dir", required=True, type=Path)
     parser.add_argument("--weights-sha", required=True)
     parser.add_argument("--upstream-dir", required=True, type=Path)
-    parser.add_argument("--run-py-sha", default=None)
+    parser.add_argument("--run-py-sha", required=True)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--device", choices=("cuda:0", "cpu"), default="cuda:0")
     parser.add_argument("--mc-resolution", type=int, default=256)
