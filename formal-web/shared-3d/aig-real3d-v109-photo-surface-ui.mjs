@@ -1,3 +1,5 @@
+import {trainAIGReal3DV118LocalNeural}
+ from './aig-real3d-v118-local-neural.mjs';
 import {planAIGReal3DV117PhotoReconstruction,
  verifyAIGReal3DV117RealGPUInspection}
  from './aig-real3d-v117-evidence-orchestrator.mjs';
@@ -92,14 +94,32 @@ async function createV110AlphaWorkingCopy(photo,originalImageSha){
  const externalMaskSha256=external?
   await sha256AIGReal3DBytes(external.bytes):null;
  const seeded=$('v111-enable').checked;
+ const neural=$('v118-enable').checked;
+ if(neural&&(seeded||external))
+  throw Error('V118_NEURAL_TRAINING_CONFLICTS_WITH_V111_MODE_OR_EXTERNAL_MASK');
  if(seeded&&external)throw Error('V111_SEEDS_AND_EXTERNAL_MASK_ARE_MUTUALLY_EXCLUSIVE');
+ const neuralResult=neural?await trainAIGReal3DV118LocalNeural({
+  rgba:photo.rgba,width:photo.width,height:photo.height,
+  sourcePhotoSha256:originalImageSha,
+  foregroundSeeds:v111Seeds.foreground,
+  backgroundSeeds:v111Seeds.background
+ }):null;
  const segmentation=seeded?segmentAIGReal3DV111FromUserSeeds({
   rgba:photo.rgba,width:photo.width,height:photo.height,
   imageSha256:originalImageSha,
   foregroundSeeds:v111Seeds.foreground,
   backgroundSeeds:v111Seeds.background
  }):null;
- const result=seeded?{
+ const result=neural?{
+  schema:neuralResult.schema,
+  maskedRGBA:neuralResult.workingRGBA,
+  sourceMode:'V118_LOCALLY_TRAINED_NEURAL_PIXEL_INFERENCE',
+  foreground:neuralResult.foregroundPixels,
+  foregroundFraction:neuralResult.foregroundFraction,
+  maxBorderRGBDistance:null,
+  fractionAmbiguousSourceBoundary:neuralResult.boundaryUncertainFraction,
+  originalImageColorPixelsPreserved:neuralResult.allOriginalPhotoRGBBytesPreserved
+ }:seeded?{
   ...segmentation,
   maskedRGBA:segmentation.originalWorkingRGBA,
   sourceMode:segmentation.segmentationMode,
@@ -139,7 +159,14 @@ async function createV110AlphaWorkingCopy(photo,originalImageSha){
   originalImageColorPixelsPreserved:result.originalImageColorPixelsPreserved,
   maskedPNGImageEncodedFromSourcePixelColors:true,
   PNGTransparentRGBColorCanonicalizationPossible:true,
-  actualNeuralForegroundSegmentationRun:false,
+  actualNeuralForegroundSegmentationRun:neural,
+  v118ModelWeightsSha256:neural?neuralResult.modelWeightsSha256:null,
+  v118ActualLocalTrainingSamples:neural?neuralResult.trainingExamples:null,
+  v118TrainingIterations:neural?neuralResult.trainingIterations:null,
+  v118TrainingLossFinal:neural?neuralResult.trainingLossFinal:null,
+  v118PretrainedHumanSemanticModelLoaded:false,
+  v118NeuralInferencePerformedOnOriginalPixels:neural,
+  v118SourceLabelsProvidedByUser:neural,
   originalSourceCannotBeClaimedAsFull3D:true,
   v111UserSeededSegmentation:seeded,
   foregroundSeedCount:seeded?v111Seeds.foreground.length:null,
@@ -148,6 +175,21 @@ async function createV110AlphaWorkingCopy(photo,originalImageSha){
   outputRequiresV109ActualGLBAndGPU:true,
   releasePASS:false};
  $('v110-mask-report').textContent=JSON.stringify(evidence,null,2);
+ if(neural){
+  $('v118-report').textContent=JSON.stringify({
+   sourcePhotoSha256:originalImageSha,
+   alphaWorkingImageSha256:maskedImageSha256,
+   weightsSha256:neuralResult.modelWeightsSha256,
+   actualNeuralInferenceExecuted:true,
+   trainingSamples:neuralResult.trainingExamples,
+   trainLossStart:neuralResult.trainingLossFirst,
+   trainLossFinal:neuralResult.trainingLossFinal,
+   foregroundPixels:neuralResult.foregroundPixels,
+   sourceConfidence:'USER_PIXEL_LABELS_ONLY',
+   semanticHumanSegmentationCertified:false,
+   naturalHuman1to1Certified:false,releasePASS:false
+  },null,2);
+ }
  return {maskedPNGBytes,maskedImageSha256,rgba:result.maskedRGBA,evidence};
 }
 $('v110-preview').addEventListener('click',async()=>{
@@ -156,7 +198,7 @@ $('v110-preview').addEventListener('click',async()=>{
   const f=$('photo').files?.[0],photo=await pngFromFile(f),
    sha=await sha256AIGReal3DBytes(photo.bytes);
   const result=await createV110AlphaWorkingCopy(photo,sha);
-  status('V110 前景預覽完成：'+result.evidence.sourceMode+
+  status('前景模型／來源預覽完成：'+result.evidence.sourceMode+
    '。請核對遮罩輪廓；此處未生成深度或背面。');
  }catch(e){
   status('BLOCK：'+String(e?.message??e));
