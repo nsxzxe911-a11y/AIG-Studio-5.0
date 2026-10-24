@@ -38,7 +38,7 @@ export function createAIGReal3DUnifiedAssetPipeline({
   usableForDomains:['PERSON','ANIMAL','SHIP','ENVIRONMENT','CNC_PART'],
   importedActualAIImageWeights:false,
   trainedMultiviewReconstructionModelActuallyCalled:false,
-  2DImagePixelsGeneratedByAIGEngine:false,
+  image2DPixelsGeneratedByAIGEngine:false,
   originalIdentityFaceStillLocked:true,
   sourceMeshesModified:false,
   runtimeReal3DGeometryAvailable:true,
