@@ -6,6 +6,8 @@ import {planAIGReal3DNative4K,captureAIGReal3DNative4K}
  from './aig-real3d-v96-native-4k-pipeline.mjs';
 import {createAIG3DRenderer}
  from './aig-real3d-webgl.mjs';
+import {createAIGReal3DMetric4KWorkingScene,createAIGReal3DMetric4KCamera}
+ from './aig-real3d-v105-metric-4k-adapter.mjs';
 import {auditAIGReal3DHDR10Source}
  from './aig-real3d-v103-hdr10-evidence.mjs';
 import {remodelAIGReal3DGeometryBackend}
@@ -130,9 +132,11 @@ function inspect(){
   imported,camera
  });
  const active=activeScene();
+ const metric4K=createAIGReal3DMetric4KWorkingScene(active),
+  metricCamera=createAIGReal3DMetric4KCamera(camera,{sceneUnits:active.units});
  const active4K=auditAIGReal3D4KSourceProjection({
-  scene:active,sourceSha256:imported.originalImageSha256,
-  camera,width:3840,height:2160});
+  scene:metric4K.scene,sourceSha256:imported.originalImageSha256,
+  camera:metricCamera,width:3840,height:2160});
  const plan=planAIGReal3DNative4K({
   gpuLimit:renderer.getGpuLimit(),sourceTriangles:imported.sourceTriangles
  });
@@ -145,6 +149,8 @@ function inspect(){
   V101ShowingRepairedWorkingCopy:showRepaired,
   V101ActiveTriangleCount:active.nodes.reduce((s,n)=>s+n.mesh.triangleCount,0),
   V101ActiveSourceDetail4K:active4K,
+  V105Metric4KSourceScale:metric4K.scaleApplied,
+  V105OriginalCNCMMSourceNotRewritten:true,
   V101OriginalSourceNeverChanged:true,
   missingGeometryNeverAutomaticallyFabricated:true,
   sourceSHAAndModelBytesVerified:true,
@@ -245,12 +251,15 @@ $('png4k').addEventListener('click',async()=>{
    sourceRevision:v102SourceEpoch,
    outputWidth:3840,outputHeight:2160,yaw,pitch
   });
-  renderer.setCamera(nativeArtworkFrame.camera);
+  const metric4K=createAIGReal3DMetric4KWorkingScene(activeScene()),
+   metricCamera=createAIGReal3DMetric4KCamera(nativeArtworkFrame.camera,{
+    sceneUnits:activeScene().units});
+  renderer.setCamera(metricCamera);
   const out=await captureAIGReal3DNative4K({
-   renderer,scene:activeScene(),
+   renderer,scene:metric4K.scene,
    sourceSha256:imported.originalImageSha256,
    output:'UHD_4K',workingMemoryMB:256,
-   camera:nativeArtworkFrame.camera,requireSourceDetailPASS:false});
+   camera:metricCamera,requireSourceDetailPASS:false});
   if(fileURL)URL.revokeObjectURL(fileURL);
   fileURL=URL.createObjectURL(out.pngBlob);
   const a=document.createElement('a');a.href=fileURL;
