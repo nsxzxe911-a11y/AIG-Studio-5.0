@@ -26,7 +26,7 @@ try{
   const original=JSON.stringify(check.mesh.positions)+JSON.stringify(check.mesh.indices);
   const c=document.createElement('canvas');c.width=640;c.height=640;
   const renderer=GPU.createAIG3DRenderer(c,{quality:'balanced',pixelRatio:1,
-   maxTriangles:18000,background:[.02,.035,.06,1]});
+   maxTriangles:200000,background:[.02,.035,.06,1]});
   if(renderer.status!=='READY')throw Error('V92_REAL_SOURCE_GPU_REQUIRED');
   renderer.setInspectionMode('LIT');
   renderer.setCamera({projection:'orthographic',yaw:.35,pitch:.18,
