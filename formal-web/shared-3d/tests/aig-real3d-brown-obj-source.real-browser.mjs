@@ -99,7 +99,7 @@ try{
  },null,{timeout:210000});
  const status=await page.locator('#status').textContent();
  assert.equal(await page.locator('#status').getAttribute('data-ready'),'false',status);
- assert.match(status,/BLOCK：合成非人體 QA 模型/);
+ assert.match(status,/BLOCK：下半身只有單一 3D 連續截面/);
  assert.match(await page.locator('#shape-envelope-stats').textContent(),
   /非人體合成橢球/);
  assert.match(await page.locator('#shape-envelope-metrics').textContent(),/最大寬度 83[89] mm/);
@@ -114,6 +114,14 @@ try{
  assert.equal(proof.sourceShapeEnvelope.fixtureExplicitlySyntheticNonhuman,true);
  assert.equal(proof.sourceShapeEnvelope.noAutonomousBodyResizing,true);
  assert.equal(proof.sourceShapeEnvelope.releasePASS,false);
+ assert.equal(proof.source3DSections.schema,'AIG_REAL3D_NATIVE_3D_TRIANGLE_CROSS_SECTIONS_V1');
+ assert.equal(proof.source3DSections.oneClosedLowerMassFlag,true);
+ assert.equal(proof.source3DSections.distinctSideBySideLowerLegSectionsObserved,false);
+ assert.equal(proof.source3DSections.sections.length,4);
+ assert.equal(proof.source3DSections.sections[0].significantClosedLoops,1);
+ assert.equal(proof.source3DSections.releasePASS,false);
+ assert.equal(await page.locator('#source-3d-slice-table tbody tr').count(),4);
+ assert.match(await page.locator('#source-3d-slice-stats').textContent(),/只有一個連續閉合截面/);
  assert.equal(proof.sourceReview.model.sha256,hash);
  assert.equal(proof.sourceReview.computedEvidence.nativeMeshGeometryGatePASS,true);
  assert.equal(proof.sourceReview.computedEvidence.fourRealGpuOrthographicAnglesCaptured,true);
@@ -347,6 +355,7 @@ try{
   twoIndependentOBJFilesImmutableRepairDiffAndFourTrueGPUPairs:true,
   identicalSourceHashRejected:true,
   syntheticEllipsoid84cmFrontWidthExplicitlyFlaggedAsNonhuman:true,
+  oneContinuousSolidLower3DSectionDetectedFromActualSourceTriangles:true,
   topologyRepairDidNotChangeFatFrontWidth:true,
   referencePictureWasSyntheticNotHuman:true,
   automaticHumanAppearanceApproval:false,
