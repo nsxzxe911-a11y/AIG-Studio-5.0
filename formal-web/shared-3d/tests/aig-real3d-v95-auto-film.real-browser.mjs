@@ -47,7 +47,9 @@ try{
  assert.ok(panel.actualIndexed3DTriangles>2000);
  assert.equal(panel.actualJointCount,6);
  await page.locator('#side').click();
- await page.locator('#frame').fill('70');
+ await page.locator('#frame').evaluate(el=>{
+  el.value='70';el.dispatchEvent(new Event('input',{bubbles:true}));
+ });
  const progress=JSON.parse(await page.locator('#evidence').textContent());
  assert.ok(progress.currentMotionSeconds>=.6);
  await page.locator('#plan').click();
