@@ -1,0 +1,59 @@
+name: Real3D V106 Original Photo Alpha -> Two-Anchor Calibrated CNC CAD -> V105 GPU Gate
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v106-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v106-*'
+      - 'formal-web/shared-3d/aig-real3d-v99-native-source-lab.html'
+      - 'docs/REAL3D-V106-*'
+      - '.github/workflows/aig-real3d-v106-source-photo-alpha-cad-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: real3d-v106-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  real-photo-alpha-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: V106 real pixels, self-attested mm anchors and opaque/hole/block source tests
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-v106-photo-cad-contour.mjs
+          node --check formal-web/shared-3d/aig-real3d-v106-photo-cad-ui.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-v106-photo-cad.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v106-photo-cad-contour.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v105-cad-silhouette-registration.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v104-cad-top-first.test.mjs
+  native-chromium-photo-to-geometry:
+    needs: real-photo-alpha-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install native Chromium for true WebGL
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: V106 true original PNG hash and contour, two measured points, V105 actual source 3D GPU
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v106-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v99-native-source-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v106-photo-cad.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V106-Actual-Photo-Alpha-CAD-WorkingCopy-GPU-Proof
+          path: artifacts/aig-real3d-v106-alpha/
+          if-no-files-found: warn
