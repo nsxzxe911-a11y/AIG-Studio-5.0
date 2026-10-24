@@ -96,7 +96,8 @@ export function extractAIGReal3DV110Foreground({
    if(a>=250)opaque++;
   }
   if(transparent>0){
-   if(opaque+transparent!==n)fail('PARTIAL_ALPHA_REQUIRES_EXISTING_SOURCE_MANUAL_REVIEW');
+   // Original transparent PNG can contain measured antialiased edge alpha.
+   // Preserve its original alpha channel exactly; do not quantize hair edges.
    for(let i=0;i<n;i++)mask[i]=source[i*4+3]>16?1:0;
    mode='ORIGINAL_ALPHA_ALREADY_SEGMENTED';
   }else{
@@ -139,7 +140,8 @@ export function extractAIGReal3DV110Foreground({
   }
  }
  const quality=checkMask(mask,width,height);
- const output=makeRGBAMatte(source,mask);
+ const output=mode==='ORIGINAL_ALPHA_ALREADY_SEGMENTED'?
+  new Uint8ClampedArray(source):makeRGBAMatte(source,mask);
  return {
   schema:AIG_REAL3D_V110_SCHEMA,width,height,imageSha256,
   sourceMode:mode,backgroundMedianRGB:bgColor,
