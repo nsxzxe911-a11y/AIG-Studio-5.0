@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Real3D V94｜高精度原始 3D 結構審核工作區</title>
+<style>
+:root{color-scheme:dark;font:15px/1.6 system-ui,'Microsoft JhengHei',sans-serif;background:#020407;color:#e0f5ff}
+*{box-sizing:border-box}body{margin:0;padding:14px;background:#020407}
+main{max-width:1300px;margin:auto}h1{font-size:23px;margin:3px 0 9px}
+p{color:#afc5db}h2{font-size:17px;margin:8px 0}
+section{border:1px solid #285478;border-radius:14px;background:#07111b;padding:13px;margin:12px 0}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+button,input,select{min-height:44px;padding:8px 12px;background:#0b2941;color:#edfaff;border:1px solid #3c94c6;border-radius:8px;font:inherit}
+button{background:linear-gradient(100deg,#0a557b,#32357c,#653e74);cursor:pointer}
+button:disabled{opacity:.45;cursor:default}
+input[type=file]{max-width:310px}
+label{color:#b9eaff}
+.layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:12px}
+@media(max-width:800px){.layout{grid-template-columns:1fr}}
+canvas{width:100%;height:auto;max-height:65vh;background:#020407;display:block;border:1px solid #224d73;border-radius:10px}
+#status{border:1px solid #7e6642;color:#ffe1ab;padding:9px;border-radius:9px}
+#parts{display:grid;gap:7px}
+.part{border:1px solid #2a4d6a;padding:7px;border-radius:9px}
+pre{font:12px/1.55 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto}
+a{color:#90deff}
+</style></head><body><main>
+<h1>Real3D V94｜原始 3D 精準立體結構審核</h1>
+<p>先查幾何、厚度、曲率、零件與真實來源，再做材質和電影渲染。不新增假背面、不用平滑填補假模型，也不把 RGB 光效當作 3D 精度。</p>
+<section><div class="row">
+<label>原始模型 OBJ <input id="obj" type="file" accept=".obj,text/plain"></label>
+<label>原始尺度<select id="units"><option value="METERS">米（m）</option><option value="MM">毫米（mm）</option></select></label>
+<label>量測證據 JSON <input id="measure" type="file" accept=".json,application/json"></label>
+<button id="run">讀取原始模型／執行 V94 Gate</button>
+<button id="download">下載原始幾何審核 JSON</button>
+</div><p>不會將 OBJ 上傳伺服器；本機讀取檔案並計算 SHA-256。量測 JSON 必須以來源頂點 ID、真實單位及證據 SHA 描述；沒有獨立量測就維持 1:1 BLOCK。OBJ 沒提供背面的部分不會自動補造。</p>
+<div id="status" role="status">尚未載入來源模型；所有正式來源精度維持 BLOCK。</div></section>
+<div class="layout">
+<section><h2>原始 indexed XYZ 四視角</h2>
+<canvas id="viewport" width="960" height="640" aria-label="原始 3D 模型真實 WebGL 三角面視窗"></canvas>
+<div class="row">
+<button id="front">正面</button><button id="side">側面</button>
+<button id="back">背面</button><button id="oblique">斜視</button>
+<button id="gpu">真 GPU 原始 PNG</button></div>
+<p>所有角度皆呈現同一個真 3D 原始來源。當來源小於 2,000 真三角面時，PNG 的電影 GPU Gate 直接 BLOCK，而不是放寬驗證。</p>
+</section>
+<section><h2>原始部件 ID／閉合需求</h2><div id="parts"></div>
+<h2>量測與品質證據</h2><pre id="evidence">未載入原始來源。</pre>
+</section></div></main>
+<script type="module" src="./aig-real3d-v94-precision-review.mjs"></script></body></html>
