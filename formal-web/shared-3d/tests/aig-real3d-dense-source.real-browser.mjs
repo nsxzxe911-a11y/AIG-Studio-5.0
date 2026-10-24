@@ -511,11 +511,46 @@ try{
    });
    const changed=await one.captureNativePNG(live,{width:640,height:480});
    const reference=await two.captureNativePNG(next,{width:640,height:480});
+   const normalLib=await import('./aig-real3d-sparse-source-normals.mjs');
+   const originalXYZ=new Float32Array(original),
+    posedXYZ=new Float32Array(moved),sourceIndices=new Uint32Array(indices);
+   const normalCache=normalLib.createAIGReal3DSparseNormalCache({
+    original:originalXYZ,indices:sourceIndices
+   });
+   const normalScratch=new Float64Array(originalXYZ.length);
+   const movingIDs=[];
+   for(let row=19;row<27;row++)
+    for(let col=0;col<segments;col++)movingIDs.push(row*segments+col);
+   const incrementalNormals=normalLib.evaluateAIGReal3DSparseNormals({
+    cache:normalCache,posed:posedXYZ,changedGlobalVertexIds:movingIDs,
+    outputNormals:normalScratch
+   });
+   const fullNormals=normalLib.calculateAIGReal3DFullSourceNormals({
+    positions:posedXYZ,indices:sourceIndices
+   });
+   let maxNormalDifference=0;
+   for(let k=0;k<fullNormals.length;k++)
+    maxNormalDifference=Math.max(maxNormalDifference,
+     Math.abs(fullNormals[k]-normalScratch[k]));
+   const heapBefore=typeof performance.memory?.usedJSHeapSize==='number'?
+    performance.memory.usedJSHeapSize:null;
+   const completedFrames=[];
+   for(let i=0;i<12;i++)completedFrames.push(one.measureCompletedFrame(live));
+   const heapAfter=typeof performance.memory?.usedJSHeapSize==='number'?
+    performance.memory.usedJSHeapSize:null;
+
    return {
     baselineSha:baseline.sha256,deltaSha:changed.sha256,
     fullRebuildSha:reference.sha256,stats:update,
     exactGPUFrameMatch:changed.sha256===reference.sha256,
-    frameActuallyChanged:baseline.sha256!==changed.sha256
+    frameActuallyChanged:baseline.sha256!==changed.sha256,
+    normalParityMaxAbsoluteDifference:maxNormalDifference,
+    originalSourceTrianglesInNormalCache:normalCache.originalTriangleCount,
+    sparseNormalTriangleRecomputations:incrementalNormals.affectedSourceTriangles,
+    skippedNormalTriangles:incrementalNormals.skippedOriginalTriangleRecalculation,
+    gpuCompletedFrameSamples:completedFrames,
+    memoryHeapBytesBefore:heapBefore,memoryHeapBytesAfter:heapAfter,
+    completedGPUSampleNotInteractiveAnimationFPS:true
    };
   }finally{one.destroy();two.destroy();}
  });
