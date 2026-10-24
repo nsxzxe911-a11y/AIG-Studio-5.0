@@ -119,7 +119,7 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     naturalHumanSkinPASS:false,automaticRigPASS:false,releasePASS:false
    };
    evidence.textContent=JSON.stringify(report,null,2);download.disabled=false;
-   status.textContent='極速真三關節：每幀僅處理 '+timeline.sparseSourceTopology.activeWeightedGlobalVertexCount+
+   status.textContent='真三關節極速模式：每幀僅處理 '+timeline.sparseSourceTopology.activeWeightedGlobalVertexCount+
     '/'+timeline.sparseSourceTopology.inputSourceVertexCount+
     ' 頂點、'+timeline.sparseSourceTopology.indexedAffectedOriginalTriangles+
     '/'+timeline.sparseSourceTopology.inputOriginalSourceTriangles+
