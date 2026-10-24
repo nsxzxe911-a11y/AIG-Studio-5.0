@@ -93,6 +93,19 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 </figure>
 <pre id="weighted-motion-evidence">缺少來源原始網格及真實頂點權重，保持 BLOCK。</pre>
 </section>
+<section class="panel" id="dual-motion-timeline">
+<h2>原始 3D 雙手指動作序列｜三幀真 GPU／面片穿插量測</h2>
+<p>在同一份 OBJ 上使用兩組不同手指的獨立來源權重，計算 0%、50%、100% 三個真正三維姿勢；每一幀都檢查原始三角面應變、反轉與兩組受控區域間的非共面三角面相交。這是逐幀幾何研發，不是 60 FPS 真人骨架動畫；權重重疊、來源不符或運算上限不足時一律不給安全認證。</p>
+<div class="row">
+<label>第二手指來源權重 JSON <input id="dual-motion-second-weights" type="file" accept=".json,application/json"></label>
+<label>第二關節目標角度（-45° 至 +45°） <input id="dual-motion-angle-b" type="number" min="-45" max="45" step="1" value="-20"></label>
+<button id="dual-motion-run" disabled type="button">計算雙關節三維序列並擷取三幀真 GPU</button>
+<button id="dual-motion-download" disabled type="button">下載逐幀應變／穿插／SHA 報告</button>
+</div>
+<div class="status" id="dual-motion-status" role="status" aria-live="polite">BLOCK：尚未提供兩組來源綁定權重。</div>
+<div class="gallery" id="dual-motion-gallery" aria-label="真原始網格三幀姿勢 GPU 圖片"></div>
+<pre id="dual-motion-evidence">尚未執行真實三維序列。</pre>
+</section>
 <section class="panel" id="native-resolution-export">
 <h2>真 GPU 原生解析度｜1080p / 2K / 手機原生 / 4K</h2>
 <p>原本七視角的 1080×1920 仍是同尺度幾何驗收圖。下方可另外輸出一張真正的高解析度 PNG，不是放大小圖；高解析度只讓可見邊緣更清楚，不會增加原 OBJ／GLB 的三角形，也不會補出臉部或手指。</p>
