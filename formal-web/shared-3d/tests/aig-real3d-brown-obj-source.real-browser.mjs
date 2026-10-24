@@ -4,20 +4,20 @@ import {mkdir,readFile,writeFile,copyFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 const dir='artifacts/aig-real3d-brown-source-obj-review';
-function syntheticOBJ({hole=false}={}){
+function syntheticOBJ({hole=false,curvedHole=false}={}){
  const rings=42,segments=44,v=[],faces=[];
  for(let j=0;j<rings;j++){
   const t=j/(rings-1),r=Math.max(.008,Math.sin(Math.PI*t));
   for(let k=0;k<segments;k++){
    const a=2*Math.PI*k/segments;
-   v.push('v '+(.25*r*Math.cos(a)).toFixed(8)+' '+t.toFixed(8)+' '+(.15*r*Math.sin(a)).toFixed(8));
+   v.push('v '+(.25*r*Math.cos(a)).toFixed(8)+' '+t.toFixed(8)+' '+(.15*r*Math.sin(a)+(curvedHole && j===34 && k===5 ? 0.0012 : 0)).toFixed(8));
   }
  }
  for(let j=0;j<rings-1;j++)for(let k=0;k<segments;k++){
   const a=j*segments+k+1,b=j*segments+(k+1)%segments+1;
   const c=(j+1)*segments+k+1,d=(j+1)*segments+(k+1)%segments+1;
-  if(!(hole&&j===34&&k===4))faces.push('f '+a+' '+b+' '+d);
-  faces.push('f '+a+' '+d+' '+c);
+  if(!( (hole||curvedHole)&&j===34&&k===4))faces.push('f '+a+' '+b+' '+d);
+  if(!(curvedHole&&j===34&&k===4))faces.push('f '+a+' '+d+' '+c);
  }
  v.push('v 0 0 0','v 0 1 0');
  const up=rings*segments+1,down=up+1;
@@ -379,6 +379,65 @@ try{
   return !b?.disabled&&label.startsWith('BLOCK');
  },null,{timeout:30000});
  assert.match(await page.locator('#repair-compare-stats').textContent(),/SHA 完全相同/);
+ // Real NONPLANAR four-boundary-face opening: an actual second vertex has a
+ // shifted Z coordinate, proven different from a flat polygon fixture.
+ const curvedOBJ=syntheticOBJ({curvedHole:true});
+ const curvedSha=createHash('sha256').update(curvedOBJ).digest('hex');
+ await page.locator('#model-file').setInputFiles({
+  name:'SYNTHETIC_NONHUMAN_CURVED_QUAD_HOLE.obj',
+  mimeType:'text/plain',buffer:curvedOBJ
+ });
+ await page.locator('#inspect').click();
+ await page.waitForFunction(()=>{
+  const b=document.getElementById('inspect'),
+   s=document.getElementById('status')?.textContent||'';
+  return !b?.disabled&&(s.startsWith('BLOCK')||s.includes('完成 7 張'));
+ },null,{timeout:210000});
+ assert.equal(await page.locator('#make-curved-junction-copy').isDisabled(),false);
+ await page.locator('#make-curved-junction-copy').click();
+ await page.waitForFunction(()=>!document.getElementById('make-curved-junction-copy')?.disabled,
+  null,{timeout:30000});
+ const curvedStatus=await page.locator('#curved-junction-stats').textContent();
+ assert.match(curvedStatus,/已產生獨立非平面候選 OBJ/,curvedStatus);
+ const curvedReport=JSON.parse(await page.locator('#evidence').textContent());
+ const candidate=curvedReport.curvedJunctionWorkingCopy;
+ assert.equal(candidate.sourceSha256,curvedSha);
+ assert.equal(candidate.addedSourceVertices,1);
+ assert.equal(candidate.addedSourceTriangles,4);
+ assert.ok(candidate.boundaryNonplanarityMm>.01);
+ assert.equal(candidate.originalFacesAndVerticesNotChanged,true);
+ assert.equal(candidate.candidateSourceTopologyClosed,true);
+ assert.equal(candidate.realHumanShapePASS,false);
+ assert.equal(candidate.releasePASS,false);
+ const promiseCurved=page.waitForEvent('download',{timeout:20000});
+ await page.locator('#curved-junction-download').click();
+ const curvedFile=await promiseCurved,curvedBytes=await readFile(await curvedFile.path());
+ assert.ok(curvedBytes.toString().startsWith(curvedOBJ.toString()));
+ assert.equal(createHash('sha256').update(curvedBytes).digest('hex'),
+  candidate.workingCopySha256);
+ await copyFile(await curvedFile.path(),
+  dir+'/PR65-REAL-CURVED-JUNCTION-WORKING-COPY.obj');
+ await page.locator('#compare-source').click();
+ await page.waitForFunction(()=>{
+  const b=document.getElementById('compare-source'),
+   label=document.getElementById('repair-compare-stats')?.textContent||'';
+  return !b?.disabled&&
+   (label.startsWith('兩份來源 OBJ 已對照')||label.startsWith('BLOCK'));
+ },null,{timeout:210000});
+ assert.match(await page.locator('#repair-compare-stats').textContent(),
+  /兩份來源 OBJ 已對照/);
+ const curveDiff=JSON.parse(await page.locator('#evidence').textContent())
+  .beforeAfterComparison;
+ assert.equal(curveDiff.beforeSha256,curvedSha);
+ assert.equal(curveDiff.afterSha256,candidate.workingCopySha256);
+ assert.ok(curveDiff.globalBefore.openEdges>0);
+ assert.equal(curveDiff.globalAfter.openEdges,0);
+ assert.equal(curveDiff.fourPairedRealGPUViews.length,4);
+ assert.equal(curveDiff.verifiedAnatomicalRepair,false);
+ assert.equal(curveDiff.releasePASS,false);
+ await page.screenshot({path:dir+'/PR65-NONPLANAR-CURVED-4-VIEW-COMPARE.png',
+  fullPage:true});
+
 
  assert.deepEqual(errors,[]);
  await writeFile(dir+'/proof.json',JSON.stringify({
@@ -405,6 +464,9 @@ try{
   trueOriginalMeshTriangleMillimeterDetailAndFaceBendForFiveAreas:true,
   originalBrokenNeckJunctionDetectedByGeometryDetailGate:true,
   no3DGeometryDetailInventedBy4KDisplay:true,
+  actualFourEdgeNonplanarSourceHolePatchedInIndependentOBJ:true,
+  curvedRepairWorkingCopyRealDownloadAndSHAVerified:true,
+  curvedWorkingCopyFourViewGPUBeforeAfterTrue:true,
   referencePictureWasSyntheticNotHuman:true,
   automaticHumanAppearanceApproval:false,
   noSyntheticHumanReconstruction:true,
