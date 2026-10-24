@@ -100,7 +100,7 @@ export function buildAIGReal3DDenseOBJSource({
   id:'real3dDenseNativeLocal',consumer:'FastModel',units:'METERS',
   source:'UNAUTHENTICATED_LOCAL_RAW_OBJ_DENSE_SOURCE'
  });
- let countChunk=0,indices=[],positions=[],normals=[],lookup=new Map(),
+ let countChunk=0,indices=[],positions=[],normals=[],globalVertexIds=[],lookup=new Map(),
   emittedTriangles=0,emittedVertices=0,nonemptyChunks=0;
  const flush=()=>{
   if(!indices.length)return;
@@ -108,16 +108,19 @@ export function buildAIGReal3DDenseOBJSource({
    positions,normals,indices,
    provenance:'DENSE_ORIGINAL_SOURCE_SHA_'+sourceSha256
   });
-  addAIG3DNode(scene,{
+  const node=addAIG3DNode(scene,{
    id:'denseIndexedChunk'+String(countChunk+1),kind:'character',mesh,
    material:{baseColor:[.79,.66,.57,1],roughness:.87,metallic:0,
     doubleSided:true},
    source:'RAW_HIGH_DENSITY_OBJ_SOURCE_NOT_AUTHENTICATED_HUMAN'
   });
+  // Original global IDs only: required for reversible, independent posed copies.
+  // This array is metadata; it does not change GPU indices or triangles.
+  node.sourceGlobalVertexIds=Uint32Array.from(globalVertexIds);
   emittedTriangles+=indices.length/3;
   emittedVertices+=positions.length/3;
   nonemptyChunks++;countChunk++;
-  positions=[];normals=[];indices=[];lookup=new Map();
+  positions=[];normals=[];indices=[];globalVertexIds=[];lookup=new Map();
  };
  const sourceIndexChunks=[];
  for(let k=0;k<index.length;k+=3){
@@ -130,6 +133,7 @@ export function buildAIGReal3DDenseOBJSource({
    let localIndex=lookup.get(globalVertex);
    if(localIndex===undefined){
     localIndex=lookup.size;lookup.set(globalVertex,localIndex);
+    globalVertexIds.push(globalVertex);
     const at=globalVertex*3;
     positions.push(originalWorld[at],originalWorld[at+1],originalWorld[at+2]);
     normals.push(normalWorld[at],normalWorld[at+1],normalWorld[at+2]);
