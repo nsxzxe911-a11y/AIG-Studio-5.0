@@ -88,7 +88,9 @@ function focusCamera(){
   frame:v102Frame,previews:v102PreviewGate.snapshot(),
   originalArtworkPixelsUntouched:true,
   full4KOnlyOnExplicitExport:true,
-  actualAIModelRebuildingHandledByIndependentWorker:false,
+  V101GeometryRemodelDedicatedWorkerImplemented:true,
+  trainedNeuralAIInferenceInSeparateWorkerVerified:false,
+  actualV101WorkingCopyAlreadyAvailable:Boolean(v101?.workingScene),
   hiddenBackOrHumanIdentityCertified:false,releasePASS:false
  },null,2);
 }
