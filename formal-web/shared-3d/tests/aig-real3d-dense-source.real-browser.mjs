@@ -311,6 +311,70 @@ try{
  assert.equal(createHash('sha256').update(fkBytes).digest('hex'),
   fk.gpuFrames[2].sha256);
  await copyFile(await fkPNG.path(),dir+'/NONHUMAN-DENSE-FK-FINAL-GPU.png');
+ // Source-native triple FK on same explicit NONHUMAN high-density source.
+ assert.equal(await page.locator('#three-joint-run').isDisabled(),false);
+ await page.locator('#three-joint-run').click();
+ assert.match(await page.locator('#three-joint-status').textContent(),/BLOCK/);
+ assert.equal(await page.locator('#three-joint-download').isDisabled(),true);
+ const distalT=100/314,distalR=.14+.052*Math.sin(Math.PI*distalT);
+ const tripleWeights={
+  schema:'AIG_REAL3D_EXPLICIT_THREE_JOINT_WEIGHTS_V1',
+  sourceSha256:inputSha,sourceVertexCount:vertices,side:'left',finger:'Index',
+  joints:[
+   {joint:'Base',pivotSourceXYZ:[.14,0,0],axisWorld:[0,0,1],
+    vertexWeights:Array.from({length:12},(_,i)=>[140*360+i,1])},
+   {joint:'Middle',pivotSourceXYZ:[jointR,jointT,0],axisWorld:[0,1,0],
+    vertexWeights:Array.from({length:8},(_,i)=>[140*360+i,.8])},
+   {joint:'Distal',pivotSourceXYZ:[distalR,distalT,0],axisWorld:[1,0,0],
+    vertexWeights:Array.from({length:5},(_,i)=>[140*360+i,.7])}
+  ]
+ };
+ await page.locator('#three-joint-weights').setInputFiles({
+  name:'NONHUMAN_ORIGINAL_THREE_JOINT_WEIGHTS.json',
+  mimeType:'application/json',buffer:Buffer.from(JSON.stringify(tripleWeights))
+ });
+ await page.locator('#three-joint-run').click();
+ await page.waitForFunction(()=>{
+  const btn=document.getElementById('three-joint-run'),
+   msg=document.getElementById('three-joint-status')?.textContent||'';
+  return !btn?.disabled&&(msg.startsWith('真三關節')||msg.startsWith('BLOCK'));
+ },null,{timeout:240000});
+ const tripleStatus=await page.locator('#three-joint-status').textContent();
+ assert.match(tripleStatus,/真三關節/,tripleStatus);
+ const triple=JSON.parse(await page.locator('#three-joint-evidence').textContent());
+ assert.equal(triple.sourceSha256,inputSha);
+ assert.equal(triple.originalSourceVertices,vertices);
+ assert.equal(triple.originalSourceTriangles,triangles);
+ assert.deepEqual(triple.jointNames,['Base','Middle','Distal']);
+ assert.ok(triple.checkedFrameCount>=5);
+ assert.ok(triple.maxAngularStepDeg<=6);
+ assert.equal(triple.frames[0].movedOriginalVertices,0);
+ assert.equal(triple.frames[0].deformation.originalTriangleCountUnchanged,triangles);
+ assert.ok(triple.frames.at(-1).movedOriginalVertices>=3);
+ assert.notDeepEqual(triple.frames[0].worldJointPivots[2],
+  triple.frames.at(-1).worldJointPivots[2]);
+ assert.equal(triple.diagnostics.trueThreeJointParentChildInheritance,true);
+ assert.equal(triple.diagnostics.continuousCollisionFreePASS,false);
+ assert.equal(triple.diagnostics.naturalSkinDeformationPASS,false);
+ assert.equal(triple.releasePASS,false);
+ assert.equal(await page.locator('#three-joint-gallery img').count(),3);
+ assert.ok(triple.gpuFrames.every(x=>x.sourceTriangles===triangles&&
+  x.width===1080&&x.height===1920));
+ const tripleReportDownload=page.waitForEvent('download',{timeout:15000});
+ await page.locator('#three-joint-download').click();
+ const tripleReport=await tripleReportDownload;
+ const tripleJSON=JSON.parse(await readFile(await tripleReport.path()));
+ assert.equal(tripleJSON.sourceSha256,inputSha);
+ assert.equal(tripleJSON.releasePASS,false);
+ await copyFile(await tripleReport.path(),dir+'/NONHUMAN-DENSE-THREE-JOINT-SWEPT-RISK.json');
+ const triplePNGDownload=page.waitForEvent('download',{timeout:15000});
+ await page.locator('#three-joint-gallery figure').nth(2).locator('a').click();
+ const triplePNG=await triplePNGDownload,threeBytes=await readFile(await triplePNG.path());
+ assert.equal(threeBytes.readUInt32BE(16),1080);
+ assert.equal(threeBytes.readUInt32BE(20),1920);
+ assert.equal(createHash('sha256').update(threeBytes).digest('hex'),
+  triple.gpuFrames[2].sha256);
+ await copyFile(await triplePNG.path(),dir+'/NONHUMAN-DENSE-THREE-JOINT-FINAL-GPU.png');
  assert.deepEqual(errors,[]);
  await page.screenshot({path:dir+'/DENSE-SOURCE-ORIGINAL-GPU-INTAKE.png',fullPage:true});
  await writeFile(dir+'/proof.json',JSON.stringify({
@@ -321,7 +385,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_PARENT_CHILD_FK_SUBFRAME_THREE_GPU_FRAMES_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_THREE_JOINT_FK_SWEPT_RISK_THREE_GPU_FRAMES_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;
