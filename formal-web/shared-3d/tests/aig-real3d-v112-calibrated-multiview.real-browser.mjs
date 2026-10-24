@@ -119,5 +119,5 @@ try{
    maxRegistrationResidualMM:base.landmarkRegistrationMaxMM,
    wrongCalibrationBlocked:true,
    syntheticDepthFixtureNotRealScan:true,
-   1to1HumanModelNotCertified:true}));
+   human1to1ModelNotCertified:true}));
 }finally{await browser.close();}
