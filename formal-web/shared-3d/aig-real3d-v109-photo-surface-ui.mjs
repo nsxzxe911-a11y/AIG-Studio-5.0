@@ -290,6 +290,15 @@ async function runReal3DPhotoBuild({v117Plan=null}={}){
    v117Plan.dimensions[1]!==photo.height))
    throw Error('V117_PLANNED_SOURCE_CHANGED_BEFORE_GPU_EXECUTION');
   const v110=await createV110AlphaWorkingCopy(photo,originalImageSha);
+  if(v117Plan){
+   const expectedMode=v117Plan.selectedForegroundModule==='V111_USER_SEEDED_COMPLEX_BACKGROUND'?
+    'INTERACTIVE_COLOR_CONNECTED_NOT_NEURAL_AI':v117Plan.selectedForegroundModule;
+   if(v110.evidence.sourceMode!==expectedMode||
+    v117Plan.sourceCoverage.foregroundPixels!==v110.evidence.foregroundPixels||
+    (v117Plan.sourceCoverage.externalMaskSha256??null)!==
+      (v110.evidence.independentExternalMaskSha256??null))
+    throw Error('V117_SOURCE_MASK_CHANGED_AFTER_PLANNING');
+  }
   const imageSha=v110.maskedImageSha256;
   let depthValuesMM=null,depthSourceSha256=null;
   if(g){
@@ -308,6 +317,9 @@ async function runReal3DPhotoBuild({v117Plan=null}={}){
     depthValuesMM[i]=near+(depth.rgba[i*4]/255)*(far-near);
   }else if($('depth-confirm').checked)
    throw Error('NO_SEPARATE_DEPTH_PNG_IS_PRESENT');
+  if(v117Plan&&
+   (v117Plan.declaredIndependentDepthSha256??null)!==(depthSourceSha256??null))
+   throw Error('V117_DEPTH_SOURCE_CHANGED_AFTER_PLANNING');
   const generated=buildAIGReal3DV109PhotoSurfaceGLB({
    rgba:v110.rgba,width:photo.width,height:photo.height,
    originalPNGBytes:v110.maskedPNGBytes,imageSha256:imageSha,
