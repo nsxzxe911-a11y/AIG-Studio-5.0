@@ -152,6 +152,11 @@ test('FAST mode releases offscreen full XYZ pose arrays while preserving three G
  assert.deepEqual(full.displayFrameIndexes,fast.displayFrameIndexes);
  assert.equal(full.sparseSourceTopology.numberOfFullXYZFramesRetained,full.frameCount);
  assert.equal(fast.sparseSourceTopology.numberOfFullXYZFramesRetained,3);
+ assert.equal(fast.sparseSourceTopology.scratchPoseFloat32BuffersAllocated,2);
+ assert.equal(full.sparseSourceTopology.scratchPoseFloat32BuffersAllocated,0);
+ assert.ok(fast.sparseSourceTopology.offscreenScratchBuffersActuallyReused>=1);
+ assert.equal(fast.sparseSourceTopology.noSourcePositionsModifiedByBufferPool,true);
+
  assert.equal(fast.sparseSourceTopology.discardedIntermediateFullXYZFrames,
   fast.frameCount-3);
  for(let i=0;i<fast.frameCount;i++){
