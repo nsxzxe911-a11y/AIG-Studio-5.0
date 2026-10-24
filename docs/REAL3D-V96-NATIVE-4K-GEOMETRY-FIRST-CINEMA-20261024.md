@@ -17,6 +17,12 @@
 
 沿用 V95 本機一張肩部照片建模與六關節 WebGL 真動畫研究頁，新增 FULL_HD、UHD_2K、UHD_4K 原生輸出選擇。【檢查原始 3D 清晰度】提供正側背斜可見 source 邊、GPU 上限、記憶體估算與幾何面密度報告。【輸出真 GPU 4K PNG】讀真 WebGL GPU Frame Buffer，驗證圖片 SHA 及 3840 × 2160 native IHDR，允許低細節模型輸出證據但須顯示幾何不足與正式電影 BLOCK。原始輸入照片 SHA 與原女主角身份 Gate 保持不變。沒有得到認證的 ML 影像分析不可冒充 AI 真人逆向工程。
 
+## V96 實際電影 SDR 著色精度升級
+
+- 共用 WebGL fragment shader 改成優先 HIGH_FLOAT（GL_FRAGMENT_PRECISION_HIGH 支援時）並對不支援的 WebGL 裝置保留 MEDIUM_PRECISION fallback，改善大尺度場景、法線及 UV shader 計算的數值精度，沒有改變原始三角面。
+- 新增真正的 FILM_SDR / LEGACY 色彩渲染選擇。FILM_SDR 使用獨立可切換的 filmic highlight rolloff + gamma 輸出，前後皆使用同一 GPU 原始 Indexed XYZ Source。此項是 SDR LDR RGB 映射，**不是 HDR10、線性光照色彩管理全流程、物理 PBR 或 ray tracing**。
+- 獨立 Chromium GPU Gate 會比較同一真 3D 模型的 LEGACY / FILM_SDR PNG SHA 是否不同，並把 FILM_SDR 用在原生 4K GPU 輸出。驗證真 shader callback，而非假的 UI 開關。
+
 ## Source / 真 Chromium GPU 4K 自動測試
 
 - 原始像素 3840 × 2160、記憶體、GPU 尺寸上限不得偷偷降低解析度。
