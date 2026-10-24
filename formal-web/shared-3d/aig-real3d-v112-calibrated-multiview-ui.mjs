@@ -1,3 +1,5 @@
+import {auditAIGReal3DV113TwoViewOverlap}
+ from './aig-real3d-v113-overlap-seam.mjs';
 import {buildAIGReal3DV112CalibratedMultiViewGLB}
  from './aig-real3d-v112-calibrated-multiview.mjs';
 import {sha256AIGReal3DBytes,ingestAIGReal3DNativeGeneratedGLB}
@@ -17,8 +19,14 @@ async function readPhoto(file){
  try{
   if(bmp.width<16||bmp.height<16||bmp.width>512||bmp.height>512)
    throw Error('V112_CALIBRATED_SOURCE_RANGE_16_TO_512_PX');
+  const canvas=document.createElement('canvas');
+  canvas.width=bmp.width;canvas.height=bmp.height;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  if(!ctx)throw Error('V113_ORIGINAL_PHOTO_RGB_DECODE_CANVAS_REQUIRED');
+  ctx.drawImage(bmp,0,0);
+  const photoRGBA=ctx.getImageData(0,0,bmp.width,bmp.height).data;
   return {bytes,width:bmp.width,height:bmp.height,
-   sha:await sha256AIGReal3DBytes(bytes)};
+   photoRGBA,sha:await sha256AIGReal3DBytes(bytes)};
  }finally{bmp.close();}
 }
 async function readDepth(file,width,height){
@@ -35,6 +43,21 @@ async function readDepth(file,width,height){
  if(body.depthUnit!=='MM'||body.measuredWithDepthSensor!==true)
   throw Error('V112_REAL_DEPTH_SENSOR_DECLARATION_REQUIRED');
  return {depthValuesMM:new Float32Array(body.valuesMM),depthSha};
+}
+function drawV113Mismatch(source){
+ const canvas=$('v113-seam-mask');
+ const {width,height,firstViewMismatchMask}=source;
+ canvas.width=width;canvas.height=height;
+ const ctx=canvas.getContext('2d');
+ const data=ctx.createImageData(width,height);
+ for(let k=0;k<firstViewMismatchMask.length;k++){
+  const idx=k*4,bad=firstViewMismatchMask[k]===1;
+  data.data[idx]=bad?255:8;
+  data.data[idx+1]=bad?54:21;
+  data.data[idx+2]=bad?44:31;
+  data.data[idx+3]=255;
+ }
+ ctx.putImageData(data,0,0);
 }
 function draw(){
  if(!imported||!renderer)return;
@@ -79,6 +102,7 @@ $('v112-build').addEventListener('click',async()=>{
    throw Error('V112_TWO_INDEPENDENT_CAMERA_CALIBRATIONS_REQUIRED');
   const views=photo.map((p,i)=>({
    width:p.width,height:p.height,imagePNGBytes:p.bytes,
+   photoRGBA:p.photoRGBA,
    photoSha256:p.sha,depthValuesMM:depth[i].depthValuesMM,
    depthSha256:depth[i].depthSha,
    intrinsics:spec.views[i].intrinsics,
@@ -90,6 +114,15 @@ $('v112-build').addEventListener('click',async()=>{
    maxSurfaceEdgeMM:spec.maxSurfaceEdgeMM??35,
    maxCorrespondenceRmsMM:spec.maxCorrespondenceRmsMM??1});
   const modelSHA=await sha256AIGReal3DBytes(built.glbBytes);
+  const v113=auditAIGReal3DV113TwoViewOverlap({
+   views,sourceGLBSha256:modelSHA,
+   depthToleranceMM:Number($('v113-depth-mm').value),
+   maxColorSeamMean:Number($('v113-color-rms').value)
+  });
+  if(v113.researchGate!=='PASS_OBSERVED_SEAM_CONSISTENCY')
+   throw Error('V113_'+v113.geometryOverlapStatus+
+    '_RMS_'+v113.overlapRmsMM+'_P95_'+v113.overlapP95MM);
+  const {diagnostics:v113Diagnostics,...v113Summary}=v113;
   const result=await ingestAIGReal3DNativeGeneratedGLB({
    glbBytes:built.glbBytes,referenceImageBytes:photo[0].bytes,
    declaredImageSha256:photo[0].sha,declaredGLBSha256:modelSHA,
@@ -110,8 +143,10 @@ $('v112-build').addEventListener('click',async()=>{
    distance:extent*3.5,focus:audit.originalPivotWorld,
    fovDeg:48,orthoSpan:extent*1.1,near:.0001,far:2000});
   imported=result;original={sha:modelSHA,bytes:built.glbBytes};
+  drawV113Mismatch(v113Diagnostics);
   $('v112-a').value='0';$('v112-b').value='0';$('v112-slice').value='100';
-  report({...built.receipt,actualModelSourceSha256:modelSHA,
+  report({...built.receipt,v113OverlapSeamAndMaterial:v113Summary,
+   actualModelSourceSha256:modelSHA,
    originalFirstPhotoSha256:photo[0].sha,
    secondIndependentPhotoSha256:photo[1].sha,
    trueNativeImportedTriangles:result.sourceTriangles,
