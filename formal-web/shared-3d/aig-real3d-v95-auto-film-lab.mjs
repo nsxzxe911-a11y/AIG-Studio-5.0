@@ -3,16 +3,20 @@ import {runAIGReal3DLocalPortraitToRig,createAIGReal3DResourceScheduler,
  planAIGReal3DFilmSegments}
  from './aig-real3d-v95-ai-orchestrator.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
+import {planAIGReal3DNative4K,auditAIGReal3D4KSourceProjection,
+ captureAIGReal3DNative4K,AIG_REAL3D_V96_OUTPUTS}
+ from './aig-real3d-v96-native-4k-pipeline.mjs';
 const $=id=>document.getElementById(id);
 const canvas=$('model'),scheduler=createAIGReal3DResourceScheduler(),
  CANON_PREVIOUSLY_RECORDED_SHA='fbf47f32a844a80e1bb39cb23084527baaf1350427c20d2b49d21fdc453444d6';
 let renderer=null,out=null,frame=0,playing=false,raf=null,start=0,busy=false,
- cameraMode='oblique',reportURL=null,videoURL=null,photoURL=null,lastDrawMs=0;
+ cameraMode='oblique',reportURL=null,videoURL=null,photoURL=null,lastDrawMs=0,
+ highQualityURL=null,last4KReport=null;
 const cameraAngles={front:[0,.1],side:[Math.PI/2,.1],back:[Math.PI,.1],
  oblique:[.65,.23]};
 function status(t){$('status').textContent=t;}
 function setReady(ready){
- for(const k of ['play','front','side','back','oblique','png','webm','proof'])
+ for(const k of ['play','front','side','back','oblique','png','webm','proof','quality4k','capture4k'])
   $(k).disabled=!ready;
  $('pause').disabled=true;
 }
@@ -98,6 +102,8 @@ async function build(){
   });
   if(!out.true3DModelGenerated)throw Error('照片沒有足夠臉部色彩線索，自動候選 BLOCK');
   if(renderer)renderer.destroy();
+  last4KReport=null;
+  $('quality-report').textContent='尚未檢查 4K 原始幾何與 GPU。';
   renderer=createAIG3DRenderer(canvas,{pixelRatio:1,quality:'balanced',
    maxTriangles:200000,preserveDrawingBuffer:true,
    background:[.017,.034,.058,1]});
@@ -214,4 +220,82 @@ $('proof').addEventListener('click',()=>{
  reportURL=URL.createObjectURL(new Blob([text],{type:'application/json'}));
  const a=document.createElement('a');a.href=reportURL;
  a.download='V95-3D-SOURCE-AND-INFERENCE-EVIDENCE.json';a.click();
+});
+
+function qualityDiagnostics(){
+ if(!out||!renderer)throw Error('請先建立真 3D 候選模型');
+ const output=$('output').value;
+ const dimensions=AIG_REAL3D_V96_OUTPUTS[output];
+ if(!dimensions)throw Error('未授權的輸出解析度');
+ const camera=renderer.getCamera(),scene=out.candidate.rig.workingScene,
+  sourceSha256=out.vision.imageSha256;
+ const plan=planAIGReal3DNative4K({
+  output,gpuLimit:renderer.getGpuLimit(),
+  estimatedWorkingMemoryMB:256,
+  sourceTriangles:out.candidate.mesh.triangleCount
+ });
+ const geometry=auditAIGReal3D4KSourceProjection({
+  scene,sourceSha256,camera,width:dimensions.width,height:dimensions.height,
+  maxSourceEdgePx:20,maxOverLimitFraction:.08
+ });
+ last4KReport={schema:'AIG_REAL3D_V96_UI_NATIVE_4K_DIAGNOSTICS_V1',
+  inputPortraitSHA:sourceSha256,output,plan,
+  geometricDetail:geometry,
+  outputPixelsAreActual4KIfNativeCaptureSucceeds:false,
+  photoBasedAnatomical1to1PASS:false,
+  native4KMaterialPBRPASS:false,
+  4K60FPSMoviePASS:false,releasePASS:false};
+ $('quality-report').textContent=JSON.stringify(last4KReport,null,2);
+ return last4KReport;
+}
+$('quality4k').addEventListener('click',()=>{
+ if(!out||busy)return;
+ try{
+  stop();const r=qualityDiagnostics();
+  status('來源原生 '+r.plan.width+'×'+r.plan.height+
+   '｜GPU預算 '+(r.plan.hardwareBudgetPASS?'PASS':'BLOCK')+
+   '｜幾何4K清晰度 '+(r.geometricDetail.sourceDetailCandidatePASS?'候選PASS':'BLOCK')+
+   '｜人物自然度／電影級材質仍 BLOCK');
+ }catch(e){status('BLOCK：'+e.message);}
+});
+$('capture4k').addEventListener('click',async()=>{
+ if(!out||busy)return;
+ stop();busy=true;$('capture4k').disabled=true;
+ try{
+  const report=qualityDiagnostics();
+  if(!report.plan.hardwareBudgetPASS)throw Error('設備記憶體或真 GPU 渲染尺寸不足');
+  // Original 3D is still only a proxy; source-detail Gate is diagnostic
+  // so the user can inspect the real low-detail limit, not a fake upscale.
+  poseCamera();
+  const result=await captureAIGReal3DNative4K({
+   renderer,scene:out.candidate.rig.workingScene,
+   sourceSha256:out.vision.imageSha256,
+   output:$('output').value,workingMemoryMB:256,
+   camera:renderer.getCamera(),requireSourceDetailPASS:false
+  });
+  if(highQualityURL)URL.revokeObjectURL(highQualityURL);
+  highQualityURL=URL.createObjectURL(result.pngBlob);
+  const a=document.createElement('a');a.href=highQualityURL;
+  a.download='Real3D-V96-TRUE-'+result.width+'x'+result.height+
+   '-ESTIMATED-NOT-CINEMA.png';a.click();
+  last4KReport={...last4KReport,
+   outputPixelsAreActual4KIfNativeCaptureSucceeds:true,
+   actualNativeGPUWidth:result.width,actualNativeGPUHeight:result.height,
+   trueGPUReadPixels:result.trueGPUReadPixels,
+   outputSourceSHA:result.sourceSha256,
+   outputPngSHA:result.sha256,sourceDetailPASS:
+    result.sourceGeometryProjectionQA.sourceDetailCandidatePASS,
+   outputUpscaled:false,releasePASS:false};
+  $('quality-report').textContent=JSON.stringify(last4KReport,null,2);
+  status('真正 GPU '+result.width+'×'+result.height+' PNG 已生成，SHA '+
+   result.sha256.slice(0,16)+'…；來源幾何清晰度 '+(
+    last4KReport.sourceDetailPASS?'候選PASS':'BLOCK')+
+   '，女主角身份與高擬真材質仍 BLOCK');
+ }catch(e){status('BLOCK：'+String(e?.message??e));}
+ finally{busy=false;$('capture4k').disabled=!out;}
+});
+$('output').addEventListener('change',()=>{
+ if(out&&!busy){
+  try{qualityDiagnostics();}catch(e){status('BLOCK：'+e.message);}
+ }
 });
