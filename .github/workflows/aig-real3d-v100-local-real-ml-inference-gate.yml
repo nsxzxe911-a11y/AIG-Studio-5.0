@@ -1,0 +1,71 @@
+name: Real3D V100 Actual Local ML Inference and Model Gate
+on:
+  pull_request:
+    paths:
+      - 'tools/real3d_v100_*'
+      - 'tools/tests/test_real3d_v100_*'
+      - 'docs/REAL3D-V100-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v100-*'
+      - '.github/workflows/aig-real3d-v100-local-real-ml-inference-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: v100-local-ai-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline-source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: V100 genuine model source/weight SHA and glTF GLB structure Gate (NOT neural inference)
+        run: |
+          python -m py_compile tools/real3d_v100_triposr_local.py
+          python -m unittest discover -s tools/tests -p 'test_real3d_v100_*.py' -v
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: V99 actual source GLB import regression (NOT trained-ML output)
+        run: |
+          node --check tools/real3d_v100_native_handoff.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v99-native-model-ingest.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v100-handoff.test.mjs
+
+  actual-trained-model:
+    if: ${{ vars.AIG_V100_LOCAL_MODEL_READY == 'true' }}
+    needs: offline-source-contract
+    runs-on: [self-hosted, Linux, X64, AIG-GPU-3D]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: V100 execute REAL licensed on-device TripoSR weights and inspect actual generated GLB
+        env:
+          AIG_V100_MODEL_DIR: ${{ vars.AIG_V100_MODEL_DIR }}
+          AIG_V100_UPSTREAM_DIR: ${{ vars.AIG_V100_UPSTREAM_DIR }}
+          AIG_V100_TEST_IMAGE: ${{ vars.AIG_V100_TEST_IMAGE }}
+          AIG_V100_WEIGHTS_SHA: ${{ vars.AIG_V100_WEIGHTS_SHA }}
+          AIG_V100_IMAGE_SHA: ${{ vars.AIG_V100_IMAGE_SHA }}
+          AIG_V100_RUNPY_SHA: ${{ vars.AIG_V100_RUNPY_SHA }}
+        run: |
+          set -eu
+          mkdir -p artifacts/aig-real3d-v100/
+          python3 tools/real3d_v100_triposr_local.py \
+            --image "$AIG_V100_TEST_IMAGE" \
+            --image-sha "$AIG_V100_IMAGE_SHA" \
+            --model-dir "$AIG_V100_MODEL_DIR" \
+            --weights-sha "$AIG_V100_WEIGHTS_SHA" \
+            --upstream-dir "$AIG_V100_UPSTREAM_DIR" \
+            --run-py-sha "$AIG_V100_RUNPY_SHA" \
+            --device cuda:0 --mc-resolution 256 --no-remove-bg \
+            --output-dir artifacts/aig-real3d-v100/trained-local-inference
+          test -s artifacts/aig-real3d-v100/trained-local-inference/0/mesh.glb
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V100-Actual-Trained-Local-AI-3D-Inference
+          path: artifacts/aig-real3d-v100/
+          if-no-files-found: warn
