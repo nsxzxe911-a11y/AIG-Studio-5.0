@@ -357,6 +357,19 @@ try{
  assert.equal(triple.diagnostics.continuousCollisionFreePASS,false);
  assert.equal(triple.diagnostics.naturalSkinDeformationPASS,false);
  assert.equal(triple.releasePASS,false);
+ assert.equal(triple.sparseSourceTopology.schema,
+  'AIG_REAL3D_SPARSE_FK_SOURCE_TOPOLOGY_CACHE_V1');
+ assert.equal(triple.sparseSourceTopology.inputSourceVertexCount,vertices);
+ assert.equal(triple.sparseSourceTopology.inputOriginalSourceTriangles,triangles);
+ assert.equal(triple.sparseSourceTopology.activeWeightedGlobalVertexCount,12);
+ assert.ok(triple.sparseSourceTopology.indexedAffectedOriginalTriangles<triangles*.02);
+ assert.ok(triple.sparseSourceTopology.skippedUnweightedGlobalVerticesPerFrame>100000);
+ assert.equal(triple.sparseSourceTopology.numberOfFullXYZFramesRetained,3);
+ assert.equal(triple.sparseSourceTopology.discardedIntermediateFullXYZFrames,
+  triple.checkedFrameCount-3);
+ assert.ok(triple.frames.every(f=>
+  f.deformation.sourceTrianglesActuallyInspected===
+   triple.sparseSourceTopology.indexedAffectedOriginalTriangles));
  assert.equal(await page.locator('#three-joint-gallery img').count(),3);
  assert.ok(triple.gpuFrames.every(x=>x.sourceTriangles===triangles&&
   x.width===1080&&x.height===1920));
@@ -385,7 +398,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_THREE_JOINT_FK_SWEPT_RISK_THREE_GPU_FRAMES_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_FAST_SPARSE_FK_TRUE_GPU_AND_STRAIN_PARITY_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;
