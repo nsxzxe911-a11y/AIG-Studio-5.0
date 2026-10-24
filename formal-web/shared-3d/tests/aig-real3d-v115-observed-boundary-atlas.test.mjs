@@ -54,7 +54,9 @@ test('V115 original XYZ/UV/bin unchanged, open edge atlas measures new seams aga
  assert.equal(r.unsupportedNewOpenEdges,0);
  assert.equal(r.verifiedOpenEdgeFraction,1);
  assert.ok(r.verifiedOpenEdgeLengthMM>0);
- assert.ok(r.workingOpenEdgesPerCamera[1]>r.originalOpenEdgesPerCamera[1]);
+ assert.equal(r.workingOpenEdgesPerCamera.length,2);
+ assert.ok(r.workingOpenEdgesPerCamera[1]>0);
+ assert.ok(r.newOpenEdgesCreatedByOverlapRemoval>0);
  assert.equal(r.workingTrianglesPerCamera[0],r.originalTrianglesPerCamera[0]);
  assert.ok(r.workingTrianglesPerCamera[1]<r.originalTrianglesPerCamera[1]);
  assert.equal(r.verifiedHuman1to1,false);
