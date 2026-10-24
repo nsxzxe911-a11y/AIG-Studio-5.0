@@ -47,7 +47,7 @@ test('V110 rejects scenery, touching foreground, ambiguous flat image',()=>{
   /COMPLEX_OR_CROPPED_BACKGROUND_NEEDS_INDEPENDENT_MASK/);
  const blank=source({fg:[233,232,226]});
  assert.throws(()=>extractAIGReal3DV110Foreground(blank),
-  /MASK_COVERAGE_OUTSIDE_SAFE_RANGE/);
+  /UNTRUSTED_SOFT_EDGE_OR_LOW_CONTRAST|MASK_COVERAGE_OUTSIDE_SAFE_RANGE/);
 });
 test('V110 independent user-supplied mask can salvage complex original RGB only with distinct SHA and consent',()=>{
  const input=source(),reviewed=new Uint8ClampedArray(input.rgba.length);
