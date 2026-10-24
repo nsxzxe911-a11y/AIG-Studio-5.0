@@ -104,7 +104,7 @@ test('Fake source binding, coincident pivots, weights without parent inheritance
   /REAL3D_HIERARCHY_ORIGINAL_GLOBAL_SOURCE_JOINT_AND_MANIFEST_REQUIRED/);
  assert.throws(()=>run({manifest:{...manifest,
   child:{...manifest.child,pivotSourceXYZ:[0,0,0]}}}),
-  /REAL3D_HIERARCHY_PARENT_CHILD_PIVOTS_COINCIDENT/);
+  /REAL3D_HIERARCHY_JOINT_PIVOT_OFF_SOURCE_MESH/);
  assert.throws(()=>run({manifest:{...manifest,
   child:{...manifest.child,vertexWeights:[[0,.3],[2,.8],[6,.7]]}}}),
   /REAL3D_HIERARCHY_CHILD_WEIGHTS_WITHOUT_PARENT_INHERITANCE/);
