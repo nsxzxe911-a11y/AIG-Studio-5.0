@@ -1,0 +1,60 @@
+name: Real3D V105 CAD Top Source Silhouette IoU + Bounded XY Registration Gate
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v105-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v105-*'
+      - 'formal-web/shared-3d/aig-real3d-v99-native-source-lab.*'
+      - 'formal-web/shared-3d/aig-real3d-v104-cad-top-ui.mjs'
+      - 'docs/REAL3D-V105-*'
+      - '.github/workflows/aig-real3d-v105-observed-cad-silhouette-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: real3d-v105-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  source-cad-calibrated:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: True XY mm silhouette, IoU not bounding box, observation and source preservation
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-v105-cad-silhouette-registration.mjs
+          node --check formal-web/shared-3d/aig-real3d-v105-cad-registration-ui.mjs
+          node --check formal-web/shared-3d/aig-real3d-v99-native-source-lab.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-v105-cad-registration.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v105-cad-silhouette-registration.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v104-cad-top-first.test.mjs
+  actual-3d-webgl-registration:
+    needs: source-cad-calibrated
+    runs-on: ubuntu-latest
+    timeout-minutes: 21
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Actual native GLB and observed CAD top mismatch corrected in genuine GPU Working Copy
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v105-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v99-native-source-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v105-cad-registration.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V105-Actual-CAD-Source-Silhouette-IoU-GPU-Receipt
+          path: artifacts/aig-real3d-v105-register/
+          if-no-files-found: warn
