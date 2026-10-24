@@ -170,19 +170,46 @@ export async function ingestAIGReal3DNativeGeneratedGLB({
     accessor(primitive.attributes.NORMAL,'VEC3',[5126]);
    const original=createAIG3DMesh({positions,normals,indices,
     provenance:'V99_REAL_BINARY_GLB_'+actualGLBSHA});
-   const baseColor=gltf.materials?.[primitive.material]?.pbrMetallicRoughness
-    ?.baseColorFactor;
-   const mat=Array.isArray(baseColor)&&baseColor.length===4&&baseColor.every(finite)
-    ?baseColor:[.66,.74,.82,1];
+   // Preserve AI GLB authored material factors. Previously the loader
+   // overwrote metallic/roughness and fabricated a blue default palette,
+   // so even a valid source model could look different from its source.
+   const material=gltf.materials?.[primitive.material]??{},
+    pbr=material.pbrMetallicRoughness??{},
+    baseColor=pbr.baseColorFactor??[1,1,1,1],
+    sourceMetallic=pbr.metallicFactor??1,
+    sourceRoughness=pbr.roughnessFactor??1,
+    emissive=material.emissiveFactor??[0,0,0];
+   if(!Array.isArray(baseColor)||baseColor.length!==4||
+    !baseColor.every(x=>finite(x)&&x>=0&&x<=1)||
+    !finite(sourceMetallic)||sourceMetallic<0||sourceMetallic>1||
+    !finite(sourceRoughness)||sourceRoughness<0||sourceRoughness>1||
+    !Array.isArray(emissive)||emissive.length!==3||
+    !emissive.every(x=>finite(x)&&x>=0&&x<=1))
+    fail('ORIGINAL_GLTF_MATERIAL_FACTORS_INVALID');
+   // The current SDR diffuse/specular approximation has a lower bound
+   // 0.04 on roughness, unlike glTF which allows zero. Keep the exact
+   // original value in the source report; do not falsely call this PBR.
+   const rendererRoughness=Math.max(.04,sourceRoughness);
    const nodeId='sourceModel'+(perMesh.length+1);
    addAIG3DNode(scene,{id:nodeId,mesh:original,
     kind:domain==='PERSON'||domain==='ANIMAL'?'character':
      domain==='ENVIRONMENT'?'environment':'object',
     source:'V99_FULL_REAL_SOURCE_TRIANGLES_NOT_PROCEDURAL_PROXY',
-    material:{baseColor:mat,metallic:.16,roughness:.65,doubleSided:true}});
+    material:{baseColor,metallic:sourceMetallic,roughness:rendererRoughness,
+     emissive,doubleSided:material.doubleSided===true}});
    perMesh.push({nodeId,originalVertexCount:original.vertexCount,
     originalTriangleCount:original.triangleCount,
-    originalFaceIndicesRetained:true,materialMapValidation:false,
+    originalFaceIndicesRetained:true,
+    materialSourceFactors:{baseColor:[...baseColor],
+     metallic:sourceMetallic,roughness:sourceRoughness,emissive:[...emissive],
+     doubleSided:material.doubleSided===true},
+    rendererRoughnessClampedBelowPoint04:sourceRoughness<.04,
+    sourceTextureOrVertexColorsPresent:Boolean(
+     pbr.baseColorTexture||material.normalTexture||
+     primitive.attributes.TEXCOORD_0!==undefined||
+     primitive.attributes.COLOR_0!==undefined),
+    textureAndVertexColorFidelityValidated:false,
+    materialMapValidation:false,
     ...sourceMeshStats(original)});
   }
  }
