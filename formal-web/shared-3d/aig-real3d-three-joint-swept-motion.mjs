@@ -10,6 +10,8 @@ import {inspectAIGReal3DLocalSourceTriangleContact}
  from './aig-real3d-dual-channel-timeline.mjs';
 export const AIG_REAL3D_THREE_JOINT_SCHEMA=
  'AIG_REAL3D_EXPLICIT_THREE_JOINT_SOURCE_FK_SWEEP_V1';
+export const AIG_REAL3D_FAST_SPARSE_FK_SCHEMA=
+ 'AIG_REAL3D_SPARSE_FK_SOURCE_TOPOLOGY_CACHE_V1';
 export const AIG_REAL3D_THREE_JOINT_MANIFEST=
  'AIG_REAL3D_EXPLICIT_THREE_JOINT_WEIGHTS_V1';
 const fingerNames=['Thumb','Index','Middle','Ring','Pinky'];
@@ -101,7 +103,22 @@ function validate(dense,junction,m){
    weights[1][i]>weights[0][i]+1e-6)
    fail('DISTAL_WEIGHTS_WITHOUT_ANCESTOR_INHERITANCE');
  }
- return {e,g,m,pivots,axes,weights,snap};
+ // V2 FAST: build a source-indexed influence list and touching-face cache ONCE.
+ // This is derived from supplied weights, not geometric sculpting or inferred anatomy.
+ const affected=new Uint8Array(e.originalVertexCount),ids=[];
+ for(let i=0;i<e.originalVertexCount;i++){
+  if(weights[0][i]||weights[1][i]||weights[2][i]){
+   affected[i]=1;ids.push(i);
+  }
+ }
+ const offsets=[];
+ for(let k=0;k<g.indices.length;k+=3)
+  if(affected[g.indices[k]]||affected[g.indices[k+1]]||
+   affected[g.indices[k+2]])offsets.push(k);
+ const activeSourceIds=Uint32Array.from(ids);
+ const affectedTriangleOffsets=Uint32Array.from(offsets);
+ return {e,g,m,pivots,axes,weights,snap,activeSourceIds,
+  affectedTriangleOffsets,originalTriangleCount:g.indices.length/3};
 }
 function deform(prep,angleDegrees){
  const {g,pivots,axes,weights}=prep,angles=angleDegrees.map(x=>x*Math.PI/180);
@@ -113,7 +130,7 @@ function deform(prep,angleDegrees){
   middleAxis,angles[1]);
  const source=g.positions,positions=new Float32Array(source);
  let moved=0,maxMovement=0;
- for(let i=0;i<weights[0].length;i++){
+ for(const i of prep.activeSourceIds){
   const a=weights[0][i],b=weights[1][i],c=weights[2][i];
   if(a===0&&b===0&&c===0)continue;
   const original=pt(source,i);
@@ -125,12 +142,13 @@ function deform(prep,angleDegrees){
   maxMovement=Math.max(maxMovement,displacement*1000);
  }
  return {positions,moved,maxMovementMm:round(maxMovement),
+  activeOriginalVerticesEvaluated:prep.activeSourceIds.length,
   worldJointPivots:[pivots[0],middlePivot,distalPivot],
   worldJointAxes:[axes[0],middleAxis,distalAxis]};
 }
-function strain(a,b,idx){
+function strain(a,b,idx,affectedOffsets){
  let maxStretch=0,maxCompress=0,flipped=0,collapsed=0,dirtyTriangles=0;
- for(let k=0;k<idx.length;k+=3){
+ for(const k of affectedOffsets){
   const t=[idx[k],idx[k+1],idx[k+2]];
   const old=t.map(i=>pt(a,i)),now=t.map(i=>pt(b,i));
   if(old.every((p,i)=>p.every((x,j)=>x===now[i][j])))continue;
@@ -147,6 +165,8 @@ function strain(a,b,idx){
   if(dot(n,m)<-1e-12)flipped++;
  }
  return {changedSourceTriangles:dirtyTriangles,
+  sourceTrianglesActuallyInspected:affectedOffsets.length,
+  sourceTopologyIndexCachedOutsideTimeLoop:true,
   maxSourceEdgeStretchPercent:round(maxStretch),
   maxSourceEdgeCompressionPercent:round(maxCompress),
   invertedSourceTriangles:flipped,nearlyCollapsedSourceTriangles:collapsed,
@@ -219,11 +239,27 @@ export function createAIGReal3DThreeJointTimeline({
  if(steps>24)fail('SUBFRAME_MEMORY_BUDGET_EXCEEDED');
  const displays=[...new Set(Array.from({length:displayFrameCount},(_,i)=>
   Math.round(i*steps/(displayFrameCount-1))))],groups=triangleGroups(prep.g.indices,prep.weights);
+ const sparseStats={
+  schema:AIG_REAL3D_FAST_SPARSE_FK_SCHEMA,
+  inputSourceVertexCount:prep.e.originalVertexCount,
+  activeWeightedGlobalVertexCount:prep.activeSourceIds.length,
+  skippedUnweightedGlobalVerticesPerFrame:prep.e.originalVertexCount-prep.activeSourceIds.length,
+  inputOriginalSourceTriangles:prep.originalTriangleCount,
+  indexedAffectedOriginalTriangles:prep.affectedTriangleOffsets.length,
+  skippedUnaffectedOriginalTrianglesPerFrame:
+   prep.originalTriangleCount-prep.affectedTriangleOffsets.length,
+  globalIndexedGeometryUnmodified:true,
+  allAffectedFacesCollectedBeforeFrameEvaluation:true,
+  physicsCollisionGroupsPrebuiltOnce:true,
+  runtimeImageGPUChunksStillRebuiltPerCapture:true,
+  noBenchmarkedFPSAssertion:true
+ };
  const frames=[];let observedContact=false,unfinished=false,sweptRisk=false,
   unsafeStrain=false,inverted=false,maxStretch=0;
  for(let i=0;i<=steps;i++){
   const t=i/steps,angles=targetAnglesDeg.map(a=>a*t),pose=deform(prep,angles),
-   deformation=strain(prep.g.positions,pose.positions,prep.g.indices);
+   deformation=strain(prep.g.positions,pose.positions,prep.g.indices,
+    prep.affectedTriangleOffsets);
   const contact=inspectAIGReal3DLocalSourceTriangleContact({
    positions:pose.positions,firstTriangles:groups.base,
    secondTriangles:groups.distal,maxPairs:contactBudget
@@ -254,7 +290,7 @@ export function createAIGReal3DThreeJointTimeline({
   jointNames:['Base','Middle','Distal'],
   sourceOriginalVertices:prep.e.originalVertexCount,
   sourceOriginalTriangles:prep.e.originalTriangleCount,
-  sourceMarkerSnaps:prep.snap,
+  sourceMarkerSnaps:prep.snap,sparseSourceTopology:sparseStats,
   frameCount:frames.length,displayFrameIndexes:displays,
   maxActualAngularSampleStepDeg:round(
    Math.max(...targetAnglesDeg.map(Math.abs))/steps),
@@ -269,6 +305,9 @@ export function createAIGReal3DThreeJointTimeline({
    exceedingSourceEdgeStrainThreshold:unsafeStrain,
    invertedOrCollapsedSourceFaces:inverted,
    maxMeasuredEdgeStretchPercent:round(maxStretch),
+   cpuSparseFKSourceTopologyCacheUsed:true,
+   sourceWeightedVerticesScannedOnly:true,
+   sparseTriangleStrainFullyCoversAffectedSourceFaces:true,
    manualSourceWeightsNotAutoRig:true,
    sweptAABBRiskIsNotContinuousCollisionProof:true,
    noNativeHumanScanAnatomyEvidence:true,
