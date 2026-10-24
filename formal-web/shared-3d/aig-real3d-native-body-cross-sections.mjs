@@ -4,6 +4,7 @@
  * an SDF, an image silhouette, or inferred human anatomy.
  */
 import {parseAIGScanNativeOBJ} from './aig-real3d-scan-native-mesh.mjs';
+import {getAIG3DWorldMatrix} from './aig-real3d-core.mjs';
 export const AIG_REAL3D_SECTION_SCHEMA='AIG_REAL3D_NATIVE_3D_TRIANGLE_CROSS_SECTIONS_V1';
 const PRESETS=Object.freeze([
  {id:'LOWER_LEGS',heightFraction:.22},
@@ -152,5 +153,74 @@ export function auditAIGReal3DBodySectionGeometry({
   silhouetteAndProportionNaturalnessApproved:false,
   automaticPhotoTo3D:false,
   releasePASS:false
+ };
+}
+
+/**
+ * GLB and OBJ loaded into the current shared scene get the SAME original
+ * triangle-slice inspection. Nodes are transformed by their actual world
+ * matrices; this never estimates unseen geometry from a photo.
+ */
+export function auditAIGReal3DSceneCrossSections({
+ scene,sourceSha256,sourceName='',sourceFormat='GLB'
+}={}){
+ if(!/^[a-f0-9]{64}$/i.test(sourceSha256??'')||
+ !scene||scene.schema!=='AIG_REAL3D_SCENE_V1'||!Array.isArray(scene.nodes))
+  throw Error('SCENE_SECTION_SOURCE_REQUIRED');
+ const points=[],indices=[];let nodes=0;
+ for(const node of scene.nodes){
+  if(!node.visible)continue;
+  const xyz=node.mesh?.positions,idx=node.mesh?.indices;
+  if(!Array.isArray(xyz)||xyz.length%3||!Array.isArray(idx))
+   throw Error('SCENE_SECTION_TRIANGLES_REQUIRED');
+  const m=getAIG3DWorldMatrix(scene,node.id),base=points.length;
+  for(let i=0;i<xyz.length;i+=3){
+   const x=xyz[i],y=xyz[i+1],z=xyz[i+2];
+   const w=[m[0]*x+m[4]*y+m[8]*z+m[12],
+    m[1]*x+m[5]*y+m[9]*z+m[13],
+    m[2]*x+m[6]*y+m[10]*z+m[14]];
+   if(!w.every(Number.isFinite))throw Error('SCENE_SECTION_INVALID_WORLD_XYZ');
+   points.push(w);
+  }
+  for(const x of idx){
+   if(!Number.isInteger(x)||x<0||x>=xyz.length/3)
+    throw Error('SCENE_SECTION_SOURCE_INDICES_INVALID');
+   indices.push(base+x);
+  }
+  nodes++;
+ }
+ if(points.length<4||indices.length<12)
+  throw Error('SCENE_SECTION_MESH_EMPTY');
+ const ys=points.map(p=>p[1]),minY=Math.min(...ys),maxY=Math.max(...ys);
+ if(!(maxY-minY>1e-8))throw Error('SCENE_SECTION_HEIGHT_INVALID');
+ const sections=PRESETS.map(({id,heightFraction})=>({
+  id,heightFraction,...xySection(points,indices,minY+(maxY-minY)*heightFraction)
+ }));
+ const lower=sections[0],sectionsAtLegs=lower.components.filter(
+  c=>c.closedSimpleRing&&!c.tooSmallForMajorBodyCrossSection);
+ const separated=sectionsAtLegs.length===2&&
+  Math.min(sectionsAtLegs[0].maxXMeters,sectionsAtLegs[1].maxXMeters)-
+  Math.max(sectionsAtLegs[0].minXMeters,sectionsAtLegs[1].minXMeters)<-.005;
+ const lump=lower.significantSections===1&&lower.significantClosedLoops===1;
+ const warnings=[];
+ if(lump)warnings.push('ONE_LARGE_CLOSED_LOWER_BODY_SECTION_NOT_TWO_SEPARATE_LEGS');
+ if(lower.significantSections===0)warnings.push('NO_SIGNIFICANT_LOWER_BODY_SURFACE');
+ if(sectionsAtLegs.length>=2&&!separated)
+  warnings.push('MULTIPLE_LOWER_SECTIONS_WITHOUT_CLEAR_SIDE_BY_SIDE_X_SEPARATION');
+ if(sections.some(x=>x.sourceTrianglesOnExactPlane>0))
+  warnings.push('EXACT_VERTEX_ON_SLICE_AMBIGUITY_REVIEW');
+ if(nodes>1)warnings.push('MULTIPLE_SOURCE_MESH_NODES_MAY_HAVE_OVERLAPPING_GEOMETRY');
+ return {
+  schema:AIG_REAL3D_SECTION_SCHEMA,sourceSha256,sourceName,sourceFormat,
+  sourceSceneId:scene.id,sourceMeshNodes:nodes,
+  sourceVertexCount:points.length,sourceTriangleCount:indices.length/3,
+  measuredHeightMm:rounded((maxY-minY)*1000),
+  sections,oneClosedLowerMassFlag:lump,
+  distinctSideBySideLowerLegSectionsObserved:separated,
+  genuineOriginalTriangleIntersections:true,warnings,
+  manufacturedSeparateLegs:false,
+  geometricalFeatureObservationIsNotHumanScanAuthentication:true,
+  silhouetteAndProportionNaturalnessApproved:false,
+  automaticPhotoTo3D:false,releasePASS:false
  };
 }
