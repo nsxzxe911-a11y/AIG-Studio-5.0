@@ -1,6 +1,6 @@
 <!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FastModel Real3D V117｜AI 來源決策、真 GLB 與五軸自動巡檢</title>
+<title>FastModel Real3D V118｜本機神經網路分割、來源 GLB 與五軸 GPU</title>
 <style>
 :root{color-scheme:dark;font:15px/1.55 system-ui,"Microsoft JhengHei",sans-serif;
 background:#020407;color:#d8efff}
@@ -21,7 +21,7 @@ pre{overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-m
 #status{color:#ffdfa4}
 img{max-width:100%;max-height:320px;object-fit:contain}
 </style></head><body><main>
-<h1>FastModel Real3D V117｜主動建模控制與真五軸 GPU 檢查</h1>
+<h1>FastModel Real3D V118｜本機神經網路辨識與真五軸 GPU</h1>
 <p>透明 PNG 保留原流程；普通不透明 PNG 僅在背景顏色簡單、輪廓可可靠分離時自動產生透明工作副本。複雜背景可上傳另一份已人工確認的遮罩，無法安全分離就 BLOCK。另提供獨立量測的深度圖才能得到可觀測的曲面深度。<strong>沒有深度資料時只有平面 2.5D，不會捏造人體背面、臉型或衣服內部。</strong></p>
 <section>
 <div class="row">
@@ -43,6 +43,14 @@ img{max-width:100%;max-height:320px;object-fit:contain}
 <canvas id="v111-source-canvas" width="320" height="320" style="width:100%;max-width:580px;cursor:crosshair;touch-action:manipulation" aria-label="V111 點選來源照片標記主體或背景"></canvas>
 <p>按「預覽／檢驗自動前景遮罩」檢查後，再執行「建立來源表面並以 GPU 顯示」；遮罩錯誤請清除後重新標記。</p>
 </section>
+<section id="v118-neural-panel">
+<h2>V118｜真正的本機神經網路訓練／推論</h2>
+<p>先利用上方原圖畫布標記至少 2 個主體點和 2 個背景點；若人物或背景有不同顏色，請各自增加標記。選擇 V118 後，會在目前 Android／Windows 瀏覽器內，實際訓練 3→12→1 的神經網路、用新學習的權重逐像素推論，保留權重 SHA；不需要第三方雲端或 API 金鑰。</p>
+<label><input id="v118-enable" type="checkbox"> 啟用 V118 本機神經網路（不可與 V111 或外部遮罩同時啟用）</label>
+<div class="row"><button type="button" id="v118-train">訓練神經網路並預覽遮罩</button></div>
+<pre id="v118-report">尚未訓練：沒有人體預訓練模型，必須提供實際主體／背景樣本。</pre>
+<p><small>現階段是從本張照片的使用者標記學習 RGB 分類，不是預先訓練的人體／頭髮／衣服語義模型。遮罩、GLB 及 GPU 通過仍不代表照片 1:1 人體完成。</small></p>
+</section>
 <div class="row">
 <label><input id="width-verified" type="checkbox"> 寬度來自實際量測（否則只是預覽比例）</label>
 <label><input id="depth-confirm" type="checkbox"> 這張深度圖是獨立實測資料，而非從照片亮度猜測</label>
@@ -55,7 +63,7 @@ img{max-width:100%;max-height:320px;object-fit:contain}
 </div>
 <section id="v117-active-controller">
 <h2>V117｜AI 主動建模控制（來源證據優先）</h2>
-<p>按「自主分析」會實際執行 V110/V111 的前景像素辨識並判斷下一個重建方式；「自主執行」將在可信的前景來源上接續真 GLB 與五個真 WebGL A/B 檢查姿態。複雜背景無法可靠分離就要求標記或遮罩。<strong>本輪沒有載入神經網路權重，不會假稱已執行 AI 模型推論；未知人體背面和 1:1 仍 BLOCK。</strong></p>
+<p>按「自主分析」會實際執行 V110/V111 或啟用的 V118 本機神經辨識並判斷下一個重建方式；「自主執行」將在可信的前景來源上接續真 GLB 與五個真 WebGL A/B 檢查姿態。複雜背景無法可靠分離就要求標記或遮罩。<strong>本輪沒有載入神經網路權重，不會假稱已執行 AI 模型推論；未知人體背面和 1:1 仍 BLOCK。</strong></p>
 <label>要生成的目標
 <select id="v117-desired"><option value="FRONT_SOURCE_GLB">依據可觀測來源生成 2.5D／可見深度 GLB</option><option value="REQUIRE_COMPLETE_3D">要求完整真人 3D（無多視角來源則 BLOCK）</option></select>
 </label>
