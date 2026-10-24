@@ -101,7 +101,7 @@ test('V105 mm and meters models same actual CAD mm silhouette, no fake 1000x cor
 });
 test('V105 self-intersecting CAD, fake GLB and unauthorized plan fail explicitly',()=>{
  const bow=createAIGReal3DTopCADObservation({
-  imageSha256:sha,verticesXYmm:[[0,0],[2,0],[0,2],[2,2]]
+  imageSha256:sha,verticesXYmm:[[0,0],[2,2],[0,2],[2,0],[2,3]]
  });
  assert.throws(()=>compareAndRegisterAIGReal3DTopCAD({
   scene:cube(),originalGLBSha256:sha,observedTopCAD:bow
