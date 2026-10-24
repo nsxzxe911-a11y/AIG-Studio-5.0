@@ -510,6 +510,30 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    originalIndexBufferReused:true,fullGPUBufferReallocation:false,
    entireOriginalGeometryWasNotReuploaded:true};
  }
+ /**
+  * Real completed-frame diagnostic. gl.finish() waits for submitted GPU draw
+  * commands: this intentionally stalls the pipeline and is NOT animation FPS.
+  * Only use for bounded QA, not during interactive runtime playback.
+  */
+ function measureCompletedFrame(scene){
+  if(dead||lost)throw Error('AIG3D_GPU_FRAME_PROBE_CONTEXT_UNAVAILABLE');
+  const before=performance.now();
+  const frame=render(scene);
+  if(frame.status!=='WEBGL_XYZ_TRIANGLES_RENDERED')
+   throw Error('AIG3D_GPU_FRAME_PROBE_RENDER_BLOCKED');
+  gl.finish();
+  if(gl.getError()!==gl.NO_ERROR||lost)
+   throw Error('AIG3D_GPU_FRAME_PROBE_FINISH_BLOCKED');
+  return {
+   schema:'AIG_REAL3D_COMPLETED_GPU_RENDER_WALL_PROBE_V1',
+   completedGPUDrawAndSubmissionWallMs:Math.round((performance.now()-before)*1000)/1000,
+   trueGLFinishSynchronization:true,
+   originalIndexedTrianglesRendered:frame.triangles,
+   gpuIndexAndSourcePreserved:true,
+   interactive60FPSProven:false,
+   devicePowerThermalStressPASS:false
+  };
+ }
  function releaseMesh(mesh){
   if(dead||!mesh)return false;
   const old=cache.get(mesh);
@@ -535,7 +559,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  }
  return {status:'READY',contextVersion:webgl2?2:1,render,destroy,
   setCamera,getCamera,setInspectionMode,getInspectionMode,
-  setQuality,getQuality,releaseMesh,updateMeshVertices,captureNativePNG,
+  setQuality,getQuality,releaseMesh,updateMeshVertices,measureCompletedFrame,captureNativePNG,
   getGpuLimit:()=>lost||dead?0:Math.min(
    gl.getParameter(gl.MAX_TEXTURE_SIZE),gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)),
   getLastStats:()=>last?{...last}:null};
