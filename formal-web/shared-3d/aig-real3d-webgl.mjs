@@ -347,7 +347,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   const cached=mappedTextureCache.get(asset);
   if(cached)return cached;
   if(!Number.isInteger(asset.width)||!Number.isInteger(asset.height)||
-   asset.width<2||asset.height<2||asset.width>512||asset.height>512||
+   asset.width<2||asset.height<2||asset.width>2048||asset.height>2048||
    !Array.isArray(asset.pixels)||
    asset.pixels.length!==asset.width*asset.height*4||
    asset.pixels.some(x=>!Number.isInteger(x)||x<0||x>255))
@@ -356,8 +356,15 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   if(!tex)throw Error('AIG3D_GPU_MAP_TEXTURE_ALLOCATION_FAILED');
   gl.bindTexture(gl.TEXTURE_2D,tex);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  if(asset.wrapS!==undefined&&! [33071,10497,33648].includes(asset.wrapS)||
+    asset.wrapT!==undefined&&! [33071,10497,33648].includes(asset.wrapT))
+   throw Error('AIG3D_GLTF_SAMPLER_WRAP_INVALID');
+  const wraps=[asset.wrapS??33071,asset.wrapT??33071];
+  if((asset.width&(asset.width-1)||asset.height&(asset.height-1))&&
+   wraps.some(x=>x!==33071)&&!webgl2)
+   throw Error('AIG3D_WEBGL1_NPOT_REPEAT_UNSUPPORTED');
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,wraps[0]);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,wraps[1]);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
   gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,asset.width,asset.height,
