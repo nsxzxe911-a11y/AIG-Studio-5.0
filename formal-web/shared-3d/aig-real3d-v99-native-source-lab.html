@@ -111,10 +111,26 @@ pre{font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anyw
 </div>
 <canvas id="v105-compare-canvas" width="384" height="384" aria-label="CAD 頂視真模型逐像素輪廓差異"></canvas>
 <pre id="v105-report">尚未比較 CAD 俯視真幾何。未經量測與授權時不允許變更立體模型。</pre>
+<h2>V106｜原始圖片 Alpha 輪廓 → CNC CAD 俯視</h2>
+<p>從<strong>同一張已 SHA 確認的透明 PNG</strong>擷取可觀測前景輪廓，不把不透明照片的背景當作頭髮或立體形狀。僅有圖片像素仍不是 mm，請提供兩組具實際尺寸的圖片／CNC 對應點。</p>
+<div class="row">
+<button id="v106-extract" disabled>讀取原圖 Alpha 並自動追蹤輪廓</button>
+</div>
+<canvas id="v106-outline-canvas" width="384" height="384" aria-label="原始像素真正 Alpha 輪廓"></canvas>
+<label for="v106-anchors">兩點校準：圖片 pixel 與 CNC XY 毫米對應座標（JSON）</label>
+<textarea id="v106-anchors" rows="4" style="width:100%;min-height:95px;background:#081929;color:#d3ecf9" placeholder='{"pixelAnchors":[[60,30],[108,30]],"cncAnchorsMM":[[-1,3],[1,3]]}'></textarea>
+<div class="row">
+<label><input type="checkbox" id="v106-top-confirm"> 確認此照片確實是工件 CAD 俯視方向（非一般人物正面照）</label>
+<label><input type="checkbox" id="v106-measured-confirm"> 已量測兩點對應的 CNC XY 毫米座標</label>
+<button id="v106-calibrate" disabled>將像素輪廓轉換到 V105 CAD</button>
+</div>
+<pre id="v106-report">等待載入 SHA 鎖定的透明原圖；不透明 RGB 照片沒有可信分割來源時一律 BLOCK。</pre>
+
 </div>
 </div>
 </section></main>
 <script type="module" src="./aig-real3d-v99-native-source-lab.mjs"></script>
 <script type="module" src="./aig-real3d-v104-cad-top-ui.mjs"></script>
 <script type="module" src="./aig-real3d-v105-cad-registration-ui.mjs"></script>
+<script type="module" src="./aig-real3d-v106-photo-cad-ui.mjs"></script>
 </body></html>
