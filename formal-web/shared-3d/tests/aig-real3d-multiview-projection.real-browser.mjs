@@ -26,8 +26,15 @@ try{
   const side=48,positions=[],normals=[],indices=[],uv=[];
   for(let y=0;y<side;y++)for(let x=0;x<side;x++){
    const u=x/(side-1),v=y/(side-1);
-   positions.push((u-.5)*1.4,(v-.5)*1.4,0);
-   normals.push(0,0,1);uv.push(u,v);
+   // Real original nonhuman curved height field and matching surface normals.
+   // A planar monochrome LIT fixture has <8 colors and is NOT a valid
+   // existing GPU LIT diagnostic, even if its real source has 4418 faces.
+   const z=.11*Math.sin(Math.PI*2*u)*Math.cos(Math.PI*2*v);
+   const dzdx=.11*2*Math.PI/1.4*Math.cos(2*Math.PI*u)*Math.cos(2*Math.PI*v);
+   const dzdy=-.11*2*Math.PI/1.4*Math.sin(2*Math.PI*u)*Math.sin(2*Math.PI*v);
+   const mag=Math.hypot(dzdx,dzdy,1);
+   positions.push((u-.5)*1.4,(v-.5)*1.4,z);
+   normals.push(-dzdx/mag,-dzdy/mag,1/mag);uv.push(u,v);
   }
   for(let y=0;y<side-1;y++)for(let x=0;x<side-1;x++){
    const a=y*side+x,b=a+1,c=a+side,d=c+1;
