@@ -77,6 +77,16 @@ try{
  assert.equal(base.actualGPU.aTiltDeg,0);
  assert.equal(base.actualGPU.bTurnDeg,0);
  assert.equal(base.full1to1ReleaseGate,'BLOCK_UNOBSERVED_AND_UNCERTIFIED_SURFACES');
+ assert.equal(base.v113OverlapSeamAndMaterial.geometryOverlapStatus,
+  'PASS_OBSERVED_DEPTH_SEAM_ONLY');
+ assert.equal(base.v113OverlapSeamAndMaterial.overlapRmsMM,0);
+ assert.equal(base.v113OverlapSeamAndMaterial.directionCount,2);
+ assert.equal(base.v113OverlapSeamAndMaterial.researchGate,
+  'PASS_OBSERVED_SEAM_CONSISTENCY');
+ assert.equal(base.v113OverlapSeamAndMaterial.materialDifferenceStatus,
+  'WARN_RAW_COLOR_DIFFERENCE_EXPOSURE_OR_MATERIAL');
+ const diagnostic=await page.locator('#v113-seam-mask').screenshot();
+ await writeFile(dir+'/V113-SYNTHETIC-MEASURED-SEAM-HEATMAP.png',diagnostic);
  const neutral=await page.locator('#v112-gl').screenshot();
  await writeFile(dir+'/V112-TWO-CALIBRATED-SOURCE-VIEWS-A0-B0.png',neutral);
  await page.evaluate(()=>{
@@ -101,6 +111,29 @@ try{
  assert.equal(reset.actualGPU.bTurnDeg,0);
  assert.equal(reset.actualGPU.progress,1);
  assert.equal(reset.actualModelSourceSha256,base.actualModelSourceSha256);
+ // A sparse 9mm depth outlier not included among shared landmarks must be
+ // caught by V113 dense bidirectional surface overlap -- V112 point Gate alone
+ // would still certify the three unchanged landmark pairs.
+ const inconsistentDepth={width:32,height:32,depthUnit:'MM',
+  measuredWithDepthSensor:true,captureSourceId:'INDEPENDENT_DEPTH_FIXTURE_1',
+  valuesMM:Array(32*32).fill(1000)};
+ inconsistentDepth.valuesMM[14*32+14]=1009;
+ await page.locator('#v112-depth-1').setInputFiles({
+  name:'MeasuredDepthCamera1Outlier.json',mimeType:'application/json',
+  buffer:Buffer.from(JSON.stringify(inconsistentDepth))
+ });
+ await page.locator('#v112-build').click();
+ await page.waitForFunction(()=>document.querySelector('#status')
+  ?.textContent.includes('V113_BLOCK_OVERLAP_SURFACE_DEPTH_CONTRADICTION'),
+  null,{timeout:30000});
+ const v113Rejected=JSON.parse(await page.locator('#v112-report').textContent());
+ assert.equal(v113Rejected.status,'BLOCK');
+ // Restore source depth and prove new Gate does not contaminate next source.
+ inconsistentDepth.valuesMM[14*32+14]=1000;
+ await page.locator('#v112-depth-1').setInputFiles({
+  name:'MeasuredDepthCamera1Restored.json',mimeType:'application/json',
+  buffer:Buffer.from(JSON.stringify(inconsistentDepth))
+ });
  // Deliberate incorrect camera pose must cause BLOCK without a fake scene.
  calibration.views[1].cameraToWorldMM=world(70);
  await page.locator('#v112-calibration').fill(JSON.stringify(calibration));
@@ -111,13 +144,14 @@ try{
  const refused=JSON.parse(await page.locator('#v112-report').textContent());
  assert.equal(refused.status,'BLOCK');
  await writeFile(dir+'/V112-SOURCE-POSE-GLB-GPU-AND-BLOCK-RECEIPT.json',
-  JSON.stringify({base,posed,reset,refused},null,2));
+  JSON.stringify({base,posed,reset,v113Rejected,refused},null,2));
  assert.deepEqual(errors,[]);
  console.log('AIG_REAL3D_V112_TWO_CALIBRATED_DEPTH_VIEWS_LANDMARKS_TRUE_WEBGL_5AX_PASS',
   JSON.stringify({triangles:base.observedTriangleCount,
    landmarks:base.sharedLandmarksChecked,
    maxRegistrationResidualMM:base.landmarkRegistrationMaxMM,
-   wrongCalibrationBlocked:true,
+   wrongCalibrationBlocked:true,V113DenseLocalOutlierBlocked:true,
+   V113ColorSeamWarnedNotRecolored:true,
    syntheticDepthFixtureNotRealScan:true,
    human1to1ModelNotCertified:true}));
 }finally{await browser.close();}
