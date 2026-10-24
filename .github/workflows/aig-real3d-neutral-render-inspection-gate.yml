@@ -12,6 +12,9 @@ on:
       - 'formal-web/shared-3d/aig-real3d-native-anatomy-*.mjs'
       - 'formal-web/shared-3d/aig-real3d-local-surface-topology.mjs'
       - 'formal-web/shared-3d/aig-real3d-source-defect-*.mjs'
+      - 'formal-web/shared-3d/aig-real3d-defect-edge-picker.mjs'
+      - 'formal-web/shared-3d/aig-real3d-immutable-defect-diff.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-defect-picker-diff.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-source-defect-projection.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-local-surface-topology.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-anatomy-projection.test.mjs'
@@ -33,6 +36,9 @@ on:
       - 'formal-web/shared-3d/aig-real3d-native-anatomy-*.mjs'
       - 'formal-web/shared-3d/aig-real3d-local-surface-topology.mjs'
       - 'formal-web/shared-3d/aig-real3d-source-defect-*.mjs'
+      - 'formal-web/shared-3d/aig-real3d-defect-edge-picker.mjs'
+      - 'formal-web/shared-3d/aig-real3d-immutable-defect-diff.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-defect-picker-diff.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-source-defect-projection.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-local-surface-topology.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-anatomy-projection.test.mjs'
@@ -69,6 +75,9 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-local-surface-topology.mjs
           node --check formal-web/shared-3d/aig-real3d-source-defect-projection.mjs
           node --check formal-web/shared-3d/aig-real3d-source-defect-overlay.mjs
+          node --check formal-web/shared-3d/aig-real3d-defect-edge-picker.mjs
+          node --check formal-web/shared-3d/aig-real3d-immutable-defect-diff.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-defect-picker-diff.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-source-defect-projection.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-local-surface-topology.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-native-anatomy-projection.test.mjs
@@ -84,7 +93,7 @@ jobs:
   browser:
     needs: source
     runs-on: ubuntu-latest
-    timeout-minutes: 29
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
