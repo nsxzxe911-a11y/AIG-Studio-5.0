@@ -210,6 +210,25 @@ try{
  assert.ok(bad.sourceDefectOverlay.images.every(x=>
   x.deduplicatedRawEdgeCount>0&&x.originalSourceTrianglesChanged===false));
  assert.equal(bad.sourceDefectOverlay.releasePASS,false);
+ assert.ok(await page.locator('#defect-edge-list button').count()>0);
+ await page.locator('#defect-edge-list button').first().click();
+ assert.match(await page.locator('#defect-selected').textContent(),/原始 OBJ 頂點/);
+ assert.match(await page.locator('#defect-selected').textContent(),/原始 XYZ 起點/);
+ assert.match(await page.locator('#defect-selected').textContent(),new RegExp(brokenSha));
+ // Real image click at the original source pixel under object-fit containment.
+ const selectedEdge=bad.sourceDefectOverlay.images[0].projectedSourceEdges[0];
+ const pX=(selectedEdge.start.x+selectedEdge.end.x)/2,
+       pY=(selectedEdge.start.y+selectedEdge.end.y)/2;
+ const pixel=await page.locator('#defect-gallery figure').first().locator('img')
+  .evaluate((img,{x,y})=>{
+   const r=img.getBoundingClientRect(),sc=Math.min(r.width/1080,r.height/1920);
+   return {x:(r.width-1080*sc)/2+x*sc,
+    y:(r.height-1920*sc)/2+y*sc};
+  },{x:pX,y:pY});
+ await page.locator('#defect-gallery figure').first().locator('img')
+  .click({position:pixel});
+ assert.match(await page.locator('#defect-selected').textContent(),/原始 OBJ 頂點/);
+ assert.equal(await page.locator('#compare-source').isDisabled(),false);
  assert.equal(await page.locator('#defect-gallery figure').count(),4);
  for(let i=0;i<4;i++){
   const fig=page.locator('#defect-gallery figure').nth(i);
@@ -231,6 +250,65 @@ try{
  assert.equal(downloaded.localSurfaceTopology.sourceGeometryGatePASS,false);
  await copyFile(await badFile.path(),dir+'/BROKEN_OBJ_SOURCE_DEFECT_REPORT.json');
  await page.screenshot({path:dir+'/BROKEN_OBJ_4_GPU_DEFECT_VIEWS-LAB.png',fullPage:true});
+ // Independent intact source submitted as an AFTER candidate. Source mesh
+ // is never edited; native SHA and all 4 camera captures must be independent.
+ await page.locator('#after-source-file').setInputFiles({
+  name:'AFTER_INTACT_SYNTHETIC_NONHUMAN_OBJ.obj',mimeType:'text/plain',buffer:buf
+ });
+ await page.locator('#compare-source').click();
+ await page.waitForFunction(()=>{
+  const b=document.getElementById('compare-source'),
+   label=document.getElementById('repair-compare-stats')?.textContent||'';
+  return !b?.disabled&&
+   (label.startsWith('兩份來源 OBJ 已對照')||label.startsWith('BLOCK'));
+ },null,{timeout:210000});
+ assert.match(await page.locator('#repair-compare-stats').textContent(),/兩份來源 OBJ 已對照/);
+ const compared=JSON.parse(await page.locator('#evidence').textContent());
+ const diff=compared.beforeAfterComparison;
+ assert.equal(diff.beforeSha256,brokenSha);
+ assert.equal(diff.afterSha256,hash);
+ assert.ok(diff.globalBefore.openEdges>0);
+ assert.equal(diff.globalAfter.openEdges,0);
+ assert.equal(diff.beforeSourceGeometryPASS,false);
+ assert.equal(diff.afterSourceGeometryPASS,true);
+ assert.ok(diff.previousDefectEdgesAbsentInAfter>0);
+ assert.equal(diff.newDefectEdgesNotPresentInBefore,0);
+ assert.equal(diff.fourPairedRealGPUViews.length,4);
+ assert.equal(diff.bothSourceModelsRemainUnmodified,true);
+ assert.equal(diff.verifiedAnatomicalRepair,false);
+ assert.equal(diff.releasePASS,false);
+ assert.equal(await page.locator('#repair-compare-table tbody tr').count(),5);
+ assert.equal(await page.locator('#repair-compare-gallery .compare-pair').count(),4);
+ const promisedAfter=page.waitForEvent('download',{timeout:30000});
+ await page.locator('#repair-compare-gallery a').first().click();
+ const dlAfter=await promisedAfter,afterPNG=await readFile(await dlAfter.path());
+ assert.equal(afterPNG.readUInt32BE(0),0x89504e47);
+ assert.equal(afterPNG.readUInt32BE(16),1080);
+ assert.equal(afterPNG.readUInt32BE(20),1920);
+ assert.equal(createHash('sha256').update(afterPNG).digest('hex'),
+  diff.fourPairedRealGPUViews[0].afterBrownGPUOverlaySHA256);
+ await copyFile(await dlAfter.path(),dir+'/PR59-AFTER-SOURCE-TRUE_GPU.png');
+ const downloadDiff=page.waitForEvent('download',{timeout:20000});
+ await page.locator('#report-download').click();
+ const json=await downloadDiff;
+ const nativeReport=JSON.parse((await readFile(await json.path())).toString());
+ assert.equal(nativeReport.beforeAfterComparison.releasePASS,false);
+ await copyFile(await json.path(),dir+'/PR59-IMMUTABLE-BEFORE-AFTER-REPORT.json');
+ await page.screenshot({
+  path:dir+'/PR59-SELECTABLE-XYZ-AND-BEFORE-AFTER-LAB.png',fullPage:true
+ });
+ // Re-upload identical SHA: fail closed, never count identical source as repair.
+ await page.locator('#after-source-file').setInputFiles({
+  name:'STILL_SAME_BROKEN.obj',mimeType:'text/plain',buffer:brokenOBJ
+ });
+ await page.locator('#compare-source').click();
+ await page.waitForFunction(()=>{
+  const b=document.getElementById('compare-source'),
+   label=document.getElementById('repair-compare-stats')?.textContent||'';
+  return !b?.disabled&&label.startsWith('BLOCK');
+ },null,{timeout:30000});
+ assert.match(await page.locator('#repair-compare-stats').textContent(),/SHA 完全相同/);
+
  assert.deepEqual(errors,[]);
  await writeFile(dir+'/proof.json',JSON.stringify({
   schema:'AIG_REAL3D_BROWN_LOCAL_OBJ_SOURCE_REPORT_BROWSER_GATE_V1',
@@ -244,6 +322,9 @@ try{
   nativeFiveAreaTopologyChecksSourceTrianglesTrue:true,
   brokenObjSourceHasRealRemovedTriangleAndFourVerifiedGPUEdgeOverlays:true,
   badMeshAllowedReadOnlyButNeverReleasePass:true,
+  clickSourceTrueDefectEdgeDisplaysXYZ:true,
+  twoIndependentOBJFilesImmutableRepairDiffAndFourTrueGPUPairs:true,
+  identicalSourceHashRejected:true,
   referencePictureWasSyntheticNotHuman:true,
   automaticHumanAppearanceApproval:false,
   noSyntheticHumanReconstruction:true,
