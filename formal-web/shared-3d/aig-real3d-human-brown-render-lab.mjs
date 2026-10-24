@@ -1018,7 +1018,8 @@ $('dense-source-run').addEventListener('click',async()=>{
    objText,sourceSha256,sourceName:f.name,heightMm,upAxis
   });
   gpu=createAIG3DRenderer($('native-webgl'),{
-   quality:'balanced',pixelRatio:1,background:[.769,.745,.702,1]
+   quality:'balanced',pixelRatio:1,maxTriangles:700000,
+   background:[.769,.745,.702,1]
   });
   if(gpu.status!=='READY')throw Error('本地 GPU 尚未啟用，無法產生真實圖片');
   if(gpu.getGpuLimit()<1920)throw Error('GPU 尺寸不足 1080×1920 原生來源畫面');
