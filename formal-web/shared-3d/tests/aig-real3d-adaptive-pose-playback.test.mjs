@@ -36,14 +36,14 @@ test('Invisible tabs and critical browser heap pressure never render, thermal wi
 function makeScene(z){
  const scene=createAIG3DScene({id:'NONHUMAN_SOURCE_SCENE',
   consumer:'FastModel',units:'METERS',source:'NONHUMAN_ORIGINAL_GPU_SOURCE'});
- const count=1001,positions=[],normals=[],indices=[];
+ const count=1005,positions=[],normals=[],indices=[];
  for(let i=0;i<count;i++){
   const a=2*Math.PI*i/count;
   positions.push(Math.cos(a),Math.sin(a),z+(i%7)*.001);
   normals.push(0,0,1);
  }
  // 2,002 triangles of original indexed NONHUMAN fan.
- for(let i=1;i<1000;i++)indices.push(0,i,i+1,0,i+1,(i+2)%count);
+ for(let i=1;i<1002;i++)indices.push(0,i,i+1,0,i+1,(i+2)%count);
  const mesh=createAIG3DMesh({positions,normals,indices,
   provenance:'NONHUMAN_INDEXED_SOURCE_SHA_QA'});
  addAIG3DNode(scene,{id:'real_original_source_0',mesh,kind:'character',
