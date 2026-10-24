@@ -44,6 +44,10 @@ input[type=range]{min-width:150px;flex:1}
 <option value="UHD_2K">2560 × 1440</option>
 <option value="UHD_4K" selected>3840 × 2160 原生 4K</option>
 </select></label>
+<label>電影色調<select id="colorPipeline">
+<option value="FILM_SDR" selected>電影 SDR（高精度著色）</option>
+<option value="LEGACY">原始照明</option>
+</select></label>
 <button id="quality4k" disabled>檢查原始 3D 清晰度</button>
 <button id="capture4k" disabled>輸出真 GPU 4K PNG</button>
 <button id="plan">電影分段計畫 2:12:08</button>
