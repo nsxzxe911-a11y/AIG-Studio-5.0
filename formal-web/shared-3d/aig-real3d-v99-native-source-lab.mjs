@@ -6,6 +6,8 @@ import {planAIGReal3DNative4K,captureAIGReal3DNative4K}
  from './aig-real3d-v96-native-4k-pipeline.mjs';
 import {createAIG3DRenderer}
  from './aig-real3d-webgl.mjs';
+import {auditAIGReal3DHDR10Source}
+ from './aig-real3d-v103-hdr10-evidence.mjs';
 import {remodelAIGReal3DGeometryBackend}
  from './aig-real3d-v101-backend-orchestrator.mjs';
 import {planAIGReal3DAdaptiveArtworkFrame,
@@ -128,6 +130,14 @@ function inspect(){
   selectedActualSDRShader:renderer.getColorPipeline(),
   originalGLTFMaterialFactorSourcesPreserved:imported.perMesh.every(x=>!!x.materialSourceFactors),
   animationSkinRigAutomaticallyTransferred:false,
+  hdr10Readiness:auditAIGReal3DHDR10Source({
+   rendererColorBits:[...(renderer.getLastStats()?.framebufferRGBBits??[8,8,8]),0],
+   linearSceneFloatSource:false,sourceLuminanceActuallyMeasured:false,
+   outputEncodedBitDepth:null,transferFunction:null,
+   colorPrimaries:null,colorMatrix:null
+  }),
+  GGXSourceBRDFCurrentlyActive:renderer.getColorPipeline().physicallyBasedGGXDirectLighting,
+  fullIBLAndHDR10OutputNotYetCertified:true,
   finalCinemaQualityPASS:false,releasePASS:false
  };
  $('proof').textContent=JSON.stringify(proof,null,2);
