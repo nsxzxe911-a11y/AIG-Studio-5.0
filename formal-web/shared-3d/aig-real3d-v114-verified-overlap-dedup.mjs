@@ -58,12 +58,14 @@ function decodeGLB(bytes){
     p.attributes?.TEXCOORD_0==null||p.indices==null)
     fail('V112_MESH_ATTRIBUTES_INDEXED_TRIANGLES_REQUIRED');
   const positions=data(p.attributes.POSITION,'VEC3',5126,3),
+   normals=data(p.attributes.NORMAL,'VEC3',5126,3),
    uv=data(p.attributes.TEXCOORD_0,'VEC2',5126,2),
    indices=data(p.indices,'SCALAR',5125,1);
-  if(positions.length/3!==uv.length/2||indices.length%3||
+  if(positions.length/3!==uv.length/2||
+   positions.length!==normals.length||indices.length%3||
    indices.some(n=>n>=positions.length/3))
    fail('GLB_SOURCE_VERTEX_INDEX_CORRUPTION');
-  return {positions,uv,indices,indicesAccessorId:p.indices};
+  return {positions,normals,uv,indices,indicesAccessorId:p.indices};
  };
  return {doc,body,first:getMesh(0),second:getMesh(1)};
 }
@@ -81,6 +83,40 @@ function colorDiff(a,offsetA,b,offsetB){
  return Math.hypot(
   a[offsetA]-b[offsetB],a[offsetA+1]-b[offsetB+1],
   a[offsetA+2]-b[offsetB+2])/Math.sqrt(3);
+}
+/**
+ * Calculate stable per-vertex UV tangent from ALL the untouched original
+ * triangles BEFORE de-duplication. A V99 import cannot infer tangents for
+ * vertices no longer referenced by the compacted triangle index list.
+ * This adds a glTF TANGENT attribute -- not a new source surface or mesh.
+ */
+function originalSourceTangents(mesh){
+ const {positions,normals,uv,indices}=mesh,n=positions.length/3,
+  accumulated=new Float64Array(n*3),tangents=new Float32Array(n*4);
+ for(let k=0;k<indices.length;k+=3){
+  const a=indices[k],b=indices[k+1],c=indices[k+2];
+  const du1=uv[b*2]-uv[a*2],dv1=uv[b*2+1]-uv[a*2+1],
+   du2=uv[c*2]-uv[a*2],dv2=uv[c*2+1]-uv[a*2+1];
+  const det=du1*dv2-du2*dv1;
+  if(Math.abs(det)<1e-12)continue;
+  for(let axis=0;axis<3;axis++){
+   const ab=positions[b*3+axis]-positions[a*3+axis],
+    ac=positions[c*3+axis]-positions[a*3+axis],
+    value=(ab*dv2-ac*dv1)/det;
+   for(const i of [a,b,c])accumulated[i*3+axis]+=value;
+  }
+ }
+ for(let i=0;i<n;i++){
+  const no=normals.slice(i*3,i*3+3),vec=[
+   accumulated[i*3],accumulated[i*3+1],accumulated[i*3+2]];
+  const normalProjection=no.reduce((sum,v,j)=>sum+v*vec[j],0);
+  const ortho=vec.map((v,j)=>v-no[j]*normalProjection),
+   length=Math.hypot(...ortho);
+  if(length<1e-10)fail('SOURCE_UV_TANGENT_EVIDENCE_DEGENERATE');
+  for(let j=0;j<3;j++)tangents[i*4+j]=ortho[j]/length;
+  tangents[i*4+3]=1;
+ }
+ return new Uint8Array(tangents.buffer);
 }
 function repackGLB(doc,bytes){
  const json=new TextEncoder().encode(JSON.stringify(doc)),
@@ -153,13 +189,23 @@ export function deduplicateAIGReal3DV114VerifiedOverlapGLB({
   fail('NO_SAFELY_REDUNDANT_SOURCE_TRIANGLES_TO_INTEGRATE');
  if(keep.length<36)fail('ALL_SECOND_SOURCE_TRIANGLES_REMOVED_NO_INDEPENDENT_COVERAGE');
  const newIndexBytes=new Uint8Array(new Uint32Array(keep).buffer);
- const offset=pad4(body.length),payload=new Uint8Array(offset+newIndexBytes.length);
+ const tangentBytes=originalSourceTangents(second);
+ const offset=pad4(body.length),
+  tangentOffset=pad4(offset+newIndexBytes.length),
+  payload=new Uint8Array(tangentOffset+tangentBytes.length);
  payload.set(body);payload.set(newIndexBytes,offset);
+ payload.set(tangentBytes,tangentOffset);
  const idxId=second.indicesAccessorId;
  const newBV=doc.bufferViews.length;
  doc.bufferViews.push({buffer:0,byteOffset:offset,byteLength:newIndexBytes.length});
  doc.accessors[idxId].bufferView=newBV;
  doc.accessors[idxId].count=keep.length;
+ const tangentBV=doc.bufferViews.length;
+ doc.bufferViews.push({buffer:0,byteOffset:tangentOffset,byteLength:tangentBytes.length});
+ const tangentAccessorId=doc.accessors.length;
+ doc.accessors.push({bufferView:tangentBV,componentType:5126,
+  count:second.positions.length/3,type:'VEC4'});
+ doc.meshes[1].primitives[0].attributes.TANGENT=tangentAccessorId;
  doc.buffers[0].byteLength=payload.length;
  const copy=repackGLB(doc,payload);
  if(copy.length>35e6)fail('SOURCE_WORKING_COPY_MAX_35MB');
@@ -180,6 +226,8 @@ export function deduplicateAIGReal3DV114VerifiedOverlapGLB({
   secondViewVerifiedDepthButColorMismatchVertices:colorConflicts,
   firstViewSourceMeshUnchanged:true,
   secondViewXYZAndUVUnchanged:true,
+  originalTopologySupportedUVTangentsAdded:true,
+  originalSourceTriangleTangentsUsedBeforeDedup:true,
   allOriginalBINBytesPrefixPreserved:true,
   bothOriginalEmbeddedPNGsPreserved:true,
   bothOriginalMaterialsPreserved:true,
