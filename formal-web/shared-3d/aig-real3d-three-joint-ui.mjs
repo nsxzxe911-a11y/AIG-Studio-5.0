@@ -7,6 +7,8 @@ import {runAIGReal3DQuadStrain,benchmarkAIGReal3DWorkerModes}
  from './aig-real3d-quad-strain-pool.mjs';
 import {runAIGReal3DVirtualProcessor}
  from './aig-real3d-virtual-processor.mjs';
+import {createAIGReal3DPersistentVPU,verifyAIGReal3DStageEvidence}
+ from './aig-real3d-persistent-vpu.mjs';
 import {applyAIGReal3DSourceMeshDelta}
  from './aig-real3d-gpu-delta-source.mjs';
 import {benchmarkAIGReal3DNativePosePlayback}
@@ -21,17 +23,19 @@ import {createAIGReal3DSparseNormalCache,evaluateAIGReal3DSparseNormals}
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {validateAIGInspectionCapturePlan} from './aig-real3d-render-inspection.mjs';
 export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}={}){
- let source=null,report=null,stressScenes=null,vpuSource=null;
+ let source=null,report=null,stressScenes=null,vpuSource=null,v82Poses=null;
  const run=$('three-joint-run'),download=$('three-joint-download'),
   stressButton=$('three-joint-stress-run'),stressStatus=$('three-joint-stress-status'),
   poolButton=$('three-joint-pool-run'),poolStatus=$('three-joint-pool-status'),
   vpuButton=$('three-joint-vpu-run'),vpuStatus=$('three-joint-vpu-status'),
+  v82Button=$('three-joint-v82-run'),v82Status=$('three-joint-v82-status'),
   status=$('three-joint-status'),evidence=$('three-joint-evidence'),
   gallery=$('three-joint-gallery');
  const reset=()=>{
-  source=null;report=null;stressScenes=null;vpuSource=null;
+  source=null;report=null;stressScenes=null;vpuSource=null;v82Poses=null;
   run.disabled=true;download.disabled=true;
   stressButton.disabled=true;poolButton.disabled=true;vpuButton.disabled=true;
+  v82Button.disabled=true;v82Status.textContent='等待真來源 GPU 驗證。';
   vpuStatus.textContent='等待真 OBJ/SHA 與三節 GPU 驗證。';
   poolStatus.textContent='等待真來源 OBJ 與三節關節 GPU 驗證。';
   stressStatus.textContent='等待同來源三節關節真 GPU 驗證。';
@@ -51,7 +55,8 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
    status.textContent='BLOCK：原始 OBJ 或校準參數變動，需重新匯入。';return;
   }
   setBusy(true);run.disabled=true;download.disabled=true;stressButton.disabled=true;
-  poolButton.disabled=true;vpuButton.disabled=true;vpuSource=null;
+  poolButton.disabled=true;vpuButton.disabled=true;v82Button.disabled=true;
+  vpuSource=null;v82Poses=null;
   stressScenes=null;report=null;
   gallery.replaceChildren();let renderer;
   try{
@@ -208,11 +213,14 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     naturalHumanSkinPASS:false,automaticRigPASS:false,releasePASS:false
    };
    stressScenes=playbackScenes;
+   v82Poses=timeline.displayFrameIndexes.map(i=>timeline.frames[i].workingCopyPositions);
    vpuSource={original:originalSource.positions,posed:last.workingCopyPositions,
     indices:originalSource.indices,triangleOffsets:Uint32Array.from(offsets),
     sourceSha256:source.sha256,expectedStrain:check};
    evidence.textContent=JSON.stringify(report,null,2);download.disabled=false;
    stressButton.disabled=false;poolButton.disabled=false;vpuButton.disabled=false;
+   v82Button.disabled=false;
+   v82Status.textContent='來源 GPU 三姿勢已驗證，可重用真 Worker 處理三批原始面片。';
    vpuStatus.textContent='來源已驗證；可在不增加實體核心下分派 4/8/16 個網格計算任務。';
    poolStatus.textContent='原始三節關節 GPU 姿勢已驗證，可測試共用一套 GPU buffer 的 3×72 排程。';
    stressStatus.textContent='來源三個真 GPU 姿勢已通過，可進行獨立三輪緩衝清理壓力驗證。';
@@ -332,6 +340,65 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
   }catch(error){
    vpuStatus.textContent='BLOCK：'+String(error?.message??error);
   }finally{setBusy(false);vpuButton.disabled=!vpuSource;}
+ });
+ v82Button.addEventListener('click',async()=>{
+  if(isBusy()||!source||!vpuSource||!v82Poses||
+   v82Poses.length!==3||!report||
+   source.sha256!==vpuSource.sourceSha256){
+   v82Status.textContent='BLOCK：來源、三節關節或 GPU 證據不足。';return;
+  }
+  setBusy(true);v82Button.disabled=true;let vpu;
+  try{
+   const target=Number($('three-joint-vpu-workers').value),
+    lanes=Number($('three-joint-vpu-lanes').value);
+   const evidenceChain=verifyAIGReal3DStageEvidence({
+    sourceSha256:source.sha256,
+    geometry:{sourceSha256:source.sha256,
+     sourceTriangleCount:source.dense.evidence.originalTriangleCount},
+    pose:{sourceSha256:source.sha256,
+     sourceTriangleCount:source.dense.evidence.originalTriangleCount},
+    contact:{sourceSha256:source.sha256,
+     sampledOriginalTriangleAudit:Array.isArray(report.frames)&&
+      report.frames.length>=3&&report.frames.every(x=>x.contact&&
+       x.sweptRiskFromPriorSample!==undefined)},
+    gpu:{sourceSha256:source.sha256,
+     frameSha256:report.gpuFrames.map(x=>x.sha256)}
+   });
+   vpu=createAIGReal3DPersistentVPU({
+    physicalWorkers:target===1?2:target,virtualLanes:lanes,
+    maxBatches:3,maxPacketBytes:64*1024*1024
+   });
+   const batches=[];
+   for(const posed of v82Poses){
+    batches.push(await vpu.runBatch({
+     original:vpuSource.original,posed,indices:vpuSource.indices,
+     triangleOffsets:vpuSource.triangleOffsets,
+     sourceSha256:source.sha256
+    }));
+   }
+   const info=vpu.stats();
+   if(source.sha256!==vpuSource.sourceSha256||info.batchesCompleted!==3||
+    info.virtualTasksCompleted!==lanes*3||
+    batches.some(x=>!x.serialEquivalent||x.originalSourceBuffersUnmodified!==true))
+    throw Error('原始來源、Worker 三批結果或工作總數不一致');
+   report.persistentVirtualProcessor={
+    sourceStageChain:evidenceChain,
+    batches,workPoolDuringSession:info,
+    workerObjectsAfterDispose:vpu.close().liveWorkerObjects,
+    realCPUCoresAdded:0,sourceSHAUnchanged:true,
+    actualFullDeviceFPSVerified:false,releasePASS:false
+   };
+   evidence.textContent=JSON.stringify(report,null,2);
+   v82Status.textContent=info.realWebWorkersCreated+
+    ' 個真 Worker 常駐，完成 '+info.batchesCompleted+
+    ' 批／'+info.virtualTasksCompleted+
+    ' 個真來源虛擬任務；已清理 Worker。未聲稱加倍效能。';
+  }catch(error){
+   v82Status.textContent='BLOCK：'+String(error?.message??error);
+  }finally{
+   vpu?.close('WORKSTATION_FINALLY');
+   setBusy(false);v82Button.disabled=!v82Poses;
+  }
  });
  download.addEventListener('click',()=>{
   if(!report)return;
