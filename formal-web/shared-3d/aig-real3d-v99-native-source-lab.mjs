@@ -170,7 +170,7 @@ $('import').addEventListener('click',async()=>{
    domain:$('domain').value,
    assetId:'LocalNative'+$('domain').value,
    outputOrigin:'AUTHORIZED_SOURCE_MESH',
-   sourceUnits:'METERS'
+   sourceUnits:$('v104-units').value
   });
   if(renderer)renderer.destroy();
   renderer=createAIG3DRenderer($('model'),{quality:'balanced',
