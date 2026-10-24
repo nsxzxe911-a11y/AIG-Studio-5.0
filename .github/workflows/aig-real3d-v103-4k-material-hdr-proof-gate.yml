@@ -1,0 +1,68 @@
+name: Real3D V103 Native 4K Original GLB Texture + GGX PBR + HDR10 Evidence Gate
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v103-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v103-*'
+      - 'formal-web/shared-3d/aig-real3d-v102-adaptive-frame.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-v102-adaptive-frame.test.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v101-structure-repair.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-v101-structure-repair.test.mjs'
+      - 'formal-web/shared-3d/aig-real3d-webgl.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v99-native-model-ingest.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v99-native-source-lab.*'
+      - 'docs/REAL3D-V103-*'
+      - '.github/workflows/aig-real3d-v103-4k-material-hdr-proof-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: real3d-v103-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  source-correctness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: V103 actual 4K camera contract, native glTF source, UV shader and strict HDR10 claims
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-webgl.mjs
+          node --check formal-web/shared-3d/aig-real3d-v99-native-model-ingest.mjs
+          node --check formal-web/shared-3d/aig-real3d-v99-native-source-lab.mjs
+          node --check formal-web/shared-3d/aig-real3d-v103-hdr10-evidence.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-v103-pbr-material.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v102-adaptive-frame.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v99-native-model-ingest.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v101-structure-repair.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v103-hdr10-evidence.test.mjs
+  actual-gpu:
+    needs: source-correctness
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install native Chromium WebGL
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: V103 embedded PNG + normal texture + UV + true GGX pixels
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v103-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v99-native-source-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v103-pbr-material.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V103-Real-UV-PBR-SDR-GPU-Source-Receipt
+          path: artifacts/aig-real3d-v103-material/
+          if-no-files-found: warn

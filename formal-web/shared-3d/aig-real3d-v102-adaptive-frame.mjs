@@ -97,7 +97,7 @@ export function planAIGReal3DAdaptiveArtworkFrame({
  const depthSpan=max[2]-min[2],
   distance=Math.max(3,orthoSpan*2,depthSpan*2+1);
  const camera={projection:'orthographic',yaw,pitch,focus,
-  orthoSpan,distance};
+  orthoSpan,distance,fovDeg:55};
  const projectionPixels=corners.map(p=>{
   const d=p.map((x,i)=>x-focus[i]);
   return [artworkWidth*(.5+dot(d,right)/(orthoSpan*aspect)),

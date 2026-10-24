@@ -189,12 +189,32 @@ export function repairAIGReal3DSourceMesh({
  catch(e){return {schema:AIG_REAL3D_V101_SCHEMA,status:String(e.message),
   before:auditAIGReal3DSourceStructure(mesh),workingMesh:null,
   sourceMeshWasNeverMutated:true,releasePASS:false};}
+ // A real UV textured GLB must NEVER lose authored UV/tangent data during
+ // backend remodelling. If winding flips, original tangent orientation may
+ // change and needs independent source evidence; BLOCK rather than silently
+ // generating corrupted normal-mapped skin/clothes or a fake texture layout.
+ if(mesh.uvs||mesh.tangents){
+  if(!Array.isArray(mesh.uvs)||!Array.isArray(mesh.tangents)||
+   mesh.uvs.length!==mesh.vertexCount*2||
+   mesh.tangents.length!==mesh.vertexCount*4)
+   fail('TEXTURED_SOURCE_UV_TANGENT_CONTRACT_INVALID');
+  if(oriented.flipped.length)
+   return {schema:AIG_REAL3D_V101_SCHEMA,
+    status:'BLOCK_SOURCE_TEXTURE_TANGENT_REORIENTATION_NEEDS_EVIDENCE',
+    before:auditAIGReal3DSourceStructure(mesh),workingMesh:null,
+    sourceMeshWasNeverMutated:true,originalUVAndNormalsUntouched:true,
+    releasePASS:false};
+ }
  const normals=acceptNormalRebuild?
   rebuildNormals(mesh,oriented.indices):[...mesh.normals];
  const workingMesh=createAIG3DMesh({
   positions:mesh.positions,normals,indices:oriented.indices,
   provenance:'V101_SOURCE_TOPOLOGY_CORRECTED_WORKING_COPY'
  });
+ if(mesh.uvs&&mesh.tangents){
+  workingMesh.uvs=[...mesh.uvs];
+  workingMesh.tangents=[...mesh.tangents];
+ }
  const after=scan(workingMesh);
  // Do not silently create open edges, islands, non-manifold connections or
  // degenerate faces while "repairing". A hole cannot be inferred from the
@@ -222,6 +242,7 @@ export function repairAIGReal3DSourceMesh({
    original.degenerateFaceIDs:[],
   originalVertexXYZNotMoved:true,
   originalMeshNormalsAndFacesNotMutated:true,
+  originalUVAndTangentsPreservedIfSourceValidated:Boolean(mesh.uvs),
   sourceMeshWasNeverMutated:true,sourceOpeningsNeverFabricated:true,
   originalMaterialsAndUVsNotValidated:true,
   sourceDisconnectedPartsRetained:true,
