@@ -19,6 +19,8 @@ on:
       - 'formal-web/shared-3d/tests/aig-real3d-source-geometry-detail.test.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-body-cross-sections.mjs'
       - 'formal-web/shared-3d/aig-real3d-local-hole-working-copy.mjs'
+      - 'formal-web/shared-3d/aig-real3d-curved-junction-working-copy.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-resolution.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-resolution.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-local-hole-working-copy.test.mjs'
@@ -53,6 +55,8 @@ on:
       - 'formal-web/shared-3d/tests/aig-real3d-source-geometry-detail.test.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-body-cross-sections.mjs'
       - 'formal-web/shared-3d/aig-real3d-local-hole-working-copy.mjs'
+      - 'formal-web/shared-3d/aig-real3d-curved-junction-working-copy.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-resolution.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-resolution.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-local-hole-working-copy.test.mjs'
@@ -102,6 +106,8 @@ jobs:
           node --test formal-web/shared-3d/tests/aig-real3d-source-geometry-detail.test.mjs
           node --check formal-web/shared-3d/aig-real3d-native-body-cross-sections.mjs
           node --check formal-web/shared-3d/aig-real3d-local-hole-working-copy.mjs
+          node --check formal-web/shared-3d/aig-real3d-curved-junction-working-copy.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs
           node --check formal-web/shared-3d/aig-real3d-native-resolution.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-native-resolution.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-local-hole-working-copy.test.mjs

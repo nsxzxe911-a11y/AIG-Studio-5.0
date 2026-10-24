@@ -28,6 +28,8 @@ import {planAIGReal3DNativeResolution}
  from './aig-real3d-native-resolution.mjs';
 import {createAIGReal3DOBJLocalPatchWorkingCopy}
  from './aig-real3d-local-hole-working-copy.mjs';
+import {createAIGReal3DCurvedJunctionWorkingCopy}
+ from './aig-real3d-curved-junction-working-copy.mjs';
 import {
  auditAIG3DSourceSilhouette,validateAIGInspectionCapturePlan,
  AIG_INSPECTION_FRAME_SCHEMA
@@ -145,6 +147,10 @@ $('inspect').addEventListener('click',async()=>{
  $('native-output-status').textContent='尚無來源驗證圖，解析度輸出 BLOCK。';
  currentNativeReview=null;$('compare-source').disabled=true;
  $('make-local-working-copy').disabled=true;
+ $('make-curved-junction-copy').disabled=true;
+ $('curved-junction-download').hidden=true;
+ $('curved-junction-download').removeAttribute('href');
+ $('curved-junction-stats').textContent='尚未載入原始 OBJ；非平面補面僅能新增可溯源的候選曲面。';
  $('local-working-copy-stats').textContent='先匯入原始 OBJ 並執行來源檢查。原檔案不會被修改。';
  $('local-working-copy-download').hidden=true;
  $('local-working-copy-download').removeAttribute('href');
@@ -578,6 +584,10 @@ $('inspect').addEventListener('click',async()=>{
   }:null;
   $('compare-source').disabled=!currentNativeReview;
   $('make-local-working-copy').disabled=!currentNativeReview;
+  $('make-curved-junction-copy').disabled=!currentNativeReview;
+  $('curved-junction-stats').textContent=currentNativeReview?
+   '來源已通過原始標記檢查，可嘗試小型非平面四邊以上缺口；無法修復時顯示 BLOCK。':
+   '缺少可核對的 OBJ；非平面曲面修補 BLOCK。';
   $('local-working-copy-stats').textContent=currentNativeReview?
    '可建立獨立小型平面破洞修補工作副本：按鈕只新增 OBJ 三角面，絕不覆寫原始來源。':
    '尚無通過原始網格標記審核的 OBJ，修補工作副本 BLOCK。';
@@ -912,5 +922,64 @@ $('native-output-render').addEventListener('click',async()=>{
   captureRenderer?.destroy?.();
   running=false;
   $('native-output-render').disabled=!lastResolutionSource;
+ }
+});
+
+
+$('make-curved-junction-copy').addEventListener('click',async()=>{
+ const original=currentNativeReview;
+ if(running||!original?.objText){
+  $('curved-junction-stats').textContent='BLOCK：僅接受通過來源檢查的真 OBJ。';return;
+ }
+ running=true;
+ $('make-curved-junction-copy').disabled=true;
+ $('curved-junction-download').hidden=true;
+ try{
+  const copy=createAIGReal3DCurvedJunctionWorkingCopy({
+   objText:original.objText,sourceName:original.sourceName,
+   sourceSha256:original.sourceSha256,
+   heightMm:original.heightMm,upAxis:original.upAxis,
+   authorizeWorkingCopy:true,
+   maxHoleDiameterMm:90,maxNonplanarityMm:3,maxFaceBendDegrees:55
+  });
+  const file=new File([copy.workingCopyCandidateObjText],
+   'AIG-Real3D-CURVED-JUNCTION-WORKING-COPY.obj',
+   {type:'text/plain'});
+  const bytes=await file.arrayBuffer();
+  const sha=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))]
+   .map(x=>x.toString(16).padStart(2,'0')).join('');
+  if(sha===original.sourceSha256)
+   throw Error('工作副本 SHA 與來源完全相同，禁止假成功');
+  const url=URL.createObjectURL(file);urlPool.add(url);
+  const link=$('curved-junction-download');
+  link.href=url;link.download=file.name;link.hidden=false;
+  // Load into existing independent four-camera OBJ comparison tool.
+  const dt=new DataTransfer();dt.items.add(file);
+  $('after-source-file').files=dt.files;
+  if(!report)throw Error('原始來源報告不存在');
+  const {workingCopyCandidateObjText:ignore,...evidence}=copy;
+  report.curvedJunctionWorkingCopy={
+   ...evidence,workingCopySha256:sha,
+   actualSourceXYZPreserved:true,
+   generatedOnlyByRealUserCallback:true,
+   noAutomaticAnatomicalAcceptance:true
+  };
+  $('evidence').textContent=JSON.stringify(report,null,2);
+  $('curved-junction-stats').textContent=
+   '已產生獨立非平面候選 OBJ（不覆寫來源）。原始頂點 '+copy.sourceVertices+
+   ' 個；新頂點 '+copy.addedSourceVertices+'、新三角面 '+
+   copy.addedSourceTriangles+'；邊界非平面偏差 '+
+   copy.boundaryNonplanarityMm+' mm、中心校正 '+
+   copy.centerNormalCorrectionMm+' mm；最大新舊曲面折角 '+
+   copy.worstAddedToOriginalFaceBendDegrees+
+   '°。可下載，並已放入下方真 GPU 前後比較欄。'+
+   ' 此為近似插值，不代表真人頭頸、手部或腳趾已修復。';
+ }catch(err){
+  $('curved-junction-download').hidden=true;
+  $('curved-junction-stats').textContent='BLOCK：'+(err?.message||String(err))+
+   '。原始 OBJ 不會被更改；不以假模型取代失敗的真實曲面。';
+ }finally{
+  running=false;
+  $('make-curved-junction-copy').disabled=!currentNativeReview;
  }
 });

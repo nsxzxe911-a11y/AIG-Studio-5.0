@@ -148,6 +148,15 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
  </div>
  <div id="local-working-copy-stats" class="status" role="status" aria-live="polite">先匯入原始 OBJ 並執行來源檢查。原檔案不會被修改。</div>
 </div>
+<div class="panel diagnostic-inner" id="curved-junction-panel">
+ <h3>非平面曲面接合｜受控補面工作副本 V1</h3>
+ <p>只處理原始 OBJ 4～8 邊、小於 90 mm 的單一非平面凸形缺口；沿真來源相鄰面法線推估候選中心頂點（校正上限 1.5 mm），並檢查新舊曲面折角。**這是可審查的幾何插值，不是恢復照片未拍到的頭頸、手指或腳趾。**</p>
+ <div class="row">
+  <button id="make-curved-junction-copy" type="button" disabled>建立非平面曲面候選 OBJ 工作副本</button>
+  <a id="curved-junction-download" hidden download="AIG-Real3D-CURVED-JUNCTION-WORKING-COPY.obj">下載獨立曲面工作副本 OBJ</a>
+ </div>
+ <div id="curved-junction-stats" class="status" role="status" aria-live="polite">尚未載入通過來源核對的 OBJ；不自動新增人體曲面。</div>
+</div>
 <div class="panel diagnostic-inner" id="repair-diff-panel">
  <h3>修復前／後原始 OBJ 唯讀比較</h3>
  <p>以剛才完成的 OBJ 作為修復前版本；可另選修復後 OBJ。兩份模型各自建立 SHA、相同身高／朝上軸與標記審核，再對比新舊局部破洞與錯面片。**異常減少不是自動修復、更不代表自然人體 PASS。**</p>
