@@ -22,6 +22,8 @@ import {reviewAIGReal3DSourceEnvelope,compareAIGReal3DSourceEnvelopes}
  from './aig-real3d-source-envelope-review.mjs';
 import {auditAIGReal3DSceneCrossSections}
  from './aig-real3d-native-body-cross-sections.mjs';
+import {createAIGReal3DOBJLocalPatchWorkingCopy}
+ from './aig-real3d-local-hole-working-copy.mjs';
 import {
  auditAIG3DSourceSilhouette,validateAIGInspectionCapturePlan,
  AIG_INSPECTION_FRAME_SCHEMA
@@ -133,6 +135,10 @@ $('inspect').addEventListener('click',async()=>{
  }
  running=true;$('inspect').disabled=true;$('report-download').disabled=true;report=null;
  currentNativeReview=null;$('compare-source').disabled=true;
+ $('make-local-working-copy').disabled=true;
+ $('local-working-copy-stats').textContent='先匯入原始 OBJ 並執行來源檢查。原檔案不會被修改。';
+ $('local-working-copy-download').hidden=true;
+ $('local-working-copy-download').removeAttribute('href');
  $('defect-edge-list').replaceChildren();
  $('defect-selected').textContent='尚未選取；匯入來源 OBJ 後可點選真異常邊。';
  $('source-3d-slice-stats').textContent='尚未取得原始三角面截面，不能判定人型。';
@@ -525,10 +531,14 @@ $('inspect').addEventListener('click',async()=>{
    (summary.averageIoU===null?'無法計算':(summary.averageIoU*100).toFixed(2)+'%')+
    '；失敗：'+silhouetteProblems.length+'；這不是人體自然度自動驗收。';
   currentNativeReview=localSurface?{
-   localSurface,sourceSha256:hash,heightMm,upAxis:axis,landmarks,
+   localSurface,objText,sourceSha256:hash,heightMm,upAxis:axis,landmarks,
    sourceFrames,sourceName:file.name
   }:null;
   $('compare-source').disabled=!currentNativeReview;
+  $('make-local-working-copy').disabled=!currentNativeReview;
+  $('local-working-copy-stats').textContent=currentNativeReview?
+   '可建立獨立小型平面破洞修補工作副本：按鈕只新增 OBJ 三角面，絕不覆寫原始來源。':
+   '尚無通過原始網格標記審核的 OBJ，修補工作副本 BLOCK。';
   $('repair-compare-stats').textContent=currentNativeReview?
    '修復前來源已鎖定 SHA '+hash.slice(0,16)+
    '…；請選擇第二份 OBJ 並開始差異比較。':
@@ -700,5 +710,62 @@ $('compare-source').addEventListener('click',async()=>{
   afterRenderer?.destroy?.();running=false;
   $('inspect').disabled=false;
   $('compare-source').disabled=!currentNativeReview;
+ }
+});
+
+
+$('make-local-working-copy').addEventListener('click',async()=>{
+ const original=currentNativeReview;
+ if(running||!original?.objText){
+  $('local-working-copy-stats').textContent='BLOCK：需要真實原始 OBJ 與來源標記審核。';return;
+ }
+ running=true;$('make-local-working-copy').disabled=true;
+ $('local-working-copy-download').hidden=true;
+ try{
+  const candidate=createAIGReal3DOBJLocalPatchWorkingCopy({
+   objText:original.objText,heightMm:original.heightMm,
+   upAxis:original.upAxis,sourceSha256:original.sourceSha256,
+   sourceName:original.sourceName,authorizeWorkingCopy:true,
+   maximumHoleDiameterMm:100,maximumHoles:2
+  });
+  const file=new File([candidate.workingCopyCandidateObjText],
+   'AIG-Real3D-LOCAL-PATCH-WORKING-COPY.obj',{type:'text/plain'});
+  const candidateSha256=[...new Uint8Array(await crypto.subtle.digest(
+   'SHA-256',await file.arrayBuffer()))]
+   .map(x=>x.toString(16).padStart(2,'0')).join('');
+  if(candidateSha256===original.sourceSha256)
+   throw Error('工作副本 SHA 未改變：拒絕假修補');
+  const url=URL.createObjectURL(file);urlPool.add(url);
+  const link=$('local-working-copy-download');link.href=url;
+  link.download=file.name;link.hidden=false;
+  // This is a separate real File (unmodified original file remains selected).
+  // Enables the existing true before/after GPU comparison without re-upload.
+  const transfer=new DataTransfer();transfer.items.add(file);
+  $('after-source-file').files=transfer.files;
+  if(!report)throw Error('先完成真來源報告');
+  const {workingCopyCandidateObjText:omitted,...summary}=candidate;
+  report.localPatchWorkingCopy={
+   ...summary,workingCopySha256:candidateSha256,
+   originalSourceSha256:original.sourceSha256,
+   generatedOnlyAfterUserClick:true,
+   trueNativeOBJNewFaceGeometry:true,
+   sourceAndCandidateSHAIndependent:true,
+   actualHumanSurfaceReconstructionComplete:false,
+   humanNaturalAppearancePASS:false,releasePASS:false
+  };
+  $('evidence').textContent=JSON.stringify(report,null,2);
+  $('local-working-copy-stats').textContent=
+   '已建立獨立 OBJ 工作副本。原始頂點 '+candidate.sourceOriginalVertices+
+   ' 個、原始頂點改動 0、新增真三角面 '+candidate.addedFaceCount+
+   '、補足邊界 '+candidate.repairedSourceBoundaryEdges+
+   ' 條。原 SHA '+original.sourceSha256.slice(0,16)+'…；工作副本 SHA '+
+   candidateSha256.slice(0,16)+'…。可下載，也已填入下方修復前／後比較欄。'+
+   ' 只證明小破洞的拓樸修補，不代表自然人體完成。';
+ }catch(e){
+  $('local-working-copy-stats').textContent='BLOCK：'+
+   (e?.message||String(e))+
+   '。不符合安全補面條件時不產生工作副本，也不會修改原始 OBJ。';
+ }finally{
+  running=false;$('make-local-working-copy').disabled=!currentNativeReview;
  }
 });
