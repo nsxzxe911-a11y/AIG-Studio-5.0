@@ -184,6 +184,9 @@ $('import').addEventListener('click',async()=>{
   if(result.status!=='WEBGL_XYZ_TRIANGLES_RENDERED')
    throw Error('原始 GPU 三角面沒有真正繪製');
   inspect();
+  document.dispatchEvent(new CustomEvent('aig-real3d-v104-source-ready',{
+   detail:{imported,scene:activeScene(),sourceRevision:v102SourceEpoch}
+  }));
   status('V99 已從真正 GLB 解析 '+imported.sourceTriangles+
    ' 個原始三角面；SHA 與 GPU PASS。來源人物身份及電影級外觀仍 BLOCK。');
  }catch(e){enable(false);status('BLOCK：'+String(e?.message??e));}
@@ -311,6 +314,9 @@ $('repair101').addEventListener('click',()=>{
     done();return;
    }
    showRepaired=true;
+   document.dispatchEvent(new CustomEvent('aig-real3d-v104-source-ready',{
+    detail:{imported,scene:activeScene(),sourceRevision:v102SourceEpoch}
+   }));
    focusCamera();
    // Return only the final GPU snapshot. AI's intermediate revisions
    // never trigger the full native 4K PNG pipeline.
@@ -374,7 +380,11 @@ for(const [id,repaired] of [['original101',false],['remodel101',true]]){
  $(id).addEventListener('click',()=>{
   if(!ready||busy||!v101?.workingScene)return;
   try{
-   showRepaired=repaired;focusCamera();
+   showRepaired=repaired;
+   document.dispatchEvent(new CustomEvent('aig-real3d-v104-source-ready',{
+    detail:{imported,scene:activeScene(),sourceRevision:v102SourceEpoch}
+   }));
+   focusCamera();
    const result=renderer.render(activeScene());
    if(result.status!=='WEBGL_XYZ_TRIANGLES_RENDERED')
     throw Error('切換的真幾何沒有繪製');
