@@ -1103,6 +1103,87 @@ try{
   dir+'/NONHUMAN-V86-SEPARATE-FUR-AND-GARMENT-ORIGINAL-GPU.png');
  await writeFile(dir+'/NONHUMAN-V86-FUR-CLOTH-MATERIAL-AND-INDEPENDENT-SHA.json',
   JSON.stringify(coatReport,null,2));
+ // V87 one fixed WebGL material shader accepts arbitrary NEW user-defined
+ // recipe families from JSON. No per-material shader edit or geometry rebuild.
+ assert.equal(await page.locator('#recipe-run').isDisabled(),false);
+ const userMaterialCatalog={
+  schema:'AIG_REAL3D_V87_MATERIAL_LIBRARY_V1',
+  recipes:[
+   {id:'novel_space_fabric',name:'QA Alien Fabric',family:'user_custom_movie',
+    layers:[
+     {color:[.03,.5,.85],opacity:1,metallic:.24,roughness:.42,
+      mask:'SOLID',scale:25},
+     {color:[.95,.25,.08],opacity:.8,metallic:.1,roughness:.79,
+      mask:'STRIPES',scale:97}
+    ]},
+   {id:'other_metal',name:'QA Custom Metal',family:'unlisted_custom',
+    layers:[{color:[.56,.71,.86],opacity:1,metallic:.94,
+     roughness:.11,mask:'NOISE',scale:44}]}
+  ]
+ };
+ const jsonBytes=Buffer.from(JSON.stringify(userMaterialCatalog),'utf8');
+ const catalogSHA=createHash('sha256').update(jsonBytes).digest('hex');
+ await page.locator('#recipe-catalog-file').setInputFiles({
+  name:'V87-CUSTOM-BATCH-MATERIALS.json',
+  mimeType:'application/json',buffer:jsonBytes
+ });
+ await page.locator('#recipe-catalog-import').click();
+ await page.waitForFunction(()=>{
+  const value=document.querySelector('#recipe-status')?.textContent||'';
+  return value.includes('材質庫驗證成功')||value.startsWith('BLOCK');
+ },null,{timeout:15000});
+ assert.match(await page.locator('#recipe-status').textContent(),
+  /材質庫驗證成功：2 組配方/);
+ await page.locator('#recipe-material-select').selectOption('novel_space_fabric');
+ await page.locator('#recipe-run').click();
+ await page.waitForFunction(()=>{
+  const txt=document.querySelector('#recipe-status')?.textContent||'';
+  return document.querySelector('#recipe-run')?.disabled===false&&
+   (txt.includes('V87 同引擎多材質 PASS')||txt.startsWith('BLOCK'));
+ },null,{timeout:180000});
+ const recipeStatus=await page.locator('#recipe-status').textContent();
+ assert.match(recipeStatus,/V87 同引擎多材質 PASS/,recipeStatus);
+ const recipeEvidence=JSON.parse(await page.locator('#recipe-evidence').textContent());
+ assert.equal(recipeEvidence.schema,'AIG_REAL3D_V87_MATERIAL_RECIPE_WORKSTATION_GATE_V1');
+ assert.equal(recipeEvidence.catalogFileSha256,catalogSHA);
+ assert.equal(recipeEvidence.sourceObjSha256,curvedSHA);
+ assert.equal(recipeEvidence.catalogMaterialCount,2);
+ assert.equal(recipeEvidence.selectedRecipeId,'novel_space_fabric');
+ assert.equal(recipeEvidence.selectedRecipeFamily,'user_custom_movie');
+ assert.equal(recipeEvidence.compiledUniformLayerCount,2);
+ assert.equal(recipeEvidence.materialSourceCopyIdentityPreserved,true);
+ assert.equal(recipeEvidence.originalGPUBufferReallocationsBetweenMaterialChanges,0);
+ assert.equal(recipeEvidence.fullGPUShadersRecompiledPerRecipe,0);
+ assert.equal(recipeEvidence.actualSourceGPUReadbackFrames.length,2);
+ assert.notEqual(recipeEvidence.actualSourceGPUReadbackFrames[0].sha256,
+  recipeEvidence.actualSourceGPUReadbackFrames[1].sha256);
+ assert.equal(recipeEvidence.UVTexturesRefractionDisplacementSSSValidated,false);
+ assert.equal(recipeEvidence.filmQualityPhotorealismPASS,false);
+ assert.equal(await page.locator('#recipe-gallery figure img').count(),2);
+ const recipeDownload=page.waitForEvent('download',{timeout:30000});
+ await page.locator('#recipe-gallery figure').last().locator('a').click();
+ const downloadedRecipePNG=await recipeDownload;
+ const recipeBytes=await readFile(await downloadedRecipePNG.path());
+ assert.equal(recipeBytes.readUInt32BE(16),640);
+ assert.equal(recipeBytes.readUInt32BE(20),640);
+ assert.equal(createHash('sha256').update(recipeBytes).digest('hex'),
+  recipeEvidence.actualSourceGPUReadbackFrames[1].sha256);
+ await copyFile(await downloadedRecipePNG.path(),
+  dir+'/NONHUMAN-V87-UNLISTED-CUSTOM-MATERIAL-RECIPE-GPU.png');
+ await writeFile(dir+'/NONHUMAN-V87-BATCH-MATERIAL-JSON-NO-BODY-REUPLOAD.json',
+  JSON.stringify(recipeEvidence,null,2));
+ // Another never-before-coded recipe uses EXACT SAME GPU pipeline.
+ await page.locator('#recipe-material-select').selectOption('other_metal');
+ await page.locator('#recipe-run').click();
+ await page.waitForFunction(()=>{
+  const t=document.querySelector('#recipe-status')?.textContent||'';
+  return document.querySelector('#recipe-run')?.disabled===false&&
+   (t.includes('V87 同引擎多材質 PASS')||t.startsWith('BLOCK'));
+ },null,{timeout:180000});
+ const nextMaterial=JSON.parse(await page.locator('#recipe-evidence').textContent());
+ assert.equal(nextMaterial.selectedRecipeId,'other_metal');
+ assert.equal(nextMaterial.fullGPUShadersRecompiledPerRecipe,0);
+ assert.equal(nextMaterial.originalGPUBufferReallocationsBetweenMaterialChanges,0);
  assert.deepEqual(errors,[]);
  await page.screenshot({path:dir+'/DENSE-SOURCE-ORIGINAL-GPU-INTAKE.png',fullPage:true});
  await writeFile(dir+'/proof.json',JSON.stringify({
@@ -1113,7 +1194,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_V86_FUR_MATERIAL_SEPARATE_GARMENT_GPU_ORIGINAL_SOURCE_PASS_NONHUMAN');
+ console.log('REAL3D_V87_USER_JSON_MATERIAL_RECIPES_SAME_GPU_SHADER_NO_REUPLOAD_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;

@@ -12,6 +12,8 @@ import {mountAIGReal3DCurvedSixDirectionControls}
  from './aig-real3d-curved-six-direction-ui.mjs';
 import {mountAIGReal3DFurClothLayerControls}
  from './aig-real3d-fur-cloth-layer-ui.mjs';
+import {mountAIGReal3DMaterialRecipeUI}
+ from './aig-real3d-material-recipe-ui.mjs';
 import {mountAIGReal3DHierarchicalFKControls}
  from './aig-real3d-hierarchical-fk-ui.mjs';
 import {mountAIGReal3DDualTimelineControls}
@@ -1031,6 +1033,7 @@ $('dense-source-run').addEventListener('click',async()=>{
  sixSourceUI.reset();
  curvedSixUI.reset();
  furClothUI.reset();
+ materialRecipeUI.reset();
  $('dense-source-status').textContent='解析原始高密度三角面、分塊並檢查真 GPU 輸出中…';
  let gpu=null;
  try{
@@ -1092,6 +1095,7 @@ $('dense-source-run').addEventListener('click',async()=>{
   sixSourceUI.load({dense,file:f,sha256:sourceSha256,heightMm,upAxis});
   curvedSixUI.load({dense,file:f,sha256:sourceSha256,heightMm,upAxis});
   furClothUI.load({dense,file:f,sha256:sourceSha256,heightMm,upAxis});
+  materialRecipeUI.load({dense,file:f,sha256:sourceSha256,heightMm,upAxis});
   latestDenseSourceEvidence={
    ...packet,
    realGPUFront:{width:1080,height:1920,sha256:frame.sha256,
@@ -1131,6 +1135,7 @@ $('dense-source-run').addEventListener('click',async()=>{
  sixSourceUI.reset();
  curvedSixUI.reset();
  furClothUI.reset();
+ materialRecipeUI.reset();
   $('dense-source-evidence').textContent='BLOCK：'+(error?.message||String(error));
   $('dense-source-status').textContent='BLOCK：'+(error?.message||String(error))+
    '。來源沒有通過驗證時不能宣稱高密度 GPU 匯入成功。';
@@ -1181,6 +1186,13 @@ const hierarchicalFKUI=mountAIGReal3DHierarchicalFKControls({
  isBusy:()=>running,
  setBusy:v=>{running=v;},
  registerURL:url=>urlPool.add(url)
+});
+
+const materialRecipeUI=mountAIGReal3DMaterialRecipeUI({
+ $,
+ isBusy:()=>running,
+ setBusy:v=>{running=v;},
+ registerURL:u=>urlPool.add(u)
 });
 
 const furClothUI=mountAIGReal3DFurClothLayerControls({
