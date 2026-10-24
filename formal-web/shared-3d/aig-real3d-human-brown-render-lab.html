@@ -20,6 +20,7 @@ figure img{width:100%;height:400px;max-height:52vh;object-fit:contain;display:bl
 .diagnostic-inner{margin:12px 0;border-color:#705338}#defect-edge-list button{min-height:38px;background:#2d201b;max-width:100%;word-break:break-word}
 #defect-selected{white-space:pre-wrap;overflow-wrap:anywhere}#repair-compare-gallery .compare-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 #repair-compare-gallery figure img{height:280px}#defect-gallery figure img[data-pickable=true]{cursor:crosshair;touch-action:manipulation}
+#shape-envelope-metrics{margin-top:8px;color:#ecd2b6}#shape-envelope-metrics strong{font-size:16px}#shape-envelope-review .status{border-color:#b37d43}
 #reference-stats{display:block;margin:11px 0;padding:8px;border:1px solid #8f683d;border-radius:8px;color:#efcca5}
 figcaption{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:9px}
 a{color:#7fe7fb}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:290px;overflow-y:auto;font-size:11px}
@@ -45,6 +46,13 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 </div>
 <p>第一階驗證原始 OBJ／GLB 的 SHA、真實三角面及來源聲明；第二階才以同一模型輸出黑線、咖啡平塗、陰影、低高光。四視角無炫光，外觀自然度永遠需獨立比對真人來源。</p>
 <div id="status" class="status" role="status" aria-live="polite">未匯入模型。外觀驗收 BLOCK。</div>
+</section>
+<section class="panel" id="shape-envelope-review">
+<h2>原始三維來源外型實際尺寸｜不靠陰影修飾</h2>
+<div id="shape-envelope-stats" class="status" role="status" aria-live="polite">尚未取得 OBJ／GLB 原始 XYZ 尺寸。人體外型仍 BLOCK。</div>
+<div id="shape-envelope-metrics" role="region" aria-label="實際正面寬度及側面厚度">
+<p>匯入模型後顯示正面寬度、側面厚度、身高與倍率。此處測量的是原始網格包圍盒，不能診斷體重、胖瘦或取代人體比例對照。</p>
+</div>
 </section>
 <section class="panel" id="reference-section">
 <h2>真人來源四視角輪廓對照（透明 PNG）</h2>
