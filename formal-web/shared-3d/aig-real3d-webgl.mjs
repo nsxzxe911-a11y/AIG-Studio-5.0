@@ -48,11 +48,18 @@ function program(gl,vs,fs){
 }
 const vs=[
  'attribute vec3 aPosition,aNormal;',
+ 'attribute vec2 aTexUV;',
+ 'attribute vec4 aTangent;',
  'uniform mat4 uModel,uVP;',
  'uniform mat3 uNormal;',
  'varying vec3 vNormal,vWorld;',
+ 'varying vec2 vUV;',
+ 'varying vec3 vTangent,vBiTangent;',
  'void main(){vec4 world=uModel*vec4(aPosition,1.0);vWorld=world.xyz;',
- 'vNormal=normalize(uNormal*aNormal);gl_Position=uVP*world;}'
+ 'vNormal=normalize(uNormal*aNormal);',
+ 'vec3 tn=normalize(uNormal*aTangent.xyz);',
+ 'vTangent=tn;vBiTangent=normalize(cross(vNormal,tn))*aTangent.w;',
+ 'vUV=aTexUV;gl_Position=uVP*world;}'
 ].join('\n');
 const fs=[
  'precision mediump float;',
@@ -61,6 +68,10 @@ const fs=[
  'uniform vec3 uEye,uEmission;',
  'uniform float uMetallic,uRoughness,uInspectMode;',
  'uniform float uFurStrength,uFurFrequency;',
+ 'uniform sampler2D uAlbedoMap,uNormalMap;',
+ 'uniform float uHasAlbedoMap,uHasNormalMap,uNormalMapStrength,uClearcoat;',
+ 'varying vec2 vUV;',
+ 'varying vec3 vTangent,vBiTangent;',
  'uniform vec3 uFurUndercoat,uFurGuard;',
  'uniform float uRecipeEnabled;',
  'uniform vec4 uRecipeColor[4],uRecipeSpec[4];',
@@ -73,6 +84,12 @@ const fs=[
  '}',
 
  'void main(){vec3 n=normalize(vNormal),l=normalize(vec3(0.42,0.79,0.55));',
+ 'if(uHasNormalMap>0.5&&uInspectMode<0.5){',
+ 'vec3 mapped=texture2D(uNormalMap,vUV).rgb*2.0-1.0;',
+ 'mapped.xy*=uNormalMapStrength;',
+ 'mat3 basis=mat3(normalize(vTangent),normalize(vBiTangent),n);',
+ 'n=normalize(basis*normalize(mapped));',
+ '}',
  'vec3 view=normalize(uEye-vWorld);float diffuse=max(dot(n,l),0.0);',
  'vec3 halfV=normalize(l+view);',
  'vec3 recipeAlbedo=uColor.rgb;',
@@ -88,7 +105,11 @@ const fs=[
  '}',
  'float shine=mix(105.0,7.0,recipeRough);',
  'float spec=pow(max(dot(n,halfV),0.0),shine)*(0.06+recipeMetal*0.44);',
- 'vec3 shaded=recipeAlbedo*(0.24+0.76*diffuse)+vec3(spec)+uEmission;',
+ 'if(uHasAlbedoMap>0.5&&uInspectMode<0.5){',
+ 'recipeAlbedo*=texture2D(uAlbedoMap,vUV).rgb;',
+ '}',
+ 'float coat=uClearcoat*pow(max(dot(n,halfV),0.0),140.0)*0.17;',
+ 'vec3 shaded=recipeAlbedo*(0.24+0.76*diffuse)+vec3(spec+coat)+uEmission;',
  'if(uFurStrength>0.001&&uInspectMode<0.5){',
  'vec3 p=floor(vWorld*uFurFrequency+normalize(vNormal)*3.0);',
  'float strand=hashFur(p)*0.6+hashFur(p*1.61)*0.4;',
@@ -160,6 +181,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  meshProg=program(gl,vs,fs),lineProg=program(gl,lineVs,lineFs);
  const u={pos:gl.getAttribLocation(meshProg,'aPosition'),
   normal:gl.getAttribLocation(meshProg,'aNormal'),
+  texUV:gl.getAttribLocation(meshProg,'aTexUV'),
+  tangent:gl.getAttribLocation(meshProg,'aTangent'),
   model:gl.getUniformLocation(meshProg,'uModel'),vp:gl.getUniformLocation(meshProg,'uVP'),
   normalMatrix:gl.getUniformLocation(meshProg,'uNormal'),
   color:gl.getUniformLocation(meshProg,'uColor'),
@@ -174,7 +197,13 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   furGuard:gl.getUniformLocation(meshProg,'uFurGuard'),
   recipeEnabled:gl.getUniformLocation(meshProg,'uRecipeEnabled'),
   recipeColor:gl.getUniformLocation(meshProg,'uRecipeColor[0]'),
-  recipeSpec:gl.getUniformLocation(meshProg,'uRecipeSpec[0]')};
+  recipeSpec:gl.getUniformLocation(meshProg,'uRecipeSpec[0]'),
+  albedoMap:gl.getUniformLocation(meshProg,'uAlbedoMap'),
+  normalMap:gl.getUniformLocation(meshProg,'uNormalMap'),
+  hasAlbedo:gl.getUniformLocation(meshProg,'uHasAlbedoMap'),
+  hasNormal:gl.getUniformLocation(meshProg,'uHasNormalMap'),
+  normalStrength:gl.getUniformLocation(meshProg,'uNormalMapStrength'),
+  clearcoat:gl.getUniformLocation(meshProg,'uClearcoat')};
  const lu={pos:gl.getAttribLocation(lineProg,'aPosition'),
   model:gl.getUniformLocation(lineProg,'uModel'),
   vp:gl.getUniformLocation(lineProg,'uVP'),
@@ -182,6 +211,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  const camera={projection:'perspective',yaw:.7,pitch:.36,distance:14,
   focus:[0,0,0],fovDeg:48,orthoSpan:9,near:.01,far:20000};
  let dead=false,lost=false,cache=new WeakMap(),buffers=[],last=null;
+ const mappedTextureCache=new WeakMap(),ownedMappedTextures=[];
+ let mappedTexturesCreated=0,mappedTexturesDeleted=0;
  let createdOwnedBuffers=0,deletedOwnedBuffers=0,fullBufferUploads=0,
   subBufferUploads=0,uploadedFullBytes=0,uploadedSubBytes=0;
  const INSPECTION_MODES=['LIT','SILHOUETTE','NORMALS','ALBEDO',
@@ -259,12 +290,51 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   let m=cache.get(mesh);if(m)return m;
   const n=mesh.positions.length/3;
   if(n>65535&&!uintExt)throw Error('AIG3D_UINT_INDEX_EXTENSION_REQUIRED');
-  const idx=n>65535?new Uint32Array(mesh.indices):new Uint16Array(mesh.indices);
-  m={pos:createBuffer(gl.ARRAY_BUFFER,new Float32Array(mesh.positions)),
-   norm:createBuffer(gl.ARRAY_BUFFER,new Float32Array(mesh.normals)),
-   indices:createBuffer(gl.ELEMENT_ARRAY_BUFFER,idx),
-   count:idx.length,type:n>65535?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT};
+  if(mesh.originalSourceGeometryMesh){
+   const base=mesh.originalSourceGeometryMesh;
+   if(base.positions!==mesh.positions||base.normals!==mesh.normals||
+    base.indices!==mesh.indices||base.vertexCount!==mesh.vertexCount)
+    throw Error('AIG3D_TEXTURE_SOURCE_GEOMETRY_MISMATCH');
+   m={...bufferMesh(base),sharesOriginalGeometry:true};
+  }else{
+   const idx=n>65535?new Uint32Array(mesh.indices):new Uint16Array(mesh.indices);
+   m={pos:createBuffer(gl.ARRAY_BUFFER,new Float32Array(mesh.positions)),
+    norm:createBuffer(gl.ARRAY_BUFFER,new Float32Array(mesh.normals)),
+    indices:createBuffer(gl.ELEMENT_ARRAY_BUFFER,idx),
+    count:idx.length,type:n>65535?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT};
+  }
+  if(mesh.uvs||mesh.tangents){
+   if(!Array.isArray(mesh.uvs)||mesh.uvs.length!==n*2||
+    !Array.isArray(mesh.tangents)||mesh.tangents.length!==n*4||
+    ![...mesh.uvs,...mesh.tangents].every(finite))
+    throw Error('AIG3D_UV_TANGENT_SOURCE_INVALID');
+   m.uv=createBuffer(gl.ARRAY_BUFFER,new Float32Array(mesh.uvs));
+   m.tangent=createBuffer(gl.ARRAY_BUFFER,new Float32Array(mesh.tangents));
+  }
   cache.set(mesh,m);return m;
+ }
+ function mapTexture(asset){
+  if(!asset)return null;
+  const cached=mappedTextureCache.get(asset);
+  if(cached)return cached;
+  if(!Number.isInteger(asset.width)||!Number.isInteger(asset.height)||
+   asset.width<2||asset.height<2||asset.width>512||asset.height>512||
+   !Array.isArray(asset.pixels)||
+   asset.pixels.length!==asset.width*asset.height*4||
+   asset.pixels.some(x=>!Number.isInteger(x)||x<0||x>255))
+   throw Error('AIG3D_GPU_MAP_RGBA_SOURCE_INVALID');
+  const tex=gl.createTexture();
+  if(!tex)throw Error('AIG3D_GPU_MAP_TEXTURE_ALLOCATION_FAILED');
+  gl.bindTexture(gl.TEXTURE_2D,tex);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,asset.width,asset.height,
+   0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(asset.pixels));
+  mappedTextureCache.set(asset,tex);ownedMappedTextures.push(tex);
+  mappedTexturesCreated++;return tex;
  }
  function setCamera(patch={}){
   if(dead)throw Error('AIG3D_RENDERER_DESTROYED');
@@ -327,6 +397,17 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   gl.enableVertexAttribArray(u.pos);gl.vertexAttribPointer(u.pos,3,gl.FLOAT,false,0,0);
   gl.bindBuffer(gl.ARRAY_BUFFER,mesh.norm);
   gl.enableVertexAttribArray(u.normal);gl.vertexAttribPointer(u.normal,3,gl.FLOAT,false,0,0);
+  if(mesh.uv&&mesh.tangent){
+   gl.bindBuffer(gl.ARRAY_BUFFER,mesh.uv);
+   gl.enableVertexAttribArray(u.texUV);
+   gl.vertexAttribPointer(u.texUV,2,gl.FLOAT,false,0,0);
+   gl.bindBuffer(gl.ARRAY_BUFFER,mesh.tangent);
+   gl.enableVertexAttribArray(u.tangent);
+   gl.vertexAttribPointer(u.tangent,4,gl.FLOAT,false,0,0);
+  }else{
+   gl.disableVertexAttribArray(u.texUV);gl.vertexAttrib2f(u.texUV,0,0);
+   gl.disableVertexAttribArray(u.tangent);gl.vertexAttrib4f(u.tangent,1,0,0,1);
+  }
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mesh.indices);
   gl.uniformMatrix4fv(u.model,false,new Float32Array(model));
   gl.uniformMatrix4fv(u.vp,false,vp);
@@ -361,6 +442,26 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    !recipe.packedLayerRGBA.every(x=>Number.isFinite(x)&&x>=0&&x<=1)||
    !recipe.packedLayerSpec.every(Number.isFinite)
   ))throw Error('REAL3D_GPU_MATERIAL_RECIPE_INVALID');
+  const mapped=mat.aigTextureNodes;
+  if(mapped){
+   if(mapped.schema!=='AIG_REAL3D_V88_UV_TANGENT_NORMAL_CLEARCOAT_V1'||
+    !mesh.uv||!mesh.tangent||
+    !finite(mapped.normalStrength)||mapped.normalStrength<0||
+    mapped.normalStrength>2||
+    !finite(mapped.clearcoat)||mapped.clearcoat<0||mapped.clearcoat>1)
+    throw Error('AIG3D_GPU_TEXTURE_NODE_SOURCE_INVALID');
+  }
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D,mapped?mapTexture(mapped.albedoImage):null);
+  gl.uniform1i(u.albedoMap,1);
+  gl.activeTexture(gl.TEXTURE2);
+  gl.bindTexture(gl.TEXTURE_2D,mapped?.normalImage?mapTexture(mapped.normalImage):null);
+  gl.uniform1i(u.normalMap,2);
+  gl.uniform1f(u.hasAlbedo,mapped?.albedoImage?1:0);
+  gl.uniform1f(u.hasNormal,mapped?.normalImage?1:0);
+  gl.uniform1f(u.normalStrength,mapped?.normalStrength??0);
+  gl.uniform1f(u.clearcoat,mapped?.clearcoat??0);
+  gl.activeTexture(gl.TEXTURE0);
   gl.uniform1f(u.recipeEnabled,recipe?1:0);
   gl.uniform4fv(u.recipeColor,new Float32Array(recipe?.packedLayerRGBA??[
    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
@@ -612,7 +713,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   if(dead||!mesh)return false;
   const old=cache.get(mesh);
   if(!old)return false;
-  const toDelete=[old.pos,old.norm,old.indices];
+  const toDelete=[...(old.sharesOriginalGeometry?[]:[old.pos,old.norm,old.indices]),
+   old.uv,old.tangent].filter(Boolean);
   for(const buffer of toDelete){
    gl.deleteBuffer(buffer);deletedOwnedBuffers++;
    const at=buffers.indexOf(buffer);
@@ -632,6 +734,9 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    fullBufferBytesUploaded:uploadedFullBytes,
    incrementalBytesUploaded:uploadedSubBytes,
    originalIndexTopologyNotRebuiltByDelta:true,
+   actualMaterialTexturesCreated:mappedTexturesCreated,
+   actualMaterialTexturesDeleted:mappedTexturesDeleted,
+   liveTrackedMaterialTextures:ownedMappedTextures.length,
    GPUDriverMemoryBytesUnknown:true,
    gpuMemoryPressureMeasurementClaimed:false,
    rendererDestroyed:dead};
@@ -640,6 +745,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   if(dead)return;dead=true;
   canvas.removeEventListener('webglcontextlost',contextLost);
   for(const b of buffers){gl.deleteBuffer(b);deletedOwnedBuffers++;}
+  for(const t of ownedMappedTextures){gl.deleteTexture(t);mappedTexturesDeleted++;}
+  ownedMappedTextures.length=0;
   gl.deleteProgram(meshProg);gl.deleteProgram(lineProg);
   if(edgeProg)gl.deleteProgram(edgeProg);
   if(maskFbo){gl.deleteFramebuffer(maskFbo);gl.deleteTexture(maskTexture);
