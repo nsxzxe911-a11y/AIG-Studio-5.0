@@ -95,6 +95,14 @@ try{
  assert.equal(anatomy.anatomy.missingRequiredMarkers.length,27);
  assert.equal(anatomy.anatomy.regionsRequiringReview,5);
  assert.equal(anatomy.anatomy.gpuChunksExcludedFromTopologyAnalysis,true);
+ assert.equal(anatomy.digitBranching.originalVertexCount,vertices);
+ assert.equal(anatomy.digitBranching.originalTriangleCount,triangles);
+ assert.equal(anatomy.digitBranching.gpuChunkBoundariesExcluded,true);
+ assert.equal(anatomy.digitBranching.handReports.length,2);
+ assert.equal(anatomy.digitBranching.bothFiveDistalBranchTechnicalObservations,false);
+ assert.equal(anatomy.digitBranching.sourceActuallyContainsFiveHumanFingersProven,false);
+ assert.equal(anatomy.digitBranching.naturalAppearancePASS,false);
+ assert.equal(anatomy.digitBranching.releasePASS,false);
  assert.equal(anatomy.fourView.fourRealGPUViewsCaptured,true);
  assert.equal(anatomy.fourView.fourReferenceContoursCompared,false);
  assert.equal(anatomy.fourView.views.length,4);
