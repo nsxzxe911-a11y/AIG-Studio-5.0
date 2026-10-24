@@ -109,7 +109,9 @@ try{
  await page.locator('#v104-right').click();
  report=JSON.parse(await page.locator('#v104-report').textContent());
  assert.equal(report.workPerformedOnDemand.actualFacesGenerated,2);
- assert.equal(report.workPerformedOnDemand.cacheHits,1);
+ // The UI displays the precomputed TOP through one cached lookup before
+ // the repeated RIGHT click: two cache hits, zero extra faces rebuilt.
+ assert.equal(report.workPerformedOnDemand.cacheHits,2);
  const before=await page.locator('#v104-depth-canvas').screenshot();
  // Do not label an automatically inferred second view as measured image.
  await page.locator('#v104-back').click();
