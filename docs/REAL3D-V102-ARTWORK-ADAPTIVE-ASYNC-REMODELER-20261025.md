@@ -28,6 +28,15 @@
 - `tests/aig-real3d-v102-adaptive-frame.test.mjs`：原圖 3:2、9:16、16:9、1:1 的真來源場景 ROI Frame Fit、實際透明圖判斷、三維原始頂點完全未改、影格合併與負載限流以及錯誤圖框 BLOCK。
 - `tests/aig-real3d-v102-adaptive-frame.real-browser.mjs`：真 Chromium HTML Canvas 載入 384×640 透明來源 PNG 與真正 GLB 二進位，主體限於原圖片 alpha 框架、GPU 相機不改 XYZ，V101 後端獨立 Worker 完成，原模型與修整模型真的輸出 3840×2160 PNG、SHA 不同。合成三件四面體只用來測量這套資料鏈，不是女主角真人身份、髮絲、布料品質。
 
+## 4K PNG 假 BLOCK 與 GLB 來源色彩修復（本輪補強）
+
+- 已修正共用 WebGL `captureNativePNG()` 的錯誤門檻：先前所有少於 2,000 個三角面的真模型（飛船零件、小模型、合法非人物 GLB）會被當成沒有真 3D 而 BLOCK。現在只要求確實有真 indexed triangle 與真 GPU readPixels，4K 細節足夠與否仍由獨立 Source Detail Gate 決定。取消「必須有至少 12KB PNG」這種與內容壓縮率無關的錯誤 Gate；仍驗證 3840×2160 的 PNG Header、SHA 與來源三角面。
+- V99 GLB 匯入器先前會固定寫入藍色替代 `baseColor` 與指定 `metallic=.16 / roughness=.65`，即使原 AI 檔有正式材質因子也覆蓋掉。現在實際讀取 GLB 標準 `pbrMetallicRoughness.baseColorFactor`、`metallicFactor`、`roughnessFactor`、`emissiveFactor`、`doubleSided`，並在報告中保留各自的原始值。
+- V99 原有的 diffuse/specular shader 不是真正 GLTF PBR；核心限制 `roughness >= 0.04`，若 GLB 原始值低於此則只在渲染工作表示上限制，並明示 `rendererRoughnessClampedBelowPoint04`，**不修改原始 GLB 或悄悄宣稱 1:1 材質**。
+- V102 工作頁新增真正可切換的 `FILM_SDR`／`LEGACY` 着色模式；切換不重做 AI 模型、骨架或三角面。RGB 仍為 SDR 8-bit RGBA，沒有宣稱 HDR10、ACES 全流程、物理 PBR 或貼圖/頂點顏色已完整還原。
+- 因目前 V99 GLB 匯入仍未全面轉入 `TEXCOORD_0 / COLOR_0 / baseColorTexture`，有貼圖來源會在資產報告以 `sourceTextureOrVertexColorsPresent` 真實標記，`textureAndVertexColorFidelityValidated=false`；這是下一個明確的畫質缺口，不應把目前只有材質常數的輸出誤稱為完整電影材質。
+- Chromium 自動測試在 4K 下載逾時時，現在會帶出 `#status`、來源報告與原錯誤，排除 GPU/PNG/按鈕失敗的假成功。真 GPU 全套回歸仍以最新 CI 實際結果為準。
+
 ## Gate 與發布狀態
 
 新的 V102 Source 和 Chromium Worker GPU Gate 都成功，才能稱 V102 技術原型通過，且不代表 CPU+GPU 互不影響、AI 訓練/神經生成模型已完成、自然人臉/全身一比一、2:12:08 電影完成。它真正修正的是「圖片構圖依渲染器修改」和「Worker UI 主執行緒被重製占住」的錯誤方向。
