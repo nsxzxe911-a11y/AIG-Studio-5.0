@@ -20,6 +20,8 @@ figure img{width:100%;height:400px;max-height:52vh;object-fit:contain;display:bl
 .diagnostic-inner{margin:12px 0;border-color:#705338}#defect-edge-list button{min-height:38px;background:#2d201b;max-width:100%;word-break:break-word}
 #defect-selected{white-space:pre-wrap;overflow-wrap:anywhere}#repair-compare-gallery .compare-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 #repair-compare-gallery figure img{height:280px}#defect-gallery figure img[data-pickable=true]{cursor:crosshair;touch-action:manipulation}
+#native-output-image{width:100%;height:auto;max-height:65vh;object-fit:contain}#native-output-figure{max-width:650px}
+#native-resolution-export select{max-width:100%}
 #shape-envelope-metrics{margin-top:8px;color:#ecd2b6}#shape-envelope-metrics strong{font-size:16px}#shape-envelope-review .status{border-color:#b37d43}
 #reference-stats{display:block;margin:11px 0;padding:8px;border:1px solid #8f683d;border-radius:8px;color:#efcca5}
 figcaption{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:9px}
@@ -46,6 +48,33 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 </div>
 <p>第一階驗證原始 OBJ／GLB 的 SHA、真實三角面及來源聲明；第二階才以同一模型輸出黑線、咖啡平塗、陰影、低高光。四視角無炫光，外觀自然度永遠需獨立比對真人來源。</p>
 <div id="status" class="status" role="status" aria-live="polite">未匯入模型。外觀驗收 BLOCK。</div>
+</section>
+<section class="panel" id="native-resolution-export">
+<h2>真 GPU 原生解析度｜1080p / 2K / 手機原生 / 4K</h2>
+<p>原本七視角的 1080×1920 仍是同尺度幾何驗收圖。下方可另外輸出一張真正的高解析度 PNG，不是放大小圖；高解析度只讓可見邊緣更清楚，不會增加原 OBJ／GLB 的三角形，也不會補出臉部或手指。</p>
+<div class="row">
+<label>輸出解析度
+<select id="native-output-preset">
+<option value="AUTO">Auto｜依裝置選擇</option>
+<option value="1080P">1080p｜1080×1920</option>
+<option value="2K">2K｜1440×2560</option>
+<option value="PHONE_1440_3088">Android 原生｜1440×3088</option>
+<option value="4K">4K UHD｜2160×3840</option>
+</select></label>
+<label>方向
+<select id="native-output-orientation">
+<option value="portrait">直式</option><option value="landscape">橫式</option>
+</select></label>
+<label>GPU 鏡頭
+<select id="native-output-angle">
+<option value="front">正面</option><option value="side">側面</option>
+<option value="back">背面</option><option value="threeQuarter">45°</option>
+</select></label>
+<button type="button" id="native-output-render" disabled>產生真正原生解析度 GPU PNG</button>
+<a id="native-output-download" hidden download="AIG-Real3D-True-Native-GPU.png">下載原生 GPU PNG</a>
+</div>
+<div id="native-output-status" class="status" role="status" aria-live="polite">先匯入 OBJ／GLB 並完成原始來源檢查，才能另外匯出真 GPU 畫面。</div>
+<figure id="native-output-figure" hidden><img id="native-output-image" alt="真實原生 GPU 高解析度獨立證據"><figcaption id="native-output-caption">尚無原生影像。</figcaption></figure>
 </section>
 <section class="panel" id="source-3d-slice-review">
 <h2>原始 3D 實體截面驗證｜下半身是否真的分成兩條腿</h2>

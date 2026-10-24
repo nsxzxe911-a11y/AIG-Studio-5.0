@@ -101,11 +101,85 @@ try{
  assert.equal(new Set(names.slice(0,4).map(x=>x.sha256)).size,4);
  assert.deepEqual(names.slice(0,4).map(x=>x.mode),['BLACK_CONTOUR','BROWN_FLAT','BROWN_VOLUME','BROWN_FINISH']);
  assert.ok(sums.size>=6,'All views must render actual geometry changes');
+ // Keep all 7 source QA captures at exactly 1080p. Independently verify
+ // true 2K GPU output, not a CSS enlargement of the 1080p PNG.
+ assert.equal(await page.locator('#native-output-render').isDisabled(),false);
+ await page.locator('#native-output-preset').selectOption('2K');
+ await page.locator('#native-output-orientation').selectOption('portrait');
+ await page.locator('#native-output-angle').selectOption('front');
+ await page.locator('#native-output-render').click();
+ await page.waitForFunction(()=>{
+  const btn=document.getElementById('native-output-render'),
+   status=document.getElementById('native-output-status')?.textContent||'';
+  return !btn?.disabled&&(status.startsWith('真正 GPU')||status.startsWith('BLOCK'));
+ },null,{timeout:210000});
+ const highStatus=await page.locator('#native-output-status').textContent();
+ assert.match(highStatus,/真正 GPU 2K 1440×2560/,highStatus);
+ const hReport=JSON.parse(await page.locator('#evidence').textContent());
+ const h=hReport.nativeGpuExports?.at(-1);
+ assert.equal(h.selectedPreset,'2K');
+ assert.equal(h.nativePNGWidth,1440);
+ assert.equal(h.nativePNGHeight,2560);
+ assert.equal(h.pixels,3686400);
+ assert.equal(h.actualGPUReadback,true);
+ assert.equal(h.noUpscale,true);
+ assert.equal(h.releasePASS,false);
+ const promisedHigh=page.waitForEvent('download',{timeout:30000});
+ await page.locator('#native-output-download').click();
+ const highFile=await promisedHigh,highBytes=await readFile(await highFile.path());
+ assert.equal(highBytes.readUInt32BE(0),0x89504e47);
+ assert.equal(highBytes.readUInt32BE(16),1440);
+ assert.equal(highBytes.readUInt32BE(20),2560);
+ assert.equal(createHash('sha256').update(highBytes).digest('hex'),h.pngSha256);
+ await copyFile(await highFile.path(),folder+'/REAL-2K-1440x2560-GPU.png');
+ // A single real 4K capture is opt-in and BLOCKs visibly if actual
+ // GPU resource limits prevent a native 8,294,400 pixel PNG.
+ await page.locator('#native-output-preset').selectOption('4K');
+ await page.locator('#native-output-render').click();
+ await page.waitForFunction(()=>{
+  const btn=document.getElementById('native-output-render'),
+   status=document.getElementById('native-output-status')?.textContent||'';
+  return !btn?.disabled&&(status.startsWith('真正 GPU')||status.startsWith('BLOCK'));
+ },null,{timeout:240000});
+ const fourKStatus=await page.locator('#native-output-status').textContent();
+ let real4KProven=false;
+ if(fourKStatus.startsWith('真正 GPU')){
+  assert.match(fourKStatus,/4K 2160×3840/);
+  const snapshot=JSON.parse(await page.locator('#evidence').textContent());
+  const output=snapshot.nativeGpuExports.at(-1);
+  assert.equal(output.nativePNGWidth,2160);
+  assert.equal(output.nativePNGHeight,3840);
+  assert.equal(output.pixels,8294400);
+  assert.equal(output.actualGPUReadback,true);
+  assert.equal(output.noUpscale,true);
+  const download=page.waitForEvent('download',{timeout:30000});
+  await page.locator('#native-output-download').click();
+  const d=await download,bytes=await readFile(await d.path());
+  assert.equal(bytes.readUInt32BE(16),2160);
+  assert.equal(bytes.readUInt32BE(20),3840);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),output.pngSha256);
+  await copyFile(await d.path(),folder+'/REAL-4K-2160x3840-GPU.png');
+  real4KProven=true;
+ }else{
+  assert.match(fourKStatus,/BLOCK/);
+  assert.match(fourKStatus,/(?:GPU_TEXTURE_OR_RENDERBUFFER_LIMIT|4K_REQUIRES_HIGH_MEMORY_DEVICE|AIG3D_|WebGL|記憶體|GPU|原生)/);
+  assert.equal(await page.locator('#native-output-download').isHidden(),true);
+ }
+ console.log('REAL3D_NATIVE_RESOLUTION_GPU_EVIDENCE '+JSON.stringify({
+  true2KGPU1440x2560ShaVerified:true,
+  true4KGPU2160x3840ShaVerified:real4KProven,
+  fourKGPUResult:real4KProven?'NATIVE_GPU_4K_PASS':'HARDWARE_OR_MEMORY_BLOCK',
+  // Truncated on purpose: do not publish internal driver details as "PASS".
+  rendererHadErrors:errors.length>0
+ }));
  assert.deepEqual(errors,[]);
  await page.screenshot({path:folder+'/diagnostic-workbench.png',fullPage:true});
  await writeFile(folder+'/manifest.json',JSON.stringify({
   SOURCE:'SYNTHETIC NONHUMAN GLB - NOT HUMAN BODY',
   sevenActualGPUPngFrames:7,
+  true2KGPU1440x2560SHAValidated:true,
+  true4K2160x3840GPUValidated:real4KProven,
+  true4KHardwareBlockWhenUnproven:!real4KProven,
   sourceMorphologyDoesNotChangeWithLighting:true,
   authenticHumanVisualPASS:false,
   geometryEvidence:evidence.geometry,
