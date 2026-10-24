@@ -1,0 +1,67 @@
+name: Real3D V94 Source Geometry Precision Fast Gate
+
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v94-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v94-*'
+      - 'docs/REAL3D-V94-*'
+      - '.github/workflows/aig-real3d-v94-source-precision-fast-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: real3d-v94-fast-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: V94 original geometry precision source QA
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-v94-obj-structure-intake.mjs
+          node --check formal-web/shared-3d/aig-real3d-v94-source-structure-audit.mjs
+          node --check formal-web/shared-3d/aig-real3d-v94-dynamic-topology-gate.mjs
+          node --check formal-web/shared-3d/aig-real3d-v94-cinema-quality-budget.mjs
+          node --check formal-web/shared-3d/aig-real3d-v94-measured-geometry-working-copy.mjs
+          node --check formal-web/shared-3d/aig-real3d-v94-precision-review.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v94-source-geometry-quality.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v94-obj-intake.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v94-measured-correction.test.mjs
+  original-gpu:
+    needs: source
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium true WebGL for source precision
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: V94 direct original OBJ SHA and native GPU 4-view Gate
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/real3d-v94-source.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v94-precision-review.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v94-precision.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V94-Original-OBJ-4-View-True-GPU-Evidence
+          path: artifacts/aig-real3d-v94-precision/
+          if-no-files-found: warn

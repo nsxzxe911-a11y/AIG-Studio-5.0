@@ -37,7 +37,7 @@ try{
   const canvas=document.createElement('canvas');
   canvas.width=640;canvas.height=640;
   const renderer=W.createAIG3DRenderer(canvas,{
-   quality:'balanced',pixelRatio:1,maxTriangles:12000,
+   quality:'balanced',pixelRatio:1,maxTriangles:200000,
    background:[.05,.09,.13,1]
   });
   if(renderer.status!=='READY')throw Error('REAL_WEBGL_CONTEXT_BLOCK');

@@ -50,6 +50,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-sports-*.mjs'
       - 'formal-web/shared-3d/aig-real3d-rig-wrap-contact.mjs'
       - 'formal-web/shared-3d/aig-real3d-biomechanical-attachments.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v94-*.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v94-precision-review.html'
       - 'formal-web/shared-3d/aig-real3d-v93-qa-fixture.mjs'
       - 'formal-web/shared-3d/aig-real3d-four-species-film.mjs'
       - 'formal-web/shared-3d/aig-real3d-four-species-film-lab.html'
@@ -87,6 +89,7 @@ on:
       - 'formal-web/shared-3d/tests/aig-real3d-rig*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-v92*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-biomechanical-attachments.test.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-v94-*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-four-species-film*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-browser-blob-bytes.mjs'
       - 'formal-web/shared-3d/tests/aig-sixdof-geoglobe-space.test.mjs'
@@ -118,6 +121,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-sports-*.mjs'
       - 'formal-web/shared-3d/aig-real3d-rig-wrap-contact.mjs'
       - 'formal-web/shared-3d/aig-real3d-biomechanical-attachments.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v94-*.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v94-precision-review.html'
       - 'formal-web/shared-3d/aig-real3d-v93-qa-fixture.mjs'
       - 'formal-web/shared-3d/aig-real3d-four-species-film.mjs'
       - 'formal-web/shared-3d/aig-real3d-four-species-film-lab.html'
@@ -130,6 +135,7 @@ on:
       - 'formal-web/shared-3d/tests/aig-real3d-rig*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-v92*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-biomechanical-attachments.test.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-v94-*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-four-species-film*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-browser-blob-bytes.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-multiview-projection.real-browser.mjs'
@@ -300,6 +306,15 @@ jobs:
           node --check formal-web/shared-3d/tests/aig-real3d-four-species-film.real-browser.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-biomechanical-attachments.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-four-species-film.test.mjs
+          node --check formal-web/shared-3d/aig-real3d-v94-source-structure-audit.mjs
+          node --check formal-web/shared-3d/aig-real3d-v94-dynamic-topology-gate.mjs
+          node --check formal-web/shared-3d/aig-real3d-v94-cinema-quality-budget.mjs
+          node --check formal-web/shared-3d/aig-real3d-v94-obj-structure-intake.mjs
+          node --check formal-web/shared-3d/aig-real3d-v94-precision-review.mjs
+          node --check formal-web/shared-3d/aig-real3d-v94-measured-geometry-working-copy.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v94-measured-correction.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v94-source-geometry-quality.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v94-obj-intake.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-v90-obj-vt-bvh-film.test.mjs
           node --test formal-web/shared-3d/tests/aig-sixdof-geoglobe-space.test.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-dense-source.real-browser.mjs
@@ -352,6 +367,7 @@ jobs:
           node formal-web/shared-3d/tests/aig-real3d-sports-film.real-browser.mjs
           node formal-web/shared-3d/tests/aig-real3d-rig-sport-film.real-browser.mjs
           node formal-web/shared-3d/tests/aig-real3d-four-species-film.real-browser.mjs
+          node formal-web/shared-3d/tests/aig-real3d-v94-precision.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -365,4 +381,5 @@ jobs:
             artifacts/aig-real3d-v91-sports-film-gpu/
             artifacts/aig-real3d-v92-source-rig-sport-film/
             artifacts/aig-real3d-v93-source-four-species/
+            artifacts/aig-real3d-v94-precision/
           if-no-files-found: warn

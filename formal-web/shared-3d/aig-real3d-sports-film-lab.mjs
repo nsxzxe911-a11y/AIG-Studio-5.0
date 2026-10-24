@@ -6,7 +6,7 @@ import {createAIGReal3DSport3DReplay,recordAIGReal3DSportFilmWebM}
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 const $=id=>document.getElementById(id);
 const canvas=$('scene'),renderer=createAIG3DRenderer(canvas,{
- quality:'balanced',pixelRatio:1,maxTriangles:10000,preserveDrawingBuffer:true,
+ quality:'balanced',pixelRatio:1,maxTriangles:200000,preserveDrawingBuffer:true,
  background:[.016,.036,.064,1]
 });
 let trajectory=null,replay=null,busy=false,playing=false,

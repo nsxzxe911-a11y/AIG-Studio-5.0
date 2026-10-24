@@ -62,7 +62,7 @@ function rebuild(){
  stop();
  if(renderer)renderer.destroy();
  renderer=createAIG3DRenderer(canvas,{
-  quality:'balanced',pixelRatio:1,maxTriangles:25000,
+  quality:'balanced',pixelRatio:1,maxTriangles:200000,
   preserveDrawingBuffer:true,background:[.016,.035,.065,1]
  });
  if(renderer.status!=='READY')throw Error('真 WebGL GPU 未啟用；不能用假 2D 畫面取代');
