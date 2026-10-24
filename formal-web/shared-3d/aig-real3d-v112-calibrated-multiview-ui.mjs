@@ -1,3 +1,5 @@
+import {auditAIGReal3DV116CaptureNormalAndOcclusion}
+ from './aig-real3d-v116-capture-normal-occlusion.mjs';
 import {auditAIGReal3DV115ObservedBoundaryAtlas}
  from './aig-real3d-v115-observed-boundary-atlas.mjs';
 import {deduplicateAIGReal3DV114VerifiedOverlapGLB}
@@ -107,7 +109,7 @@ function draw(){
 $('v112-build').addEventListener('click',async()=>{
  if(busy)return;
  busy=true;$('v112-build').disabled=true;$('v112-download').disabled=true;
- status('V115：正在核對雙來源、深度接縫、去重拓樸與新開放邊界…');
+ status('V116：正在核對雙視角來源、去重邊界與可選實測法線…');
  try{
   if(!$('v112-calibration-confirm').checked)
    throw Error('V112_CALIBRATED_PHYSICAL_DEPTH_DECLARATION_NOT_CONFIRMED');
@@ -165,6 +167,28 @@ $('v112-build').addEventListener('click',async()=>{
    if(boundary.researchGate!=='PASS_SOURCE_OPEN_EDGE_ATLAS')
     throw Error('V115_'+boundary.measuredOpenSeamTopologyGate);
   }
+  const v116Enabled=$('v116-enable').checked;
+  let v116=null;
+  if(v116Enabled){
+   if(!useV114||!boundary)
+    throw Error('V116_REQUIRES_V114_AND_V115_VERIFIED_TWO_VIEW_SOURCE');
+   let manifests;try{manifests=JSON.parse($('v116-captures').value);}
+   catch{throw Error('V116_CAPTURE_MANIFEST_JSON_INVALID');}
+   if(!Array.isArray(manifests)||manifests.length!==2)
+    throw Error('V116_NEEDS_TWO_CAPTURE_MANIFESTS');
+   const captureManifests=manifests.map((x,i)=>({
+    ...x,photoSha256:photo[i].sha,depthSha256:depth[i].depthSha
+   }));
+   v116=auditAIGReal3DV116CaptureNormalAndOcclusion({
+    views,captureManifests,v115Receipt:boundary,
+    depthJumpMM:Number($('v116-jump-mm').value),
+    maxNormalAngleDeg:Number($('v116-normal-deg').value),
+    maxPointToPointMM:Number($('v116-point-mm').value)
+   });
+   $('v116-report').textContent=JSON.stringify(v116,null,2);
+   if(v116.researchGate!=='PASS_COMPUTED_NORMAL_CONTINUITY')
+    throw Error('V116_'+v116.normalAndSurfaceGate);
+  }
   const result=await ingestAIGReal3DNativeGeneratedGLB({
    glbBytes:workingGLB,referenceImageBytes:photo[0].bytes,
    declaredImageSha256:photo[0].sha,declaredGLBSha256:workingSHA,
@@ -193,6 +217,8 @@ $('v112-build').addEventListener('click',async()=>{
    v114IntegrationRequested:useV114,
    v115MeasuredOpenBoundaryAtlas:boundary,
    v115OriginalSourceNoWelding:true,
+   v116CaptureNormalAndOcclusion:v116,
+   v116OptInEnabled:v116Enabled,
    untouchedV112OriginalGLBSha256:modelSHA,
    actualModelSourceSha256:workingSHA,
    originalFirstPhotoSha256:photo[0].sha,
