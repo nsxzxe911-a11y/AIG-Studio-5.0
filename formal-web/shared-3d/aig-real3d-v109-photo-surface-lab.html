@@ -1,6 +1,6 @@
 <!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FastModel Real3D V110｜不透明照片前景 → V109 GLB → 五軸 GPU</title>
+<title>FastModel Real3D V111｜複雜背景互動辨識 → 真 GLB → 五軸 GPU</title>
 <style>
 :root{color-scheme:dark;font:15px/1.55 system-ui,"Microsoft JhengHei",sans-serif;
 background:#020407;color:#d8efff}
@@ -21,7 +21,7 @@ pre{overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-m
 #status{color:#ffdfa4}
 img{max-width:100%;max-height:320px;object-fit:contain}
 </style></head><body><main>
-<h1>FastModel Real3D V110｜不透明照片自動分離背景 → 原圖前表面 → 五軸 GPU</h1>
+<h1>FastModel Real3D V111｜複雜背景來源標記 → 原圖 GLB → 真五軸 GPU</h1>
 <p>透明 PNG 保留原流程；普通不透明 PNG 僅在背景顏色簡單、輪廓可可靠分離時自動產生透明工作副本。複雜背景可上傳另一份已人工確認的遮罩，無法安全分離就 BLOCK。另提供獨立量測的深度圖才能得到可觀測的曲面深度。<strong>沒有深度資料時只有平面 2.5D，不會捏造人體背面、臉型或衣服內部。</strong></p>
 <section>
 <div class="row">
@@ -31,7 +31,19 @@ img{max-width:100%;max-height:320px;object-fit:contain}
 <label><input id="v110-mask-confirm" type="checkbox"> 若提供遮罩，確認遮罩為來源照片對應的人工校正結果</label>
 <label>獨立深度 PNG（可選，灰階）<input id="depth" type="file" accept="image/png"></label>
 <label>來源圖片寬度（mm）<input id="width-mm" type="number" min="1" max="20000" value="100" step="0.1"></label>
-</div><div class="row">
+</div><section id="v111-interactive-panel" aria-label="V111 複雜背景前景／背景人工標記">
+<h2>V111｜複雜背景互動式前景辨識</h2>
+<p>先選原始 PNG，在下方圖片點選至少 2 個主體點及 2 個背景點（不同背景顏色都要標）。程式依原圖 RGB 與連通邊界運算，可自動追蹤輪廓，但不是辨識所有人體的神經網路，顏色混淆會 BLOCK。來源照片與 RGB 不改動。</p>
+<label><input id="v111-enable" type="checkbox"> 啟用 V111 主體／背景標記（取代 V110 自動純色背景分析）</label>
+<div class="row">
+<label>點選標記類型<select id="v111-kind"><option value="foreground">標記主體（紅點）</option><option value="background">標記背景（藍點）</option></select></label>
+<button id="v111-clear" type="button">清除標記</button>
+<output id="v111-count">主體 0 點／背景 0 點</output>
+</div>
+<canvas id="v111-source-canvas" width="320" height="320" style="width:100%;max-width:580px;cursor:crosshair;touch-action:manipulation" aria-label="V111 點選來源照片標記主體或背景"></canvas>
+<p>按「預覽／檢驗自動前景遮罩」檢查後，再執行「建立來源表面並以 GPU 顯示」；遮罩錯誤請清除後重新標記。</p>
+</section>
+<div class="row">
 <label><input id="width-verified" type="checkbox"> 寬度來自實際量測（否則只是預覽比例）</label>
 <label><input id="depth-confirm" type="checkbox"> 這張深度圖是獨立實測資料，而非從照片亮度猜測</label>
 <label>深度近端 mm <input id="depth-near" type="number" value="0" step=".1"></label>
@@ -41,7 +53,7 @@ img{max-width:100%;max-height:320px;object-fit:contain}
 <button id="save" disabled>下載真 GLB 工作副本</button>
 <a href="./aig-real3d-v99-native-source-lab.html" style="color:#8ddaff">原始 GLB 品質與六面工作頁</a>
 </div>
-<div id="status" role="status">待上傳 PNG。簡單純色背景才會自動分離；複雜背景需可靠遮罩，沒有神經網路分割權重。</div>
+<div id="status" role="status">待上傳 PNG。簡單純色背景由 V110 自動處理；複雜背景可用 V111 主體／背景點標記或可靠人工遮罩。沒有神經網路分割權重。</div>
 </section>
 <div class="grid"><section><h2>真 WebGL 五軸預覽</h2>
 <canvas id="gl" width="960" height="660"></canvas>
