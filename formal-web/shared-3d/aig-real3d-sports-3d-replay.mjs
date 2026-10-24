@@ -95,7 +95,9 @@ export function createAIGReal3DSport3DReplay({trajectory,id='sportsBall'}={}){
  }
  applyFrame(0);
  return {schema:AIG_REAL3D_V91_REPLAY_SCHEMA,
-  scene,sphereMesh:sphere,frameAt,applyFrame,renderFrame,
+  scene,sphereMesh:sphere,frameCount:trajectory.frames.length,
+  fps:trajectory.fps,durationSec:trajectory.durationSec,
+  frameAt,applyFrame,renderFrame,
   stats:()=>({drawn3DFrames:drawn,lastFrame:previousFrame,
    originalIndexedSphereTriangles:sphere.triangleCount,
    geometryCoordinatesMutableFromPhysics:false,
@@ -123,21 +125,48 @@ export async function recordAIGReal3DSportFilmWebM({
  }
  const rec=new MediaRecorder(stream,{mimeType:mime,
   videoBitsPerSecond:3500000});
- const blobs=[];
- let started=false,success=false,error=null;
+ const blobs=[];let started=false,stopped=false,error=null;
  const ended=new Promise((resolve,reject)=>{
   rec.ondataavailable=e=>{if(e.data?.size)blobs.push(e.data);};
   rec.onerror=e=>{error=e.error??Error('ENCODING_FAILED');};
   rec.onstop=()=>error?reject(error):resolve();
  });
+ let completed=0,firstStamp=null,lastRendered=-1;
  try{
   rec.start();started=true;
-  // rAF pacing is real wall-clock. Never claim delivered FPS from target FPS.
-  for(let i=0;i<replay.frameAt.length;i++){} // overwritten below by time pacing
+  const maxFrames=replay.frameCount,targetRate=replay.fps;
+  while(lastRendered<maxFrames-1){
+   const timestamp=await new Promise(resolve=>requestFrame(resolve));
+   if(!finite(timestamp))fail('MOVIE_CLOCK_INVALID');
+   if(firstStamp===null)firstStamp=timestamp;
+   const elapsed=Math.max(0,(timestamp-firstStamp)/1000);
+   // Skip superseded render frames rather than pretending 60 FPS was achieved.
+   const frame=Math.min(maxFrames-1,Math.floor(elapsed*targetRate+1e-8));
+   if(frame<=lastRendered)continue;
+   replay.renderFrame(renderer,frame);
+   video.requestFrame();
+   completed++;lastRendered=frame;
+   if(elapsed>replay.durationSec+3)fail('REALTIME_ENCODING_OVERRUN');
+  }
+  rec.stop();stopped=true;
+  await ended;
+  const blob=new Blob(blobs,{type:mime});
+  if(blob.size<256||completed<2)fail('ENCODED_MOVIE_EMPTY_OR_STATIC');
+  return {schema:'AIG_REAL3D_V91_REAL_SOURCE_SPORT_WEBM_V1',
+   blob,mimeType:mime,width:canvas.width,height:canvas.height,
+   framesActuallySubmittedToEncoder:completed,
+   requestedPlaybackFps:targetRate,
+   requestedDurationSec:replay.durationSec,
+   bytes:blob.size,
+   real3DMeshWasRenderedForEverySubmittedFrame:true,
+   actualDecodedVideoFPSIndependentlyVerified:false,
+   actualVideoFilePlaybackIndependentlyVerified:false,
+   certifiedSportsBallFlight:false,
+   realActorBodyAnimationCaptured:false,
+   originalSourceModelProvenanceStillRequired:true,
+   releasePASS:false};
  }finally{
-  if(started&&rec.state!=='inactive')rec.stop();
+  if(started&&!stopped&&rec.state!=='inactive')rec.stop();
   stream.getTracks().forEach(x=>x.stop());
  }
- // Unreachable placeholder removed during V91 QA before any movie PASS.
- return {blob:new Blob(blobs,{type:mime}),realWebMEncodingVerified:false};
 }
