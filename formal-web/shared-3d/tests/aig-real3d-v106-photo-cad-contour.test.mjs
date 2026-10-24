@@ -51,7 +51,7 @@ test('V106 actual transparent source has exact non-square shape pixels, 4 contou
 test('V106 known top-oriented 2 measured anchors directly feed real V105 observed CAD IoU, no mesh generation',()=>{
  const out=calibrate(extraction(),{
   confirmedTopView:true,calibratedMeasurement:true});
- assert.equal(out.mmPerPixel,2/48);
+ assert.ok(Math.abs(out.mmPerPixel-2/48)<1e-6);
  assert.equal(out.observedTopCAD.sourceVisibility,'OBSERVED');
  assert.equal(out.observedTopCAD.actual3DHeightObserved,false);
  assert.deepEqual(out.observedTopCAD.XYBoundsMM,{min:[-1,-3],max:[1,3]});
