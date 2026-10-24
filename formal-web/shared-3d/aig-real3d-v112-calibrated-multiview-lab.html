@@ -1,0 +1,65 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Real3D V112｜雙視角實測深度配準與五軸 GPU</title>
+<style>
+:root{color-scheme:dark;background:#020407;color:#e4f3ff;font:15px/1.6 system-ui,"Microsoft JhengHei",sans-serif}
+body{margin:0;padding:16px}main{max-width:1380px;margin:auto}
+section{background:#07111b;border:1px solid #28628a;border-radius:14px;padding:14px;margin:12px 0}
+h1{font-size:22px}h2{font-size:18px}p,small{color:#b0cedf}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:12px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+label{display:flex;flex-direction:column;gap:4px}
+button,input,select,textarea{font:inherit;color:#eaf7ff;background:#112b40;border:1px solid #39759c;border-radius:8px;padding:8px}
+button{background:linear-gradient(95deg,#08485e,#313b7c);cursor:pointer;min-height:44px}
+button:disabled{opacity:.45;cursor:not-allowed}
+textarea{width:100%;box-sizing:border-box;min-height:120px;font:12px/1.45 ui-monospace,monospace}
+canvas{display:block;width:100%;height:auto;background:#020407;border-radius:10px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:520px;overflow:auto;font:12px/1.5 ui-monospace,monospace}
+#status{color:#f5d5a4}
+</style></head><body><main>
+<h1>FastModel Real3D V112｜雙視角實測深度 → 共用世界座標 → 真五軸 GPU</h1>
+<p>本階要有兩張<strong>獨立相機圖片</strong>、與圖片像素一一對應的<strong>實測毫米深度 JSON</strong>、兩組相機內外參，以及至少三組非共線共享特徵點。若只有單張照片、沒有測得深度或校正，就不能假造背面立體幾何。</p>
+<section><h2>兩個獨立來源</h2><div class="row">
+<label>相機 1｜原始 PNG <input id="v112-photo-0" type="file" accept="image/png"></label>
+<label>相機 1｜深度 JSON <input id="v112-depth-0" type="file" accept="application/json,.json"></label>
+<label>相機 2｜原始 PNG <input id="v112-photo-1" type="file" accept="image/png"></label>
+<label>相機 2｜深度 JSON <input id="v112-depth-1" type="file" accept="application/json,.json"></label>
+</div>
+<label><input type="checkbox" id="v112-calibration-confirm"> 確認深度來自真實量測、與照片逐像素對應，且相機參數已標定（目前程式只稽核一致性，不能替儀器背書）</label>
+<p>配置檔：`views` 兩項，每項提供 intrinsics（fxPx/fyPx/cxPx/cyPx）及 column-major `cameraToWorldMM` 4×4；`correspondences` 至少三組同一實物表面量測點（x0/y0/x1/y1）。數值單位為 mm。</p>
+<textarea id="v112-calibration" aria-label="兩相機真實標定與共享特徵點 JSON">{
+ "views":[
+  {"intrinsics":{"fxPx":100,"fyPx":100,"cxPx":15.5,"cyPx":15.5},
+   "cameraToWorldMM":[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]},
+  {"intrinsics":{"fxPx":100,"fyPx":100,"cxPx":15.5,"cyPx":15.5},
+   "cameraToWorldMM":[1,0,0,0,0,1,0,0,0,0,1,0,20,0,0,1]}
+ ],
+ "correspondences":[
+  {"x0":10,"y0":10,"x1":8,"y1":10},
+  {"x0":22,"y0":10,"x1":20,"y1":10},
+  {"x0":10,"y0":22,"x1":8,"y1":22}
+ ],
+ "step":2,"maxSurfaceEdgeMM":35,"maxCorrespondenceRmsMM":1
+}</textarea>
+<p><small>以上填入的相機數值只是一組測試示例，不能當作實際相機的校正數據。</small></p>
+<div class="row"><button id="v112-build">驗證雙來源 → 配準 → 真 GLB → GPU</button>
+<button id="v112-download" disabled>下載兩視角真 GLB 工作副本</button>
+<a style="color:#8ee1ff" href="./aig-real3d-v109-photo-surface-lab.html">返回 V111 前景工作頁</a>
+</div>
+<div id="status" role="status">尚未匯入兩份真實測量來源；沒有實測深度時此處不會合成立體面。</div>
+</section>
+<div class="grid"><section><h2>共用 3D 世界坐標｜V107 五軸 GPU 檢查</h2>
+<canvas id="v112-gl" width="960" height="640"></canvas>
+<div class="row">
+<label>A 上下翻轉<input type="range" id="v112-a" min="-180" max="180" value="0"><output id="v112-a-label">0°</output></label>
+<label>B 子軸旋轉<input type="range" id="v112-b" min="0" max="360" value="0"><output id="v112-b-label">0°</output></label>
+<label>高度切片<input type="range" id="v112-slice" min="0" max="100" value="100"><output id="v112-slice-label">100%</output></label>
+<button id="v112-reset" disabled>歸零 A/B／全部表面</button>
+</div>
+<p>雙視角輸出是同一世界座標下的<strong>兩片實測可見曲面</strong>；尚未銲接成閉合人體或補齊未知表面。角度或切片不改動 GLB 來源。</p>
+</section>
+<section><h2>來源配準與 GPU 稽核</h2><pre id="v112-report">尚無證據。</pre></section>
+</div></main>
+<script type="module" src="./aig-real3d-v112-calibrated-multiview-ui.mjs"></script>
+</body></html>
