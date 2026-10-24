@@ -166,7 +166,7 @@ try{
    aTiltDeg:0,bTurnDeg:0,footHeadProgress:1,sourceAudit:audit});
   renderer.setVirtualStageV107({matrix:zero.modelStageMatrix,
    sourceScene:originalScene,sourceMaxY:zero.clipSourceYMax,
-   sourceGLBSha256:modelSha,clipEnabled:true});
+   sourceGLBSha256:modelSha,clipEnabled:false});
   const zeroDraw=renderer.render(originalScene);
   const zeroPixels=await read('FIVE_AXIS_A0_B0_FULL',1);
   const tilted=planAIGReal3DV107FiveAxis({
@@ -174,7 +174,7 @@ try{
    footHeadProgress:1,sourceAudit:audit});
   renderer.setVirtualStageV107({matrix:tilted.modelStageMatrix,
    sourceScene:originalScene,sourceMaxY:tilted.clipSourceYMax,
-   sourceGLBSha256:modelSha,clipEnabled:true});
+   sourceGLBSha256:modelSha,clipEnabled:false});
   const angledDraw=renderer.render(originalScene);
   const rotatedPixels=await read('FIVE_AXIS_A90_B90_FULL',2);
   const quarter=planAIGReal3DV107FiveAxis({
@@ -207,7 +207,7 @@ try{
    if(!p)renderer.setVirtualStageV107(null);
    else renderer.setVirtualStageV107({matrix:p.modelStageMatrix,
     sourceScene:originalScene,sourceMaxY:p.clipSourceYMax,
-    sourceGLBSha256:modelSha,clipEnabled:true});
+    sourceGLBSha256:modelSha,clipEnabled:p.progress<1});
   }
   // Warm both programs and iterate interleaved to avoid direction bias.
   for(const mode of ['standard3D','fiveAxisZero','fiveAxisTilt']){
