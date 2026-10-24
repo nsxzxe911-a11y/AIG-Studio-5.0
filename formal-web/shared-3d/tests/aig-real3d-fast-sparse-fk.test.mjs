@@ -117,7 +117,7 @@ test('Sparse FK indexes 4 original vertices and skips untouched high-density sou
  assert.equal(result.releasePASS,false);
 });
 test('EVERY accelerated frame matches independently recomputed full original-index triangle strain exactly',()=>{
- const result=pose({targetAnglesDeg:[37,33,-20],maxAngularStepDeg:5});
+ const result=pose({targetAnglesDeg:[37,33,-20],maxAngularStepDeg:5,retainAllSourcePoses:true});
  const src=dense.sourceGeometry.positions,indices=dense.sourceGeometry.indices;
  for(const frame of result.frames){
   const reference=fullFaceReference(src,frame.workingCopyPositions,indices);
@@ -144,4 +144,25 @@ test('Source SHA, changed original vertex count, excessive distal weight still f
   manifest.joints[0],manifest.joints[1],
   {...manifest.joints[2],vertexWeights:[[2,1],[5,.5],[6,.7]]}
  ]}}),/THREE_JOINT_DISTAL_WEIGHTS_WITHOUT_ANCESTOR_INHERITANCE/);
+});
+
+test('FAST mode releases offscreen full XYZ pose arrays while preserving three GPU display frames',()=>{
+ const full=pose({retainAllSourcePoses:true}),fast=pose();
+ assert.equal(full.frameCount,fast.frameCount);
+ assert.deepEqual(full.displayFrameIndexes,fast.displayFrameIndexes);
+ assert.equal(full.sparseSourceTopology.numberOfFullXYZFramesRetained,full.frameCount);
+ assert.equal(fast.sparseSourceTopology.numberOfFullXYZFramesRetained,3);
+ assert.equal(fast.sparseSourceTopology.discardedIntermediateFullXYZFrames,
+  fast.frameCount-3);
+ for(let i=0;i<fast.frameCount;i++){
+  const f=fast.frames[i],reference=full.frames[i];
+  assert.deepEqual(f.deformation,reference.deformation);
+  assert.deepEqual(f.contact,reference.contact);
+  assert.deepEqual(f.sweptRiskFromPriorSample,
+   reference.sweptRiskFromPriorSample);
+  if(fast.displayFrameIndexes.includes(i))
+   assert.deepEqual(f.workingCopyPositions,reference.workingCopyPositions);
+  else assert.equal(f.workingCopyPositions,null);
+ }
+ assert.equal(fast.diagnostics.releasePASS,false);
 });
