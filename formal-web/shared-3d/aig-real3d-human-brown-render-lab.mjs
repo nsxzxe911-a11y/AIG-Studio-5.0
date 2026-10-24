@@ -2,6 +2,8 @@ import {buildAIGReal3DGLBStatic} from './aig-real3d-glb-native-mesh.mjs';
 import {buildAIGReal3DScanNative} from './aig-real3d-scan-native-mesh.mjs';
 import {buildAIGReal3DDenseOBJSource}
  from './aig-real3d-dense-source-obj.mjs';
+import {mountAIGReal3DDenseAnatomyControls}
+ from './aig-real3d-dense-anatomy-ui.mjs';
 import {buildAIGReal3DDenseEvidencePacket}
  from './aig-real3d-dense-source-evidence.mjs';
 import {buildAIGReal3DSourceReview,validateAIGReal3DLandmarkSidecar} from './aig-real3d-source-review-gate.mjs';
@@ -1005,6 +1007,7 @@ $('dense-source-run').addEventListener('click',async()=>{
  $('dense-evidence-download').disabled=true;
  $('dense-source-figure').hidden=true;
  $('dense-source-evidence').textContent='GPU 工作進行中；尚未確認來源。';
+ denseAnatomyUI.reset();
  $('dense-source-status').textContent='解析原始高密度三角面、分塊並檢查真 GPU 輸出中…';
  let gpu=null;
  try{
@@ -1058,6 +1061,7 @@ $('dense-source-run').addEventListener('click',async()=>{
    claimedMethod:$('capture-method').value,
    authorizedByClaimant:$('source-rights').checked
   });
+  denseAnatomyUI.load({dense,file:f,sha256:sourceSha256,heightMm,upAxis});
   latestDenseSourceEvidence={
    ...packet,
    realGPUFront:{width:1080,height:1920,sha256:frame.sha256,
@@ -1089,6 +1093,7 @@ $('dense-source-run').addEventListener('click',async()=>{
     '四視角原始參考 PNG 尚未齊全，真人外觀驗收 BLOCK。');
  }catch(error){
   latestDenseSourceEvidence=null;
+  denseAnatomyUI.reset();
   $('dense-source-evidence').textContent='BLOCK：'+(error?.message||String(error));
   $('dense-source-status').textContent='BLOCK：'+(error?.message||String(error))+
    '。來源沒有通過驗證時不能宣稱高密度 GPU 匯入成功。';
@@ -1111,4 +1116,11 @@ $('dense-evidence-download').addEventListener('click',()=>{
  const a=document.createElement('a');
  a.href=url;a.download='AIG-Real3D-DENSE-SOURCE-SHA-REFERENCES.json';
  a.click();
+});
+
+const denseAnatomyUI=mountAIGReal3DDenseAnatomyControls({
+ $,
+ isBusy:()=>running,
+ setBusy:v=>{running=v;},
+ registerURL:u=>urlPool.add(u)
 });
