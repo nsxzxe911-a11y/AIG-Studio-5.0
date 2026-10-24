@@ -35,7 +35,7 @@ try{
    originalFeathers=JSON.stringify(qa.attachmentSource);
   const canvas=document.createElement('canvas');canvas.width=640;canvas.height=640;
   const renderer=GPU.createAIG3DRenderer(canvas,{
-   quality:'balanced',pixelRatio:1,maxTriangles:20000,
+   quality:'balanced',pixelRatio:1,maxTriangles:200000,
    background:[.01,.03,.05,1]
   });
   if(renderer.status!=='READY')throw Error('V93_TRUE_GPU_NOT_READY');
