@@ -13,7 +13,7 @@ button:disabled{opacity:.5;cursor:not-allowed}input{min-height:40px;max-width:10
 select,input[type=text]{padding:7px;background:#091b2d;border:1px solid #356886;border-radius:7px;min-height:40px}input[type=number]{width:115px;padding:7px;background:#091b2d;border:1px solid #356886;border-radius:7px}
 .row{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
 code{color:#a4d8ff;overflow-wrap:anywhere}
-#gallery,#reference-gallery,#anatomy-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+#gallery,#reference-gallery,#anatomy-gallery,#defect-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 figure{border:1px solid #2a6c85;border-radius:11px;padding:9px;margin:0;background:#06111f;min-width:0}
 figure img{width:100%;height:400px;max-height:52vh;object-fit:contain;display:block;background:#020407}
 #profile-table,#anatomy-region-table,#surface-table{overflow-x:auto;margin-top:12px}#profile-table table,#anatomy-region-table table,#surface-table table{width:100%;border-collapse:collapse;min-width:520px;font-size:12px}#profile-table td,#profile-table th,#anatomy-region-table td,#anatomy-region-table th,#surface-table td,#surface-table th{padding:8px 6px;text-align:left;border-bottom:1px solid #2d4059}#profile-table th{color:#a3deed}#profile-table tr[data-worst=true]{background:#4f331d88}#local-width-review{padding-top:12px}
@@ -77,6 +77,10 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <p>只檢查已提供、通過網格貼合的 OBJ 標記附近：頭頸、左手、右手、左腳、右腳。檢查開放邊、錯誤面片方向與標記所屬相連元件。**不會把合成測試體或貼了標記的橢圓認證為真人**。</p>
 <div class="status" id="surface-stats" role="status" aria-live="polite">尚無經標記審核的真 OBJ 網格，局部接合檢查 BLOCK。</div>
 <div id="surface-table" role="region" aria-label="五個原始網格局部接合品質檢查"></div>
+<h3>真原始異常邊定位｜正面、側面、背面、45°</h3>
+<p>使用來源 OBJ 真三角面邊的兩端 XYZ，投影到原 GPU 咖啡色畫面。細線只是另外加上的**診斷標記**，原始人體材質仍是咖啡色、沒有 RGB 人型，也不自動補洞。局部正常不代表整體人體合格。</p>
+<div id="defect-stats" class="status" role="status" aria-live="polite">尚無局部異常邊定位資料。</div>
+<div id="defect-gallery"></div>
 </section>
 <section class="panel"><h2>原始三維網格／來源聲明／解剖標記 Gate 報告</h2><pre id="evidence">尚無來源。</pre></section>
 <section class="panel"><h2>真正 WebGL 畫面證據（不是 AI 示意圖）</h2><div id="gallery"></div></section>

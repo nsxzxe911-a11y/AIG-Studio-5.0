@@ -11,6 +11,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-reference-silhouette*.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-anatomy-*.mjs'
       - 'formal-web/shared-3d/aig-real3d-local-surface-topology.mjs'
+      - 'formal-web/shared-3d/aig-real3d-source-defect-*.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-source-defect-projection.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-local-surface-topology.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-anatomy-projection.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-reference-silhouette.test.mjs'
@@ -30,6 +32,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-reference-silhouette*.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-anatomy-*.mjs'
       - 'formal-web/shared-3d/aig-real3d-local-surface-topology.mjs'
+      - 'formal-web/shared-3d/aig-real3d-source-defect-*.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-source-defect-projection.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-local-surface-topology.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-anatomy-projection.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-reference-silhouette.test.mjs'
@@ -63,6 +67,9 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-native-anatomy-projection.mjs
           node --check formal-web/shared-3d/aig-real3d-native-anatomy-annotation.mjs
           node --check formal-web/shared-3d/aig-real3d-local-surface-topology.mjs
+          node --check formal-web/shared-3d/aig-real3d-source-defect-projection.mjs
+          node --check formal-web/shared-3d/aig-real3d-source-defect-overlay.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-source-defect-projection.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-local-surface-topology.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-native-anatomy-projection.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-reference-silhouette.test.mjs

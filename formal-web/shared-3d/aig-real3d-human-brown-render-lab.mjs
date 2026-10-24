@@ -9,6 +9,10 @@ import {createAIGNativeAnatomyAnnotation}
  from './aig-real3d-native-anatomy-annotation.mjs';
 import {auditAIGNativeOBJLocalSurface}
  from './aig-real3d-local-surface-topology.mjs';
+import {projectAIGSourceDefectEdges}
+ from './aig-real3d-source-defect-projection.mjs';
+import {createAIGSourceDefectOverlay}
+ from './aig-real3d-source-defect-overlay.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {
  auditAIG3DSourceSilhouette,validateAIGInspectionCapturePlan,
@@ -88,6 +92,8 @@ $('inspect').addEventListener('click',async()=>{
  release();gallery.replaceChildren();$('reference-gallery').replaceChildren();
  $('anatomy-gallery').replaceChildren();$('anatomy-region-table').replaceChildren();
  $('surface-table').replaceChildren();
+ $('defect-gallery').replaceChildren();
+ $('defect-stats').textContent='來源異常邊尚未確認；診斷限定原始 OBJ。';
  $('surface-stats').textContent='未提供可驗證的原始 OBJ 網格標記，局部接合技術 Gate BLOCK。';
  $('anatomy-stats').textContent='來源標記尚未通過貼合檢查；真人自然外觀 BLOCK。';
  profiles=[];$('profile-angle').disabled=true;
@@ -222,7 +228,7 @@ $('inspect').addEventListener('click',async()=>{
     silhouetteResults.push(data.diagnostic);
    }catch(e){silhouetteProblems.push({angle,error:e.message});}
   }
-  let anatomicalProjection=null,localSurface=null;
+  let anatomicalProjection=null,localSurface=null,sourceDefectOverlay=null;
   const markerGateOK=isOBJ&&evidence.landmarkAudit?.complete===true&&
    landmarks!==null;
   if(markerGateOK){
@@ -253,6 +259,44 @@ $('inspect').addEventListener('click',async()=>{
     body.append(tr);
    }
    table.append(body);$('surface-table').append(table);
+   const defectViews=[];
+   for(const angle of ['front','side','back','threeQuarter']){
+    const projected=projectAIGSourceDefectEdges({
+     localSurface,angle,width:1080,height:1920
+    });
+    const frame=sourceFrames.get(angle);
+    if(!(frame instanceof Blob))
+     throw Error('DEFECT_GPU_ANGLE_SOURCE_MISSING_'+angle);
+    const image=await createAIGSourceDefectOverlay({
+     sourcePNG:frame,projection:projected
+    });
+    const href=URL.createObjectURL(image.blob);urlPool.add(href);
+    const fig=document.createElement('figure'),img=document.createElement('img');
+    img.src=href;
+    img.alt=angle+' 真 GPU 咖啡色模型與原始異常三角面邊定位';
+    const caption=document.createElement('figcaption');
+    const label=document.createElement('span');
+    label.textContent=angle+' · 異常來源邊 '+projected.uniqueEvidenceEdges+
+     (projected.evidenceTruncated?'（已達證據上限）':'');
+    const dl=document.createElement('a');
+    dl.href=href;dl.download='AIG-Real3D-SOURCE-EDGE-DEFECT-'+angle+'.png';
+    dl.textContent='下載異常邊真 GPU 疊圖';
+    caption.append(label,dl);fig.append(img,caption);$('defect-gallery').append(fig);
+    defectViews.push({
+     ...image,blob:undefined,
+     projectedSourceEdgeCount:projected.projectedEdges.length,
+     projectedSourceEdges:projected.projectedEdges,
+     projectedEvidenceTruncated:projected.evidenceTruncated
+    });
+   }
+   sourceDefectOverlay={sourceSha256:hash,
+    schema:'AIG_REAL3D_4_VIEW_TRUE_GPU_NATIVE_EDGE_DEFECT_OVERLAY_V1',
+    images:defectViews,viewCount:defectViews.length,
+    originalVertexMeshNeverModified:true,sourceGeometryGatePASS:nativeGeometryGatePASS,
+    naturalHumanAppearancePASS:false,releasePASS:false};
+   $('defect-stats').textContent='已輸出 4 張真 GPU 原始邊定位圖；五區異常數：'+
+    localSurface.regions.filter(x=>x.anomalyCodes.length).length+
+    '。僅為原始網格技術診斷，不是五指／臉部自然度 PASS。';
    const views=[],annotations=[],regions=[];
    for(const angle of ['front','side','back','threeQuarter']){
     const projection=projectAIGNativeOBJLandmarks({
@@ -335,7 +379,8 @@ $('inspect').addEventListener('click',async()=>{
    '已比對 '+summary.count+'/4 視角；平均重合率：'+
    (summary.averageIoU===null?'無法計算':(summary.averageIoU*100).toFixed(2)+'%')+
    '；失敗：'+silhouetteProblems.length+'；這不是人體自然度自動驗收。';
-  report={...result,sourceReview,anatomicalProjection,localSurfaceTopology:localSurface,silhouetteComparison:{
+  report={...result,sourceReview,anatomicalProjection,localSurfaceTopology:localSurface,
+   sourceDefectOverlay,silhouetteComparison:{
    ...summary,images:silhouetteResults,errors:silhouetteProblems,
    transparentReferencesUploaded:selected.length,
    fourViewSilhouetteComparePASS:summary.allFourAnglesCompared&&
@@ -344,7 +389,7 @@ $('inspect').addEventListener('click',async()=>{
   }};
   $('evidence').textContent=JSON.stringify(report,null,2);
   $('report-download').disabled=false;
-  setStatus('來源 '+file.name+' 完成 7 張唯讀 GPU 診斷圖；'+
+  setStatus((nativeGeometryGatePASS?'來源 ':'BLOCK：來源 ')+file.name+' 完成 7 張唯讀 GPU 診斷圖；'+
    (!nativeGeometryGatePASS?'【原始幾何 FAIL：禁止正式發布】'+
      (evidence.geometricErrors??[]).join('、')+'。':
     (sourceReview.readyForHumanReferenceReview?
