@@ -52,7 +52,8 @@ function contacts(positions,first,second,maxPairs=150000){
  // continuous surface neighbors and excluded from self-contact reporting.
  const A=first.map(t=>bounding(t,positions)),B=second.map(t=>bounding(t,positions))
   .sort((x,y)=>x.minimum[0]-y.minimum[0]);
- let pairsBroadphase=0,pairsNarrowphase=0,intersections=0,exhausted=false,\n  examinedCandidatePairs=0;
+ let pairsBroadphase=0,pairsNarrowphase=0,intersections=0,exhausted=false,
+  examinedCandidatePairs=0;
  for(const a of A){
   for(const b of B){
    if(b.minimum[0]>a.maximum[0])break;
@@ -71,7 +72,8 @@ function contacts(positions,first,second,maxPairs=150000){
  return {
   firstChannelAffectedSourceTriangles:first.length,
   secondChannelAffectedSourceTriangles:second.length,
-  aabbOverlappingNonadjacentPairs:pairsBroadphase,\n  totalBroadphaseCandidatesVisited:examinedCandidatePairs,
+  aabbOverlappingNonadjacentPairs:pairsBroadphase,
+  totalBroadphaseCandidatesVisited:examinedCandidatePairs,
   exactNoncoplanarTrianglePairsTested:pairsNarrowphase,
   observedSourceTriangleIntersections:intersections,
   pairTestBudget:maxPairs,budgetExhausted:exhausted,
