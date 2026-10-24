@@ -1,0 +1,52 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FastModel V119｜同一角色多套衣服真 GLB 切換</title>
+<style>
+:root{color-scheme:dark;background:#020407;color:#e0f3ff;font:15px/1.6 system-ui,"Microsoft JhengHei",sans-serif}
+body{margin:0;padding:15px}main{max-width:1380px;margin:auto}
+h1{font-size:22px}h2{font-size:18px}p,small{color:#b3cfe1}
+section{border:1px solid #225574;background:#07111b;border-radius:14px;padding:13px;margin:12px 0}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+label{display:flex;flex-direction:column;gap:3px}
+button,input,select{font:inherit;color:#e0f3ff;background:#102a3e;border:1px solid #3c7294;border-radius:7px;padding:8px}
+button{background:#164a69;min-height:44px;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}
+input[type=file]{max-width:300px}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(270px,1fr);gap:14px}
+@media(max-width:850px){.grid{grid-template-columns:1fr}}
+canvas{display:block;width:100%;background:#020407;border-radius:10px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:450px;overflow:auto;font:12px/1.5 ui-monospace,monospace}
+.outfit{border:1px solid #345c79;border-radius:12px;padding:10px;margin:9px 0}
+#status{color:#f1c88f}
+</style></head><body><main>
+<h1>FastModel V119｜同一角色・多套衣服・真 3D 五軸檢查</h1>
+<p>同一角色可建立 2～12 套衣服，每套可含上衣、下身、外套、洋裝、鞋與配件等多個真 GLB 圖層。每次只顯示所選套裝，原始角色與其他衣物的 GLB、貼圖及 SHA 完全獨立。未提供真衣物幾何時不使用假人體模板代替。</p>
+<section><h2>原始角色（固定不更換）</h2>
+<div class="row"><label>角色原始 PNG（來源比對用）<input id="actor-photo" type="file" accept="image/png"></label>
+<label>角色真 GLB <input id="actor-glb" type="file" accept=".glb,model/gltf-binary"></label></div>
+</section>
+<section><h2>多套服裝來源庫</h2>
+<p>每個衣物需提供獨立來源 PNG 和對應真 GLB。相同網格只有換顏色不能假稱不同衣服版型。所有衣物座標要先與角色對齊；本階不做蒙皮權重綁定。</p>
+<div id="outfits"></div>
+<div class="row"><button type="button" id="add-outfit">新增一套衣服</button>
+<button type="button" id="add-layer">替最後一套增加衣物圖層</button>
+<button type="button" id="build-wardrobe">核對 GLB 來源並建立衣櫃</button></div>
+</section>
+<div class="grid">
+<section><h2>真 WebGL 換裝預覽・上 XYZ／下 A／B</h2>
+<canvas id="gl" width="960" height="620"></canvas>
+<div class="row">
+<label>目前服裝<select id="active-outfit" disabled></select></label>
+<label>A 翻轉 <input id="a" type="range" min="-180" max="180" value="0"><output id="a-value">0°</output></label>
+<label>B 旋轉 <input id="b" type="range" min="0" max="360" value="0"><output id="b-value">0°</output></label>
+<label>由腳至頭高度 <input id="progress" type="range" min="0" max="100" value="100"><output id="progress-value">100%</output></label>
+<button type="button" id="reset" disabled>重設 A/B／高度</button>
+<button type="button" id="export" disabled>下載衣櫃來源 Manifest</button>
+</div>
+<p><small>這是原始角色與原始服裝 GLB 的場景合成渲染，不是新增一個已匯出的合併 GLB。只驗證粗略空間對位，沒有宣稱衣料垂墜、穿透碰撞、骨架綁定或自然照片 1:1 已完成。</small></p>
+</section>
+<section><h2>真實來源、服裝索引與 GPU 報告</h2>
+<div id="status" role="status">尚未匯入角色與服裝來源。</div><pre id="receipt">等待建立。</pre></section>
+</div>
+<p><a style="color:#8ad9ff" href="./aig-real3d-v109-photo-surface-lab.html">回到 V118 真 AI 照片→GLB</a></p>
+</main>
+<script type="module" src="./aig-real3d-v119-wardrobe-ui.mjs"></script></body></html>

@@ -47,7 +47,8 @@ try{
  await page.locator('#v110-preview').click();
  await page.waitForFunction(()=>{
   const txt=document.querySelector('#status')?.textContent||'';
-  return txt.includes('V110 前景預覽完成')||txt.startsWith('BLOCK');
+  return txt.includes('V110 前景預覽完成')||
+   txt.includes('前景模型／來源預覽完成')||txt.startsWith('BLOCK');
  },null,{timeout:30000});
  let preview=JSON.parse(await page.locator('#v110-mask-report').textContent());
  assert.equal(preview.sourceMode,'INTERACTIVE_COLOR_CONNECTED_NOT_NEURAL_AI');
