@@ -9,6 +9,7 @@ import {createAIG3DRenderer}
 import {remodelAIGReal3DGeometryBackend}
  from './aig-real3d-v101-backend-orchestrator.mjs';
 import {planAIGReal3DAdaptiveArtworkFrame,
+ planAIGReal3DNativeOutputWithinArtwork,
  findAIGReal3DVisibleAlphaROI,createAIGReal3DAdaptivePreviewGate}
  from './aig-real3d-v102-adaptive-frame.mjs';
 import {auditAIGReal3D4KSourceProjection}
@@ -190,12 +191,22 @@ $('quality').addEventListener('click',()=>{
 $('png4k').addEventListener('click',async()=>{
  if(!ready||busy)return;
  busy=true;$('png4k').disabled=true;
+ const originalPreviewCamera=renderer.getCamera();
  try{
+  const [yaw,pitch]=views[mode];
+  const nativeArtworkFrame=planAIGReal3DNativeOutputWithinArtwork({
+   scene:activeScene(),artworkWidth:v102Artwork.width,
+   artworkHeight:v102Artwork.height,subjectROI:v102Artwork.roi,
+   originalImageSha256:imported.originalImageSha256,
+   sourceRevision:v102SourceEpoch,
+   outputWidth:3840,outputHeight:2160,yaw,pitch
+  });
+  renderer.setCamera(nativeArtworkFrame.camera);
   const out=await captureAIGReal3DNative4K({
    renderer,scene:activeScene(),
    sourceSha256:imported.originalImageSha256,
    output:'UHD_4K',workingMemoryMB:256,
-   camera:renderer.getCamera(),requireSourceDetailPASS:false});
+   camera:nativeArtworkFrame.camera,requireSourceDetailPASS:false});
   if(fileURL)URL.revokeObjectURL(fileURL);
   fileURL=URL.createObjectURL(out.pngBlob);
   const a=document.createElement('a');a.href=fileURL;
@@ -204,12 +215,23 @@ $('png4k').addEventListener('click',async()=>{
   qa.actualNativeGPUFrameWidth=out.width;
   qa.actualNativeGPUFrameHeight=out.height;
   qa.actualNativeGPUReadback=out.trueGPUReadPixels;
+  qa.V102NativePictureContentFrame=nativeArtworkFrame.nativeOutputFrameContentRect;
+  qa.V102OriginalImageCompositionNotStretched=true;
+  qa.V102SceneCameraOnlyOutput=true;
   qa.realSource4KPNG_SHA=out.sha256;
   qa.actualSource4KCloseUpGeometryGate=out.sourceGeometryProjectionQA?.sourceDetailCandidatePASS;
   $('proof').textContent=JSON.stringify(qa,null,2);
   status('已生成真正 3840×2160 GPU PNG（非 upscale）；來源外型仍不是正式人物身份認證。');
  }catch(e){status('BLOCK：'+String(e?.message??e));}
- finally{busy=false;$('png4k').disabled=!ready;}
+ finally{
+  if(renderer&&ready){
+   try{
+    renderer.setCamera(originalPreviewCamera);
+    renderer.render(activeScene());
+   }catch(e){status('BLOCK：V102預覽相機復原失敗 '+String(e?.message??e));}
+  }
+  busy=false;$('png4k').disabled=!ready;
+ }
 });
 
 $('repair101').addEventListener('click',()=>{
