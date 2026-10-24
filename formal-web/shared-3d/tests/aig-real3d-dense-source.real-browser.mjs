@@ -368,6 +368,7 @@ try{
  assert.equal(await page.locator('#three-joint-stress-run').isDisabled(),false);
  assert.equal(await page.locator('#three-joint-pool-run').isDisabled(),false);
  assert.equal(await page.locator('#three-joint-vpu-run').isDisabled(),false);
+ assert.equal(await page.locator('#three-joint-v82-run').isDisabled(),false);
  assert.equal(triple.adaptiveRealSourceGPUFrameBudget.schema,
   'AIG_REAL3D_SOURCE_POSE_ADAPTIVE_RAF_BUDGET_V1');
  assert.equal(triple.adaptiveRealSourceGPUFrameBudget.requestedMode,'AUTO');
@@ -418,6 +419,81 @@ try{
  assert.equal(createHash('sha256').update(threeBytes).digest('hex'),
   triple.gpuFrames[2].sha256);
  await copyFile(await triplePNG.path(),dir+'/NONHUMAN-DENSE-THREE-JOINT-FINAL-GPU.png');
+ // V82 one genuine Worker pool persists over THREE distinct original source
+ // deform positions; each batch still does strict full-geometry serial parity.
+ const persistentVPU=await page.evaluate(async()=>{
+  const V81=await import('./aig-real3d-virtual-processor.mjs');
+  const V82=await import('./aig-real3d-persistent-vpu.mjs');
+  const n=12288,original=new Float32Array(n*9),
+   indices=new Uint32Array(n*3),triangleOffsets=new Uint32Array(n);
+  for(let i=0;i<n;i++){
+   const j=i*9,z=i*.001;
+   original.set([0,0,z,1,0,z,0,1,z],j);
+   indices.set([i*3,i*3+1,i*3+2],i*3);triangleOffsets[i]=i*3;
+  }
+  const sha='a'.repeat(64),poses=[.015,.03,.055].map(theta=>{
+   const copy=new Float32Array(original);
+   for(let i=0;i<n;i++)copy[i*9+3]+=(i%5)*theta;
+   return copy;
+  });
+  const session=V82.createAIGReal3DPersistentVPU({
+   physicalWorkers:4,virtualLanes:16,maxBatches:3
+  });
+  let first,close,result,seen;
+  const warmStart=performance.now();
+  try{
+   result=[];
+   for(const posed of poses)result.push(await session.runBatch({
+    original,posed,indices,triangleOffsets,sourceSha256:sha
+   }));
+   first=session.stats();
+  }finally{close=session.close();}
+  const reusedTotalMs=performance.now()-warmStart;
+  // V81 comparison is informational; order/JIT/GC affect timings.
+  // Both paths genuinely process the same three different source poses.
+  const coldStart=performance.now(),cold=[];
+  for(const posed of poses)cold.push(await V81.runAIGReal3DVirtualProcessor({
+   original,posed,indices,triangleOffsets,
+   virtualLanes:16,physicalWorkers:4,forceParallel:true
+  }));
+  const recreatedTotalMs=performance.now()-coldStart;
+  const evidence=V82.verifyAIGReal3DStageEvidence({
+   sourceSha256:sha,
+   geometry:{sourceSha256:sha,sourceTriangleCount:n},
+   pose:{sourceSha256:sha,sourceTriangleCount:n},
+   contact:{sourceSha256:sha,sampledOriginalTriangleAudit:true},
+   gpu:{sourceSha256:sha,frameSha256:[
+    'b'.repeat(64),'c'.repeat(64),'d'.repeat(64)]}
+  });
+  return {session:first,close,batches:result,cold,
+   stageEvidence:evidence,reusedTotalMs,recreatedTotalMs,
+   resultEquality:result.every((x,i)=>
+    JSON.stringify(x.sourceIndexedGeometryResult)===
+    JSON.stringify(cold[i].result)),
+   coldRealWorkerCreations:cold.reduce((x,r)=>x+r.actualRealWebWorkers,0)
+  };
+ });
+ assert.equal(persistentVPU.session.realWebWorkersCreated,4);
+ assert.equal(persistentVPU.session.batchesCompleted,3);
+ assert.equal(persistentVPU.session.virtualTasksCompleted,48);
+ assert.equal(persistentVPU.session.actualWorkerObjectsCreated,4);
+ assert.equal(persistentVPU.session.taskDispatches,48);
+ assert.equal(persistentVPU.session.maxConcurrentRealWorkerTasks,4);
+ assert.equal(persistentVPU.close.liveWorkerObjects,0);
+ assert.equal(persistentVPU.close.isClosed,true);
+ assert.equal(persistentVPU.coldRealWorkerCreations,12);
+ assert.equal(persistentVPU.resultEquality,true);
+ assert.ok(persistentVPU.batches.every(x=>
+  x.genuineWebWorkerCount===4&&
+  x.virtualTaskCount===16&&x.serialEquivalent===true&&
+  x.inspectedOriginalTriangles===12288));
+ assert.equal(persistentVPU.stageEvidence.stages.length,4);
+ assert.equal(persistentVPU.stageEvidence.sampledCollisionSafetyGuaranteed,false);
+ assert.equal(persistentVPU.session.physicalCPUCoresCreated,0);
+ assert.ok(persistentVPU.reusedTotalMs>=0);
+ assert.ok(persistentVPU.recreatedTotalMs>=0);
+ await writeFile(dir+'/NONHUMAN-V82-3-BATCHES-4-PERSISTENT-WORKERS-48-VIRTUAL-TASKS.json',
+  JSON.stringify(persistentVPU,null,2));
  // V81 genuine virtual triangle tasks: 16 logical lanes time-share four
  // real Dedicated Web Workers; no fake physical cores, no duplicate GPUs.
  const vpu=await page.evaluate(async()=>{
@@ -741,7 +817,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_V81_TRUE_VIRTUAL_TASKS_2_4_WORKER_SOURCE_PARITY_GPU_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_V82_PERSISTENT_WORKER_POOL_SOURCE_SHA_PARITY_GPU_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;
