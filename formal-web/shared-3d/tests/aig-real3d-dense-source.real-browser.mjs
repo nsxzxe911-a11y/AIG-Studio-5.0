@@ -1044,6 +1044,65 @@ try{
   dir+'/NONHUMAN-V85-CURVED-SOURCE-REAL-FRONT-GPU.png');
  await writeFile(dir+'/NONHUMAN-V85-CURVED-SIX-DEPTH-OCCLUSION-NO-INFERRED-SIDES.json',
   JSON.stringify({curvedReport,missingObservedSidesBLOCK:curvedMissing},null,2));
+ // V86 real immutable source material switching: skin/undercoat/guard-hair
+ // shader on SAME nonhuman original OBJ, plus an independently authored OBJ
+ // garment with its OWN file SHA. It is not a real fitted dog's sweater.
+ assert.equal(await page.locator('#fur-cloth-run').isDisabled(),false);
+ await page.locator('#coat-kind').selectOption('DOUBLE_COAT');
+ const qaClothing=Buffer.from([
+  '# Separately sourced nonhuman QA fabric patch in body world METERS',
+  'v -0.25 0.25 0.45',
+  'v 0.25 0.25 0.45',
+  'v 0.15 0.4 0.45',
+  'v -0.25 0.4 0.45',
+  'f 1 2 3',
+  'f 1 3 4'
+ ].join('\n'),'utf8');
+ const garmentSHA=createHash('sha256').update(qaClothing).digest('hex');
+ await page.locator('#coat-garment-files').setInputFiles([{
+  name:'V86-NONHUMAN-INDEPENDENT-QA-CLOTHING.obj',
+  mimeType:'text/plain',buffer:qaClothing
+ }]);
+ await page.locator('#fur-cloth-run').click();
+ await page.waitForFunction(()=>{
+  const status=document.querySelector('#fur-cloth-status')?.textContent||'';
+  return document.querySelector('#fur-cloth-run')?.disabled===false&&
+   (status.includes('材質分層真 GPU PASS')||status.startsWith('BLOCK'));
+ },null,{timeout:180000});
+ const materialStatus=await page.locator('#fur-cloth-status').textContent();
+ assert.match(materialStatus,/材質分層真 GPU PASS/,materialStatus);
+ const coatReport=JSON.parse(await page.locator('#fur-cloth-evidence').textContent());
+ assert.equal(coatReport.schema,'AIG_REAL3D_V86_SEPARATE_FUR_AND_GARMENT_MATERIAL_V1');
+ assert.equal(coatReport.bodySourceSha256,curvedSHA);
+ assert.equal(coatReport.originalBodyGeometryReallocations,0);
+ assert.equal(coatReport.noOriginalBodyGPUBufferReallocationOnMaterialSwitch,true);
+ assert.equal(coatReport.originalBodyGPUBufferCountAfterCoat,
+  coatReport.originalBodyGPUBufferCountBeforeCoat);
+ assert.equal(coatReport.additionalIndependentGarmentGPUBufferCount,3);
+ assert.equal(coatReport.independentGarmentSourceCount,1);
+ assert.equal(coatReport.garmentLayers[0].garmentSourceSha256,garmentSHA);
+ assert.equal(coatReport.garmentLayers[0].originalSourceTriangleCount,2);
+ assert.equal(coatReport.garmentLayers[0].separateRenderableSourceMesh,true);
+ assert.equal(coatReport.garmentLayers[0].garmentFitOrCollisionVerified,false);
+ assert.equal(coatReport.coatMaterial.kind,'DOUBLE_COAT');
+ assert.equal(coatReport.actualVolumetricStrandFurPASS,false);
+ assert.equal(coatReport.realDogAnatomyAndHairMotionPASS,false);
+ assert.equal(coatReport.physicallySimulatedGarmentFitPASS,false);
+ assert.equal(coatReport.realGpuMaterialComparisonPASS,true);
+ assert.notEqual(coatReport.previousOriginalSkinGPU.sha256,
+  coatReport.currentMaterialAndSeparateGarmentsGPU.sha256);
+ assert.equal(await page.locator('#fur-cloth-gallery figure img').count(),2);
+ const coatDownload=page.waitForEvent('download',{timeout:30000});
+ await page.locator('#fur-cloth-gallery figure').last().locator('a').click();
+ const coatPng=await coatDownload,coatPngBytes=await readFile(await coatPng.path());
+ assert.equal(coatPngBytes.readUInt32BE(16),640);
+ assert.equal(coatPngBytes.readUInt32BE(20),640);
+ assert.equal(createHash('sha256').update(coatPngBytes).digest('hex'),
+  coatReport.currentMaterialAndSeparateGarmentsGPU.sha256);
+ await copyFile(await coatPng.path(),
+  dir+'/NONHUMAN-V86-SEPARATE-FUR-AND-GARMENT-ORIGINAL-GPU.png');
+ await writeFile(dir+'/NONHUMAN-V86-FUR-CLOTH-MATERIAL-AND-INDEPENDENT-SHA.json',
+  JSON.stringify(coatReport,null,2));
  assert.deepEqual(errors,[]);
  await page.screenshot({path:dir+'/DENSE-SOURCE-ORIGINAL-GPU-INTAKE.png',fullPage:true});
  await writeFile(dir+'/proof.json',JSON.stringify({
@@ -1054,7 +1113,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_V85_SIX_CURVED_SOURCE_DEPTH_OCCLUSION_UNOBSERVED_REMAINS_UNKNOWN_GPU_PASS_NONHUMAN');
+ console.log('REAL3D_V86_FUR_MATERIAL_SEPARATE_GARMENT_GPU_ORIGINAL_SOURCE_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;

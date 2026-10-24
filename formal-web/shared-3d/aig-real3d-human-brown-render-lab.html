@@ -87,6 +87,31 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <div id="curved-six-gallery" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px" aria-label="六方向原始曲面真 GPU 畫面"></div>
 <pre id="curved-six-evidence">無原始曲面／掃描側面證據。</pre>
 </section>
+<section class="panel" id="real-fur-clothing-material-layers">
+<h2>極速 V86｜狗的皮膚、底絨、外層毛與一件件衣物：獨立材質層</h2>
+<p>真正的 3D 主體是原始 Indexed XYZ 網格。皮膚、底絨、護毛（guard hair）有不同的材質顏色與粗糙度；改毛色不需重新捏身體。<strong>本版毛色微紋理是 GPU 材質著色，不會生成真毛絲體積、皮膚延展或毛髮動畫。</strong></p>
+<p>衣物屬於可個別穿戴的獨立網格，每件均需使用者提供自己的 OBJ + SHA，採與身體相同的世界座標（公尺），不自動把皮膚複製成衣服。是否貼合、穿模、碰撞與布料物理另需驗證。</p>
+<div class="row">
+<label>皮毛種類
+<select id="coat-kind">
+<option value="SKIN">只看皮膚</option>
+<option value="SHORT_COAT">短毛</option>
+<option value="DOUBLE_COAT" selected>雙層毛（底絨＋外毛）</option>
+<option value="LONG_COAT">長毛材質</option>
+</select></label>
+<label>皮膚色 <input id="coat-skin" type="color" value="#6b4f3b"></label>
+<label>底絨色 <input id="coat-under" type="color" value="#a68158"></label>
+<label>外毛色 <input id="coat-guard" type="color" value="#594029"></label>
+<label>衣物顏色 <input id="coat-cloth-color" type="color" value="#254591"></label>
+<label>額外衣物 OBJ（可多件，最多四件）
+<input id="coat-garment-files" type="file" accept=".obj,text/plain" multiple></label>
+<button id="fur-cloth-run" type="button" disabled>原始身體／皮毛材質／分件衣物｜真 GPU 比對</button>
+<button id="fur-cloth-save" type="button" disabled>下載材質／衣物來源 SHA 報告</button>
+</div>
+<div id="fur-cloth-status" class="status" role="status">BLOCK：需先匯入原始 3D 網格。</div>
+<div id="fur-cloth-gallery" class="gallery" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px"></div>
+<pre id="fur-cloth-evidence">尚未有原始 OBJ 材質／衣服來源。</pre>
+</section>
 <section class="panel" id="dense-native-anatomy">
 <h2>高密度原始 3D 解剖五區＋四視角 GPU 檢查</h2>
 <p>先按上方高密度 OBJ 真匯入，再提供本機 21 點解剖 JSON（五指檢查另需左右手的 MiddleTip、RingTip、PinkyTip 六點）。
