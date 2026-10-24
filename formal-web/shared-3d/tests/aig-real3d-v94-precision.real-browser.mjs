@@ -40,8 +40,16 @@ try{
   buffer:Buffer.from(obj)
  });
  await page.locator('#run').click();
- await page.waitForFunction(()=>document.querySelector('#evidence')?.textContent
-  ?.includes('originalTriangleCount'),null,{timeout:30000});
+ await page.waitForFunction(()=>{
+  const evidence=document.querySelector('#evidence')?.textContent??'';
+  const status=document.querySelector('#status')?.textContent??'';
+  return evidence.includes('originalTriangleCount')||
+   status.startsWith('BLOCK')||status.includes('來源模型');
+ },null,{timeout:15000});
+ const loadedStatus=await page.locator('#status').textContent();
+ if(!await page.locator('#evidence').textContent().then(s=>s.includes('originalTriangleCount')))
+  throw Error('V94_REAL_SOURCE_IMPORT_BLOCK: '+loadedStatus+
+   ' | pageerrors='+JSON.stringify(errors));
  const evidence=JSON.parse(await page.locator('#evidence').textContent());
  assert.equal(evidence.originalFileSHA,originalSHA);
  assert.equal(evidence.originalTriangleCount,4418);
