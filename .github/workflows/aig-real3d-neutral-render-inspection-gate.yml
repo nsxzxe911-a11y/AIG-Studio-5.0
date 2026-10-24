@@ -17,6 +17,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-source-envelope-review.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-body-cross-sections.mjs'
       - 'formal-web/shared-3d/aig-real3d-local-hole-working-copy.mjs'
+      - 'formal-web/shared-3d/aig-real3d-native-resolution.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-native-resolution.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-local-hole-working-copy.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-body-cross-sections.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-source-envelope-review.test.mjs'
@@ -47,6 +49,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-source-envelope-review.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-body-cross-sections.mjs'
       - 'formal-web/shared-3d/aig-real3d-local-hole-working-copy.mjs'
+      - 'formal-web/shared-3d/aig-real3d-native-resolution.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-native-resolution.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-local-hole-working-copy.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-body-cross-sections.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-source-envelope-review.test.mjs'
@@ -92,6 +96,8 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-source-envelope-review.mjs
           node --check formal-web/shared-3d/aig-real3d-native-body-cross-sections.mjs
           node --check formal-web/shared-3d/aig-real3d-local-hole-working-copy.mjs
+          node --check formal-web/shared-3d/aig-real3d-native-resolution.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-native-resolution.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-local-hole-working-copy.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-native-body-cross-sections.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-source-envelope-review.test.mjs
