@@ -363,6 +363,15 @@ try{
  assert.ok(triple.gpuFrames.slice(1).every(f=>
   f.gpuDelta?.reusedOriginalIndexGPUBuffers===true));
  assert.equal(triple.gpuNativeSourceBufferDeltaReusedOnLaterFrames,true);
+ assert.equal(triple.incrementalNativeSourceNormalsVerified,true);
+ assert.equal(triple.nonDisplayFullXYZScratchBuffersAllocated,2);
+ assert.ok(triple.sparseSourceTopology.offscreenScratchBuffersActuallyReused>=1);
+ assert.ok(triple.gpuFrames.every(f=>
+  f.sparseNativeGlobalNormals.sourceTrianglesRecomputed>0&&
+  f.sparseNativeGlobalNormals.skippedSourceTriangleRecalculation>0&&
+  f.realCPUOriginalNormalsAndSceneBuildMs>=0&&
+  f.gpuReadbackAndPNGEncodingWallMs>=0));
+
  assert.equal(triple.sparseSourceTopology.schema,
   'AIG_REAL3D_SPARSE_FK_SOURCE_TOPOLOGY_CACHE_V1');
  assert.equal(triple.sparseSourceTopology.inputSourceVertexCount,vertices);
@@ -511,11 +520,46 @@ try{
    });
    const changed=await one.captureNativePNG(live,{width:640,height:480});
    const reference=await two.captureNativePNG(next,{width:640,height:480});
+   const normalLib=await import('./aig-real3d-sparse-source-normals.mjs');
+   const originalXYZ=new Float32Array(original),
+    posedXYZ=new Float32Array(moved),sourceIndices=new Uint32Array(indices);
+   const normalCache=normalLib.createAIGReal3DSparseNormalCache({
+    original:originalXYZ,indices:sourceIndices
+   });
+   const normalScratch=new Float64Array(originalXYZ.length);
+   const movingIDs=[];
+   for(let row=19;row<27;row++)
+    for(let col=0;col<segments;col++)movingIDs.push(row*segments+col);
+   const incrementalNormals=normalLib.evaluateAIGReal3DSparseNormals({
+    cache:normalCache,posed:posedXYZ,changedGlobalVertexIds:movingIDs,
+    outputNormals:normalScratch
+   });
+   const fullNormals=normalLib.calculateAIGReal3DFullSourceNormals({
+    positions:posedXYZ,indices:sourceIndices
+   });
+   let maxNormalDifference=0;
+   for(let k=0;k<fullNormals.length;k++)
+    maxNormalDifference=Math.max(maxNormalDifference,
+     Math.abs(fullNormals[k]-normalScratch[k]));
+   const heapBefore=typeof performance.memory?.usedJSHeapSize==='number'?
+    performance.memory.usedJSHeapSize:null;
+   const completedFrames=[];
+   for(let i=0;i<12;i++)completedFrames.push(one.measureCompletedFrame(live));
+   const heapAfter=typeof performance.memory?.usedJSHeapSize==='number'?
+    performance.memory.usedJSHeapSize:null;
+
    return {
     baselineSha:baseline.sha256,deltaSha:changed.sha256,
     fullRebuildSha:reference.sha256,stats:update,
     exactGPUFrameMatch:changed.sha256===reference.sha256,
-    frameActuallyChanged:baseline.sha256!==changed.sha256
+    frameActuallyChanged:baseline.sha256!==changed.sha256,
+    normalParityMaxAbsoluteDifference:maxNormalDifference,
+    originalSourceTrianglesInNormalCache:normalCache.originalTriangleCount,
+    sparseNormalTriangleRecomputations:incrementalNormals.affectedSourceTriangles,
+    skippedNormalTriangles:incrementalNormals.skippedOriginalTriangleRecalculation,
+    gpuCompletedFrameSamples:completedFrames,
+    memoryHeapBytesBefore:heapBefore,memoryHeapBytesAfter:heapAfter,
+    completedGPUSampleNotInteractiveAnimationFPS:true
    };
   }finally{one.destroy();two.destroy();}
  });
@@ -524,6 +568,18 @@ try{
  assert.equal(deltaProof.stats.reusedOriginalIndexGPUBuffers,true);
  assert.equal(deltaProof.stats.fullGPUVertexBuffersReallocated,false);
  assert.ok(deltaProof.stats.gpuBufferSubDataCalls>=2);
+ assert.ok(deltaProof.normalParityMaxAbsoluteDifference<1e-13);
+ assert.equal(deltaProof.originalSourceTrianglesInNormalCache,3136);
+ assert.ok(deltaProof.sparseNormalTriangleRecomputations>0);
+ assert.ok(deltaProof.skippedNormalTriangles>0);
+ assert.equal(deltaProof.gpuCompletedFrameSamples.length,12);
+ assert.ok(deltaProof.gpuCompletedFrameSamples.every(x=>
+  x.trueGLFinishSynchronization===true&&
+  x.completedGPUDrawAndSubmissionWallMs>=0&&
+  x.originalIndexedTrianglesRendered===3136&&
+  x.interactive60FPSProven===false));
+ assert.equal(deltaProof.completedGPUSampleNotInteractiveAnimationFPS,true);
+
  await writeFile(dir+'/NONHUMAN-WEBGL-DELTA-VS-FULL-REBUILD-SHA.json',
   JSON.stringify(deltaProof,null,2));
  // Real working UI: WGS84 -> double ECEF -> floating local mm -> 6DoF.
@@ -556,7 +612,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_ADAPTIVE_TWO_FOUR_WORKERS_GPU_DELTA_SHA_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_SPARSE_GLOBAL_NORMALS_GPU_PARITY_REUSED_SUBFRAMES_GPU_FINISH_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;

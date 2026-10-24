@@ -30,6 +30,7 @@ on:
       - 'formal-web/shared-3d/aig-real3d-three-joint*.mjs'
       - 'formal-web/shared-3d/aig-real3d-quad-strain-*.mjs'
       - 'formal-web/shared-3d/aig-real3d-gpu-delta-source.mjs'
+      - 'formal-web/shared-3d/aig-real3d-sparse-source-normals.mjs'
       - 'formal-web/shared-3d/aig-sixdof-geoglobe-*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-dense-source*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-dense-anatomy-*.mjs'
@@ -41,6 +42,7 @@ on:
       - 'formal-web/shared-3d/tests/aig-real3d-three-joint-swept-motion.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-quad-strain.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-adaptive-workers-gpu-delta.test.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-sparse-source-normals.test.mjs'
       - 'formal-web/shared-3d/tests/aig-sixdof-geoglobe-space.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-fast-sparse-fk.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs'
@@ -182,6 +184,8 @@ jobs:
           node --test formal-web/shared-3d/tests/aig-real3d-quad-strain.test.mjs
           node --check formal-web/shared-3d/aig-real3d-gpu-delta-source.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-adaptive-workers-gpu-delta.test.mjs
+          node --check formal-web/shared-3d/aig-real3d-sparse-source-normals.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-sparse-source-normals.test.mjs
           node --test formal-web/shared-3d/tests/aig-sixdof-geoglobe-space.test.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-dense-source.real-browser.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs

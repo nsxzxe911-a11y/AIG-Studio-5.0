@@ -150,14 +150,21 @@ export function createAIGReal3DWeightedFingerPose({
  return {workingCopyPositions:posed,sourceGlobalIndices:g.indices,evidence,releasePASS:false};
 }
 /** Build truly posed GPU scene preserving every index/face in original partitions. */
-export function buildAIGReal3DWeightedFingerGPUPreview({dense,pose}={}){
+export function buildAIGReal3DWeightedFingerGPUPreview({dense,pose,normalOverride=null}={}){
  const e=dense?.evidence,g=dense?.sourceGeometry,xyz=pose?.workingCopyPositions;
  if(e?.sourceSha256!==pose?.evidence?.sourceSha256||
   !(xyz instanceof Float32Array)||xyz.length!==g?.positions?.length||
   pose.evidence.sourceTriangleCount!==e.originalTriangleCount||
   !Array.isArray(dense.scene?.nodes)||dense.scene.nodes.length===0)
   fail('GPU_WORKING_COPY_SOURCE_MISMATCH');
- const normals=new Float64Array(xyz.length),indices=g.indices;
+ if(normalOverride!==null&&(
+  !(normalOverride instanceof Float64Array)||
+  normalOverride.length!==xyz.length||
+  normalOverride.some(x=>!Number.isFinite(x)||Math.abs(x)>1.0001)))
+  fail('NORMAL_OVERRIDE_ORIGINAL_VERTEX_SPACE_INVALID');
+ const normals=normalOverride??new Float64Array(xyz.length);
+ if(!normalOverride){
+  const indices=g.indices;
  for(let k=0;k<indices.length;k+=3){
   const a=indices[k]*3,b=indices[k+1]*3,c=indices[k+2]*3;
   const u=[xyz[b]-xyz[a],xyz[b+1]-xyz[a+1],xyz[b+2]-xyz[a+2]],
@@ -168,6 +175,8 @@ export function buildAIGReal3DWeightedFingerGPUPreview({dense,pose}={}){
  for(let k=0;k<normals.length;k+=3){
   const l=magnitude(normals[k],normals[k+1],normals[k+2])||1;
   for(let j=0;j<3;j++)normals[k+j]/=l;
+ }
+
  }
  const scene=createAIG3DScene({
   id:'real3dWeightedFingerWorkingCopy',consumer:'FastModel',units:'METERS',
@@ -200,6 +209,7 @@ export function buildAIGReal3DWeightedFingerGPUPreview({dense,pose}={}){
  return {scene,evidence:{
   sourceSha256:e.sourceSha256,originalTriangleCount:e.originalTriangleCount,
   posedGPUOriginalTriangles:triangles,originalIndicesPreserved:true,
+  cachedNativeOriginalSourceNormalsUsed:normalOverride!==null,
   sourceRawOBJUnmodified:true,animationNaturalnessPASS:false,releasePASS:false
  }};
 }
