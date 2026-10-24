@@ -245,6 +245,72 @@ try{
  assert.equal(createHash('sha256').update(dualPNGBytes).digest('hex'),
   dual.gpuFrames[2].sha256);
  await copyFile(await dualPNG.path(),dir+'/NONHUMAN-DENSE-DUAL-TIMELINE-FINAL-GPU.png');
+ // Parent-child joint: the distal original-source pivot inherits proximal motion.
+ // The existing industrial NONHUMAN cylinder is NOT a human hand.
+ assert.equal(await page.locator('#hierarchical-fk-run').isDisabled(),false);
+ await page.locator('#hierarchical-fk-run').click();
+ assert.match(await page.locator('#hierarchical-fk-status').textContent(),/BLOCK/);
+ assert.equal(await page.locator('#hierarchical-fk-download').isDisabled(),true);
+ const jointT=64/314, jointR=.14+.052*Math.sin(Math.PI*jointT);
+ sourceMarkers.leftIndexBase=[.14,0,0];
+ sourceMarkers.leftIndexMiddle=[jointR,jointT,0];
+ await page.locator('#landmark-file').setInputFiles({
+  name:'NONHUMAN_HIERARCHICAL_3D_SOURCE_MARKERS.json',
+  mimeType:'application/json',buffer:Buffer.from(JSON.stringify(sourceMarkers))
+ });
+ const hierarchy={
+  schema:'AIG_REAL3D_EXPLICIT_FINGER_HIERARCHY_WEIGHTS_V1',
+  sourceSha256:inputSha,sourceVertexCount:vertices,side:'left',finger:'Index',
+  parent:{joint:'Base',pivotSourceXYZ:[.14,0,0],axisWorld:[0,0,1],
+   vertexWeights:Array.from({length:8},(_,i)=>[92*360+i,1])},
+  child:{joint:'Middle',pivotSourceXYZ:[jointR,jointT,0],axisWorld:[0,1,0],
+   vertexWeights:Array.from({length:6},(_,i)=>[92*360+i,.8])}
+ };
+ await page.locator('#hierarchical-fk-weights').setInputFiles({
+  name:'NONHUMAN_EXPLICIT_PARENT_CHILD_WEIGHTS.json',
+  mimeType:'application/json',buffer:Buffer.from(JSON.stringify(hierarchy))
+ });
+ await page.locator('#hierarchical-fk-run').click();
+ await page.waitForFunction(()=>{
+  const button=document.getElementById('hierarchical-fk-run'),
+   msg=document.getElementById('hierarchical-fk-status')?.textContent||'';
+  return !button?.disabled&&(msg.startsWith('真父子關節 FK 三幀 GPU')||
+   msg.startsWith('BLOCK'));
+ },null,{timeout:240000});
+ const fkStatus=await page.locator('#hierarchical-fk-status').textContent();
+ assert.match(fkStatus,/真父子關節 FK 三幀 GPU/,fkStatus);
+ const fk=JSON.parse(await page.locator('#hierarchical-fk-evidence').textContent());
+ assert.equal(fk.sourceSha256,inputSha);
+ assert.equal(fk.sourceOriginalTriangles,triangles);
+ assert.deepEqual(fk.orderedJointHierarchy,['Base','Middle']);
+ assert.ok(fk.checkedSubframeCount>=4);
+ assert.equal(fk.checkedSamples[0].movedOriginalVertices,0);
+ assert.equal(fk.checkedSamples[0].deformation.originalSourceTriangleCount,triangles);
+ assert.ok(fk.checkedSamples.at(-1).movedOriginalVertices>0);
+ assert.notDeepEqual(fk.checkedSamples[0].transformedChildPivotWorldMeters,
+  fk.checkedSamples.at(-1).transformedChildPivotWorldMeters);
+ assert.equal(fk.diagnostics.parentPivotCarriesChildPivot,true);
+ assert.equal(fk.diagnostics.sampledFramesDoNotProveContinuousCollisionFreedom,true);
+ assert.equal(fk.diagnostics.animationRigPASS,false);
+ assert.equal(fk.releasePASS,false);
+ assert.equal(await page.locator('#hierarchical-fk-gallery img').count(),3);
+ assert.equal(fk.gpuFrames.length,3);
+ assert.ok(fk.gpuFrames.every(f=>f.originalTriangleCount===triangles&&
+  f.width===1080&&f.height===1920));
+ const fkDownload=page.waitForEvent('download',{timeout:15000});
+ await page.locator('#hierarchical-fk-download').click();
+ const fkJson=await fkDownload,fkParsed=JSON.parse(await readFile(await fkJson.path()));
+ assert.equal(fkParsed.sourceSha256,inputSha);
+ assert.equal(fkParsed.releasePASS,false);
+ await copyFile(await fkJson.path(),dir+'/NONHUMAN-DENSE-FK-SUBFRAME-CONTACT.json');
+ const fkPNGDownload=page.waitForEvent('download',{timeout:15000});
+ await page.locator('#hierarchical-fk-gallery figure').nth(2).locator('a').click();
+ const fkPNG=await fkPNGDownload,fkBytes=await readFile(await fkPNG.path());
+ assert.equal(fkBytes.readUInt32BE(16),1080);
+ assert.equal(fkBytes.readUInt32BE(20),1920);
+ assert.equal(createHash('sha256').update(fkBytes).digest('hex'),
+  fk.gpuFrames[2].sha256);
+ await copyFile(await fkPNG.path(),dir+'/NONHUMAN-DENSE-FK-FINAL-GPU.png');
  assert.deepEqual(errors,[]);
  await page.screenshot({path:dir+'/DENSE-SOURCE-ORIGINAL-GPU-INTAKE.png',fullPage:true});
  await writeFile(dir+'/proof.json',JSON.stringify({
@@ -255,7 +321,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_DUAL_NATIVE_TIMELINE_CONTACT_THREE_GPU_FRAMES_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_PARENT_CHILD_FK_SUBFRAME_THREE_GPU_FRAMES_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;
