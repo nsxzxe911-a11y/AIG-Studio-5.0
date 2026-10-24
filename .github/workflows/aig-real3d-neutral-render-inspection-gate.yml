@@ -25,11 +25,13 @@ on:
       - 'formal-web/shared-3d/aig-real3d-dense-digit-branch-gate.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-finger-junction-gate.mjs'
       - 'formal-web/shared-3d/aig-real3d-weighted-motion-*.mjs'
+      - 'formal-web/shared-3d/aig-real3d-dual-channel-timeline*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-dense-source*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-dense-anatomy-*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-dense-digit-branch-gate.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-finger-junction-gate.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-weighted-motion-working-copy.test.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-dual-channel-timeline.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-resolution.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-resolution.test.mjs'
@@ -71,11 +73,13 @@ on:
       - 'formal-web/shared-3d/aig-real3d-dense-digit-branch-gate.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-finger-junction-gate.mjs'
       - 'formal-web/shared-3d/aig-real3d-weighted-motion-*.mjs'
+      - 'formal-web/shared-3d/aig-real3d-dual-channel-timeline*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-dense-source*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-dense-anatomy-*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-dense-digit-branch-gate.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-finger-junction-gate.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-weighted-motion-working-copy.test.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-dual-channel-timeline.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-resolution.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-resolution.test.mjs'
@@ -141,6 +145,9 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-weighted-motion-working-copy.mjs
           node --check formal-web/shared-3d/aig-real3d-weighted-motion-ui.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-weighted-motion-working-copy.test.mjs
+          node --check formal-web/shared-3d/aig-real3d-dual-channel-timeline.mjs
+          node --check formal-web/shared-3d/aig-real3d-dual-channel-timeline-ui.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-dual-channel-timeline.test.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-dense-source.real-browser.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs
           node --check formal-web/shared-3d/aig-real3d-native-resolution.mjs

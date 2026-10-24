@@ -2,6 +2,8 @@ import {buildAIGReal3DGLBStatic} from './aig-real3d-glb-native-mesh.mjs';
 import {buildAIGReal3DScanNative} from './aig-real3d-scan-native-mesh.mjs';
 import {buildAIGReal3DDenseOBJSource}
  from './aig-real3d-dense-source-obj.mjs';
+import {mountAIGReal3DDualTimelineControls}
+ from './aig-real3d-dual-channel-timeline-ui.mjs';
 import {mountAIGReal3DWeightedMotionControls}
  from './aig-real3d-weighted-motion-ui.mjs';
 import {mountAIGReal3DDenseAnatomyControls}
@@ -1011,6 +1013,7 @@ $('dense-source-run').addEventListener('click',async()=>{
  $('dense-source-evidence').textContent='GPU 工作進行中；尚未確認來源。';
  denseAnatomyUI.reset();
  weightedMotionUI.reset();
+ dualTimelineUI.reset();
  $('dense-source-status').textContent='解析原始高密度三角面、分塊並檢查真 GPU 輸出中…';
  let gpu=null;
  try{
@@ -1066,6 +1069,7 @@ $('dense-source-run').addEventListener('click',async()=>{
   });
   denseAnatomyUI.load({dense,file:f,sha256:sourceSha256,heightMm,upAxis});
   weightedMotionUI.load({dense,file:f,sha256:sourceSha256,heightMm,upAxis});
+  dualTimelineUI.load({dense,file:f,sha256:sourceSha256,heightMm,upAxis});
   latestDenseSourceEvidence={
    ...packet,
    realGPUFront:{width:1080,height:1920,sha256:frame.sha256,
@@ -1099,6 +1103,7 @@ $('dense-source-run').addEventListener('click',async()=>{
   latestDenseSourceEvidence=null;
   denseAnatomyUI.reset();
   weightedMotionUI.reset();
+ dualTimelineUI.reset();
   $('dense-source-evidence').textContent='BLOCK：'+(error?.message||String(error));
   $('dense-source-status').textContent='BLOCK：'+(error?.message||String(error))+
    '。來源沒有通過驗證時不能宣稱高密度 GPU 匯入成功。';
@@ -1131,6 +1136,13 @@ const denseAnatomyUI=mountAIGReal3DDenseAnatomyControls({
 });
 
 const weightedMotionUI=mountAIGReal3DWeightedMotionControls({
+ $,
+ isBusy:()=>running,
+ setBusy:value=>{running=value;},
+ registerURL:url=>urlPool.add(url)
+});
+
+const dualTimelineUI=mountAIGReal3DDualTimelineControls({
  $,
  isBusy:()=>running,
  setBusy:value=>{running=value;},
