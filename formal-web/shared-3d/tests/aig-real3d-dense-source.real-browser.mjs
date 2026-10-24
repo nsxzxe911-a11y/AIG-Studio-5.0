@@ -365,6 +365,18 @@ try{
  assert.equal(triple.gpuNativeSourceBufferDeltaReusedOnLaterFrames,true);
  assert.equal(triple.incrementalNativeSourceNormalsVerified,true);
  assert.equal(triple.nonDisplayFullXYZScratchBuffersAllocated,2);
+ assert.equal(triple.adaptiveRealSourceGPUFrameBudget.schema,
+  'AIG_REAL3D_SOURCE_POSE_ADAPTIVE_RAF_BUDGET_V1');
+ assert.equal(triple.adaptiveRealSourceGPUFrameBudget.requestedMode,'AUTO');
+ assert.equal(triple.adaptiveRealSourceGPUFrameBudget.requestedRafCallbacks,36);
+ assert.ok(triple.adaptiveRealSourceGPUFrameBudget.actualSourceIndexedDraws>=2);
+ assert.ok(triple.adaptiveRealSourceGPUFrameBudget.gpuBufferSubDataCalls>0);
+ assert.equal(triple.adaptiveRealSourceGPUFrameBudget.gpuOriginalIndexReusedForEveryDelta,true);
+ assert.equal(triple.adaptiveRealSourceGPUFrameBudget.actualDeviceTemperatureCelsius,null);
+ assert.equal(triple.adaptiveRealSourceGPUFrameBudget.thermalProtectionCertified,false);
+ assert.equal(triple.adaptiveRealSourceGPUFrameBudget.fullAnimation60_90_120FPSGatePASS,false);
+ assert.equal(triple.adaptiveRealSourceGPUFrameBudget.sourceOriginalOBJUnmodified,true);
+
  assert.ok(triple.sparseSourceTopology.offscreenScratchBuffersActuallyReused>=1);
  assert.ok(triple.gpuFrames.every(f=>
   f.sparseNativeGlobalNormals.sourceTrianglesRecomputed>0&&
@@ -612,7 +624,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_SPARSE_GLOBAL_NORMALS_GPU_PARITY_REUSED_SUBFRAMES_GPU_FINISH_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_RAF_SOURCE_GPU_ADAPTIVE_30_60_90_120_MEMORY_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;
