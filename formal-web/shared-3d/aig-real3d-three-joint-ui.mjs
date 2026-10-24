@@ -105,6 +105,7 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     originalSourceVertices:source.dense.evidence.originalVertexCount,
     originalSourceTriangles:source.dense.evidence.originalTriangleCount,
     sourceMarkerSnaps:timeline.sourceMarkerSnaps,
+    sparseSourceTopology:timeline.sparseSourceTopology,
     jointNames:timeline.jointNames,checkedFrameCount:timeline.frameCount,
     maxAngularStepDeg:timeline.maxActualAngularSampleStepDeg,
     frames:timeline.frames.map(x=>({
@@ -118,7 +119,13 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     naturalHumanSkinPASS:false,automaticRigPASS:false,releasePASS:false
    };
    evidence.textContent=JSON.stringify(report,null,2);download.disabled=false;
-   status.textContent='真三關節 '+timeline.frameCount+
+   status.textContent='真三關節極速模式：每幀僅處理 '+timeline.sparseSourceTopology.activeWeightedGlobalVertexCount+
+    '/'+timeline.sparseSourceTopology.inputSourceVertexCount+
+    ' 頂點、'+timeline.sparseSourceTopology.indexedAffectedOriginalTriangles+
+    '/'+timeline.sparseSourceTopology.inputOriginalSourceTriangles+
+    ' 個來源面片；'+
+    '中間影格僅保留 '+timeline.sparseSourceTopology.numberOfFullXYZFramesRetained+
+    ' 組完整 XYZ。真三關節 '+timeline.frameCount+
     ' 個來源子幀、3 張真 GPU 完成。'+
     (timeline.diagnostics.possibleUnsampledSweptIntervalCollision?
      '跨幀存在潛在穿插，需人工複核；':'掃掠包圍盒未提出額外警訊；')+

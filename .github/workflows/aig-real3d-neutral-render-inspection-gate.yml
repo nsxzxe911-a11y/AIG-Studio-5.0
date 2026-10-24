@@ -36,6 +36,7 @@ on:
       - 'formal-web/shared-3d/tests/aig-real3d-dual-channel-timeline.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-hierarchical-fk-working-copy.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-three-joint-swept-motion.test.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-fast-sparse-fk.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-resolution.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-native-resolution.test.mjs'
@@ -162,6 +163,7 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-three-joint-swept-motion.mjs
           node --check formal-web/shared-3d/aig-real3d-three-joint-ui.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-three-joint-swept-motion.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-fast-sparse-fk.test.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-dense-source.real-browser.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs
           node --check formal-web/shared-3d/aig-real3d-native-resolution.mjs
