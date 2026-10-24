@@ -3,6 +3,7 @@ import {auditAIGReal3DDenseAnatomy} from './aig-real3d-dense-anatomy-review.mjs'
 import {auditAIGReal3DDenseFiveDigitBranches} from './aig-real3d-dense-digit-branch-gate.mjs';
 import {auditAIGReal3DFingerJointSurface} from './aig-real3d-native-finger-junction-gate.mjs';
 import {createAIGReal3DThreeJointTimeline} from './aig-real3d-three-joint-swept-motion.mjs';
+import {runAIGReal3DQuadStrain} from './aig-real3d-quad-strain-pool.mjs';
 import {buildAIGReal3DWeightedFingerGPUPreview} from './aig-real3d-weighted-motion-working-copy.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {validateAIGInspectionCapturePlan} from './aig-real3d-render-inspection.mjs';
@@ -62,6 +63,29 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
      Number($('three-joint-distal-angle').value)
     ],maxAngularStepDeg:6,displayFrameCount:3,contactBudget:120000
    });
+   // Shared original mesh; only owned affected triangles cross to Web Workers.
+   const originalSource=source.dense.sourceGeometry;
+   const weighted=new Set(manifest.joints.flatMap(j=>
+    j.vertexWeights.map(pair=>pair[0])));
+   const offsets=[];
+   for(let k=0;k<originalSource.indices.length;k+=3){
+    if(weighted.has(originalSource.indices[k])||
+     weighted.has(originalSource.indices[k+1])||
+     weighted.has(originalSource.indices[k+2]))offsets.push(k);
+   }
+   const last=timeline.frames.at(-1);
+   const quad=await runAIGReal3DQuadStrain({
+    original:originalSource.positions,posed:last.workingCopyPositions,
+    indices:originalSource.indices,triangleOffsets:Uint32Array.from(offsets),
+    requestedWorkers:4,minimumTrianglesForWorkers:64
+   });
+   const check=last.deformation,q=quad.result;
+   if(q.changedSourceTriangles!==check.changedSourceTriangles||
+    q.invertedSourceTriangles!==check.invertedSourceTriangles||
+    q.nearlyCollapsedSourceTriangles!==check.nearlyCollapsedSourceTriangles||
+    Math.abs(q.maxSourceEdgeStretchPercent-check.maxSourceEdgeStretchPercent)>.003||
+    Math.abs(q.maxSourceEdgeCompressionPercent-check.maxSourceEdgeCompressionPercent)>.003)
+    throw Error('四工人/單核心原始來源應變不一致，必須停止驗證');
    renderer=createAIG3DRenderer($('native-webgl'),{
     quality:'balanced',pixelRatio:1,maxTriangles:700000,
     background:[.769,.745,.702,1]
@@ -106,6 +130,7 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     originalSourceTriangles:source.dense.evidence.originalTriangleCount,
     sourceMarkerSnaps:timeline.sourceMarkerSnaps,
     sparseSourceTopology:timeline.sparseSourceTopology,
+    quadCPUOriginalSourceStrain:quad,
     jointNames:timeline.jointNames,checkedFrameCount:timeline.frameCount,
     maxAngularStepDeg:timeline.maxActualAngularSampleStepDeg,
     frames:timeline.frames.map(x=>({
@@ -124,6 +149,7 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     ' 頂點、'+timeline.sparseSourceTopology.indexedAffectedOriginalTriangles+
     '/'+timeline.sparseSourceTopology.inputOriginalSourceTriangles+
     ' 個來源面片；'+
+    '四路 Worker 工作通道 '+quad.actualWorkerLanes+'（少量面片自動單線程）；'+
     '中間影格僅保留 '+timeline.sparseSourceTopology.numberOfFullXYZFramesRetained+
     ' 組完整 XYZ。真三關節 '+timeline.frameCount+
     ' 個來源子幀、3 張真 GPU 完成。'+
