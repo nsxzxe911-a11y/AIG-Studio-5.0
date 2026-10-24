@@ -92,7 +92,7 @@ try{
   const s=document.querySelector('#status')?.textContent??'';
   return s.startsWith('BLOCK')||s.includes('已從真正 GLB');
  },null,{timeout:30000});
- const const sourceSha=createHash('sha256').update(binary).digest('hex');
+ const sourceSha=createHash('sha256').update(binary).digest('hex');
  const imageSha=createHash('sha256').update(source).digest('hex');
  const proof=await page.evaluate(async({sha,imageSha})=>{
   const captured=window.__v107abCaptured;
@@ -255,9 +255,4 @@ try{
    medianCompletedMs:[proof.originalMedianCompletedMs,
     proof.neutral5AxisMedianCompletedMs,proof.tilted5AxisMedianCompletedMs],
    originalPhotoSimilarityNotImprovedByRendering:true}));
-eepEqual(errors,[]);
- console.log('AIG_REAL3D_V107_TRUE_FIVE_AXIS_AND_FOOT_HEAD_SOURCE_GPU_PASS',
-  JSON.stringify({triangles:12,sourceGLBSha256:modelSha,
-   gpuDraw:true,sourceHeightClipping:true,footHeadFromRealIndexedXYZ:true,
-   upperXYZAndABIndependent:true,realCNCNotControlled:true}));
 }finally{await browser.close();}
