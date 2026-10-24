@@ -41,9 +41,12 @@ try{
  assert.equal(baseline.multiView1to1Gate,'BLOCK_INDEPENDENT_BACK_SIDE_AND_DEPTH_NOT_VERIFIED');
  const screenshot1=await page.locator('#gl').screenshot();
  await writeFile(path+'/V109-ALPHA-SOURCE-ORIGINAL-GPU.png',screenshot1);
- await page.locator('#a').fill('90');
- await page.locator('#b').fill('90');
- await page.locator('#progress').fill('75');
+ await page.evaluate(()=>{
+  for(const [id,value] of [['a','90'],['b','90'],['progress','75']]){
+   const control=document.getElementById(id);
+   control.value=value;control.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+ });
  const tilted=await page.evaluate(()=>JSON.parse(
   document.querySelector('#receipt').textContent));
  assert.equal(tilted.lastActualGPUFrame.aTiltDeg,90);
