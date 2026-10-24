@@ -365,7 +365,7 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
      frameSha256:report.gpuFrames.map(x=>x.sha256)}
    });
    vpu=createAIGReal3DPersistentVPU({
-    physicalWorkers:target===1?2:target,virtualLanes:lanes,
+    physicalWorkers:target,virtualLanes:lanes,
     maxBatches:3,maxPacketBytes:64*1024*1024
    });
    const batches=[];
