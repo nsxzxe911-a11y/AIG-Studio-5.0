@@ -1,0 +1,66 @@
+name: Real3D V101 AI Geometry Backend Structural Remanufacturing Gate
+
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v101-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v101-*'
+      - 'formal-web/shared-3d/aig-real3d-v99-native-source-lab.*'
+      - '.github/workflows/aig-real3d-v101-source-remodel-gate.yml'
+      - 'docs/REAL3D-V101-*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: real3d-v101-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-real-mesh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: V101 true original triangle orientation/normal safety and no fake geometry
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-v101-structure-repair.mjs
+          node --check formal-web/shared-3d/aig-real3d-v101-backend-orchestrator.mjs
+          node --check formal-web/shared-3d/aig-real3d-v99-native-source-lab.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v101-structure-repair.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v99-native-model-ingest.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v98-unified-source-projection.test.mjs
+
+  native-chromium-gpu:
+    needs: source-real-mesh
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install native WebGL test Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: V101 true GLB source Working Copy repairs orientation and renders different GPU pixels at 4K
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v101-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v99-native-source-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v101-structure.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V101-Original-Source-Structural-Working-Copy-GPU
+          path: artifacts/aig-real3d-v101-structure/
+          if-no-files-found: warn
