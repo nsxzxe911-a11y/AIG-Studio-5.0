@@ -66,6 +66,7 @@ function draw(){
 $('v112-build').addEventListener('click',async()=>{
  if(busy)return;
  busy=true;$('v112-build').disabled=true;$('v112-download').disabled=true;
+ status('V112：正在核對雙來源 SHA、深度及相機配準…');
  try{
   if(!$('v112-calibration-confirm').checked)
    throw Error('V112_CALIBRATED_PHYSICAL_DEPTH_DECLARATION_NOT_CONFIRMED');
