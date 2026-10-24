@@ -195,8 +195,9 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   gl.useProgram(edgeProg);
   gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,maskTexture);
   gl.uniform1i(edgeUniforms.mask,0);
-  // Constant ~2-pixel external black edge at native 1080-wide GPU output.
-  const thickness=Math.max(1,Math.min(3,width/540));
+  // Preserve comparable apparent outer contour thickness at native 2K/4K.
+  // Scale by output pixels, not 3D vertex modifications.
+  const thickness=Math.max(1,Math.min(6,width/540));
   gl.uniform2f(edgeUniforms.pixel,thickness/width,thickness/height);
   gl.bindBuffer(gl.ARRAY_BUFFER,edgeQuad);
   gl.enableVertexAttribArray(edgeUniforms.corner);
@@ -323,13 +324,13 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    const glLimit=Math.min(gl.getParameter(gl.MAX_TEXTURE_SIZE),
     gl.getParameter(gl.MAX_RENDERBUFFER_SIZE));
    if(!Number.isInteger(width)||!Number.isInteger(height)||
-    width<320||height<320||width*height>3200000||
+    width<320||height<320||width*height>9000000||
     Math.max(width,height)>glLimit)
     throw Error('AIG3D_NATIVE_GPU_IMAGE_DIMENSIONS_BLOCKED');
    if(canvas.width!==width)canvas.width=width;
    if(canvas.height!==height)canvas.height=height;
    gl.viewport(0,0,width,height);
-   lastFrameBudget={maxFramePixels:3200000,effectiveScale:1,
+   lastFrameBudget={maxFramePixels:9000000,effectiveScale:1,
     targetScale:1,cappedBySafety:false};
   }else resize();
   const {eye,vp}=eyeAndVP();
@@ -448,6 +449,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   const sha256=Array.from(new Uint8Array(digest),
    a=>a.toString(16).padStart(2,'0')).join('');
   return {blob,width,height,sha256,genuineGpuReadback:true,
+   nativeOutputPixels:width*height,resampledFromSmallerImage:false,
    sourceView:'front',rendererKind:'existing shared AIG3D WebGL',
    originalGeometryUnchanged:true,visualHumanAcceptancePASS:false,
    actualColorSamples:unique.size};
