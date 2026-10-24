@@ -13,10 +13,13 @@ button:disabled{opacity:.5;cursor:not-allowed}input{min-height:40px;max-width:10
 select,input[type=text]{padding:7px;background:#091b2d;border:1px solid #356886;border-radius:7px;min-height:40px}input[type=number]{width:115px;padding:7px;background:#091b2d;border:1px solid #356886;border-radius:7px}
 .row{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
 code{color:#a4d8ff;overflow-wrap:anywhere}
-#gallery,#reference-gallery,#anatomy-gallery,#defect-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+#gallery,#reference-gallery,#anatomy-gallery,#defect-gallery,#repair-compare-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 figure{border:1px solid #2a6c85;border-radius:11px;padding:9px;margin:0;background:#06111f;min-width:0}
 figure img{width:100%;height:400px;max-height:52vh;object-fit:contain;display:block;background:#020407}
-#profile-table,#anatomy-region-table,#surface-table{overflow-x:auto;margin-top:12px}#profile-table table,#anatomy-region-table table,#surface-table table{width:100%;border-collapse:collapse;min-width:520px;font-size:12px}#profile-table td,#profile-table th,#anatomy-region-table td,#anatomy-region-table th,#surface-table td,#surface-table th{padding:8px 6px;text-align:left;border-bottom:1px solid #2d4059}#profile-table th{color:#a3deed}#profile-table tr[data-worst=true]{background:#4f331d88}#local-width-review{padding-top:12px}
+#profile-table,#anatomy-region-table,#surface-table,#repair-compare-table{overflow-x:auto;margin-top:12px}#profile-table table,#anatomy-region-table table,#surface-table table,#repair-compare-table table{width:100%;border-collapse:collapse;min-width:520px;font-size:12px}#profile-table td,#profile-table th,#anatomy-region-table td,#anatomy-region-table th,#surface-table td,#surface-table th,#repair-compare-table td,#repair-compare-table th{padding:8px 6px;text-align:left;border-bottom:1px solid #2d4059}#profile-table th{color:#a3deed}#profile-table tr[data-worst=true]{background:#4f331d88}#local-width-review{padding-top:12px}
+.diagnostic-inner{margin:12px 0;border-color:#705338}#defect-edge-list button{min-height:38px;background:#2d201b;max-width:100%;word-break:break-word}
+#defect-selected{white-space:pre-wrap;overflow-wrap:anywhere}#repair-compare-gallery .compare-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+#repair-compare-gallery figure img{height:280px}#defect-gallery figure img[data-pickable=true]{cursor:crosshair;touch-action:manipulation}
 #reference-stats{display:block;margin:11px 0;padding:8px;border:1px solid #8f683d;border-radius:8px;color:#efcca5}
 figcaption{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:9px}
 a{color:#7fe7fb}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:290px;overflow-y:auto;font-size:11px}
@@ -81,6 +84,23 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <p>使用來源 OBJ 真三角面邊的兩端 XYZ，投影到原 GPU 咖啡色畫面。細線只是另外加上的**診斷標記**，原始人體材質仍是咖啡色、沒有 RGB 人型，也不自動補洞。局部正常不代表整體人體合格。</p>
 <div id="defect-stats" class="status" role="status" aria-live="polite">尚無局部異常邊定位資料。</div>
 <div id="defect-gallery"></div>
+<div class="panel diagnostic-inner" id="defect-inspector">
+ <h3>原始異常邊選取｜點圖或點選邊編號</h3>
+ <p>點選上述四視角真 GPU 缺陷圖的異常線，或使用下方的邊緣清單；顯示所選三角面邊的原始頂點編號、兩端世界 XYZ（公尺）及原始來源 SHA。只查看，不更改網格。</p>
+ <div id="defect-edge-list" class="row" aria-label="原始異常邊可選取清單"></div>
+ <div id="defect-selected" class="status" role="status" aria-live="polite">尚未選取；請先匯入真正有異常的 OBJ。</div>
+</div>
+<div class="panel diagnostic-inner" id="repair-diff-panel">
+ <h3>修復前／後原始 OBJ 唯讀比較</h3>
+ <p>以剛才完成的 OBJ 作為修復前版本；可另選修復後 OBJ。兩份模型各自建立 SHA、相同身高／朝上軸與標記審核，再對比新舊局部破洞與錯面片。**異常減少不是自動修復、更不代表自然人體 PASS。**</p>
+ <div class="row">
+  <label>候選修復後 OBJ <input id="after-source-file" type="file" accept=".obj,text/plain"></label>
+  <button type="button" id="compare-source" disabled>比較兩份原始 OBJ 並輸出真 GPU 對照</button>
+ </div>
+ <div id="repair-compare-stats" class="status" role="status" aria-live="polite">需先匯入 OBJ 並執行前版網格檢查。</div>
+ <div id="repair-compare-table" role="region" aria-label="來源網格五區修復前後真拓樸比較"></div>
+ <div id="repair-compare-gallery"></div>
+</div>
 </section>
 <section class="panel"><h2>原始三維網格／來源聲明／解剖標記 Gate 報告</h2><pre id="evidence">尚無來源。</pre></section>
 <section class="panel"><h2>真正 WebGL 畫面證據（不是 AI 示意圖）</h2><div id="gallery"></div></section>
