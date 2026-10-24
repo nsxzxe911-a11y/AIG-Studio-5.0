@@ -8,36 +8,91 @@ import {createAIG3DRenderer}
  from './aig-real3d-webgl.mjs';
 import {remodelAIGReal3DGeometryBackend}
  from './aig-real3d-v101-backend-orchestrator.mjs';
+import {planAIGReal3DAdaptiveArtworkFrame,
+ planAIGReal3DNativeOutputWithinArtwork,
+ findAIGReal3DVisibleAlphaROI,createAIGReal3DAdaptivePreviewGate}
+ from './aig-real3d-v102-adaptive-frame.mjs';
 import {auditAIGReal3D4KSourceProjection}
  from './aig-real3d-v96-native-4k-pipeline.mjs';
 const $=id=>document.getElementById(id);
 let imported=null,renderer=null,bridge=null,ready=false,busy=false,
  fileURL=null,mode='oblique',cameraSpan=2,
- v101=null,showRepaired=false;
+ v101=null,showRepaired=false,v102Artwork=null,
+ v102Frame=null,v102Worker=null,v102SourceEpoch=0,v102ReferenceURL=null,
+ v102PreviewGate=createAIGReal3DAdaptivePreviewGate();
 const activeScene=()=>showRepaired&&v101?.workingScene?
  v101.workingScene:imported?.scene;
 const views={front:[0,.08],side:[Math.PI/2,.08],
  back:[Math.PI,.08],oblique:[.58,.23]};
 function status(x){$('status').textContent=x;}
 function enable(v){
- ready=v;for(const k of ['front','side','back','oblique','quality','png4k','repair101'])
+ ready=v;for(const k of ['front','side','back','oblique','quality','png4k','repair101','adapt102'])
   $(k).disabled=!v;
  $('original101').disabled=!v||!v101?.workingScene;
  $('remodel101').disabled=!v||!v101?.workingScene;
 }
+async function prepareV102Artwork(source){
+ const bitmap=await createImageBitmap(source);
+ try{
+  if(bitmap.width<96||bitmap.height<96||
+   bitmap.width>7680||bitmap.height>4320)
+   throw Error('V102_ARTWORK_IMAGE_DIMENSIONS_BLOCK');
+  const w=bitmap.width,h=bitmap.height;
+  const ratio=Math.min(1,1024/Math.max(w,h));
+  const sw=Math.max(1,Math.round(w*ratio)),
+   sh=Math.max(1,Math.round(h*ratio));
+  const buffer=document.createElement('canvas');buffer.width=sw;buffer.height=sh;
+  const ctx=buffer.getContext('2d',{willReadFrequently:true});
+  if(!ctx)throw Error('V102_ORIGINAL_IMAGE_FRAME_UNAVAILABLE');
+  ctx.drawImage(bitmap,0,0,sw,sh);
+  let roi={x:0,y:0,width:w,height:h},alphaMeasured=false;
+  if(sw>=96&&sh>=96){
+   const mask=findAIGReal3DVisibleAlphaROI({
+    rgba:ctx.getImageData(0,0,sw,sh).data,width:sw,height:sh});
+   if(mask.alphaDerivedROI){
+    const r=mask.subjectROI;
+    roi={x:r.x*w/sw,y:r.y*h/sh,
+     width:Math.min(w-r.x*w/sw,r.width*w/sw),
+     height:Math.min(h-r.y*h/sh,r.height*h/sh)};
+    alphaMeasured=true;
+   }
+  }
+  if(v102ReferenceURL)URL.revokeObjectURL(v102ReferenceURL);
+  v102ReferenceURL=URL.createObjectURL(source);
+  const img=$('v102-original-image');img.src=v102ReferenceURL;img.hidden=false;
+  const preview=$('model');
+  const scale=Math.min(1,Math.sqrt(900000/(w*h)));
+  preview.width=Math.max(96,Math.floor(w*scale));
+  preview.height=Math.max(96,Math.floor(h*scale));
+  preview.style.aspectRatio=w+' / '+h;
+  $('v102-frame').style.aspectRatio=w+' / '+h;
+  $('v102-frame-label').textContent=
+   '原圖 '+w+'×'+h+'｜相機跟隨構圖'+(alphaMeasured?'（透明主體範圍）':'（完整畫面）');
+  return {width:w,height:h,roi,alphaMeasured};
+ }finally{bitmap.close();}
+}
 function focusCamera(){
- const positions=activeScene().nodes.flatMap(n=>n.mesh.positions);
- const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
- for(let i=0;i<positions.length;i+=3)for(let j=0;j<3;j++){
-  min[j]=Math.min(min[j],positions[i+j]);
-  max[j]=Math.max(max[j],positions[i+j]);
- }
- const focus=min.map((v,i)=>(v+max[i])*.5);
- const extent=Math.max(...max.map((v,i)=>v-min[i]));
- cameraSpan=Math.max(.15,extent*1.6);
+ if(!renderer||!v102Artwork||!activeScene())
+  throw Error('V102_IMAGE_FRAME_OR_SOURCE_NOT_READY');
  const [yaw,pitch]=views[mode];
- renderer.setCamera({projection:'orthographic',yaw,pitch,
-  focus,orthoSpan:cameraSpan,distance:Math.max(3,extent*2)});
+ v102Frame=planAIGReal3DAdaptiveArtworkFrame({
+  scene:activeScene(),
+  artworkWidth:v102Artwork.width,artworkHeight:v102Artwork.height,
+  subjectROI:v102Artwork.roi,yaw,pitch,
+  originalImageSha256:imported.originalImageSha256,
+  sourceRevision:v102SourceEpoch});
+ renderer.setCamera(v102Frame.camera);
+ $('v102-report').textContent=JSON.stringify({
+  originalImageSHA:imported.originalImageSha256,
+  originalGLBSHA:imported.actualSourceModelSha256,
+  frame:v102Frame,previews:v102PreviewGate.snapshot(),
+  originalArtworkPixelsUntouched:true,
+  full4KOnlyOnExplicitExport:true,
+  V101GeometryRemodelDedicatedWorkerImplemented:true,
+  trainedNeuralAIInferenceInSeparateWorkerVerified:false,
+  actualV101WorkingCopyAlreadyAvailable:Boolean(v101?.workingScene),
+  hiddenBackOrHumanIdentityCertified:false,releasePASS:false
+ },null,2);
 }
 function inspect(){
  if(!ready||!imported||!renderer)throw Error('真 GLB 尚未讀取');
@@ -70,6 +125,8 @@ function inspect(){
   actualNeuralModelWeightsInstalled:false,
   trueHumanIdentityPhotoSimilarityTested:false,
   sourceTexturePBRMaterialCertified:false,
+  selectedActualSDRShader:renderer.getColorPipeline(),
+  originalGLTFMaterialFactorSourcesPreserved:imported.perMesh.every(x=>!!x.materialSourceFactors),
   animationSkinRigAutomaticallyTransferred:false,
   finalCinemaQualityPASS:false,releasePASS:false
  };
@@ -92,6 +149,10 @@ $('import').addEventListener('click',async()=>{
    sha256AIGReal3DBytes(image),sha256AIGReal3DBytes(glb)
   ]);
   v101=null;showRepaired=false;
+  v102SourceEpoch++;
+  if(v102Worker){v102Worker.terminate();v102Worker=null;}
+  v102PreviewGate.setAIRebuilderBusy(false);
+  v102Artwork=await prepareV102Artwork(source);
   $('v101-report').textContent='尚未檢查來源結構。';
   imported=await ingestAIGReal3DNativeGeneratedGLB({
    glbBytes:glb,referenceImageBytes:image,
@@ -107,7 +168,7 @@ $('import').addEventListener('click',async()=>{
    background:[.015,.028,.05,1]});
   if(renderer.status!=='READY')throw Error('真正 GPU WebGL 不可用');
   renderer.setInspectionMode('LIT');
-  renderer.setColorPipeline('FILM_SDR');
+  renderer.setColorPipeline($('v102-colors').value);
   enable(true);focusCamera();
   const result=renderer.render(activeScene());
   if(result.status!=='WEBGL_XYZ_TRIANGLES_RENDERED')
@@ -134,12 +195,22 @@ $('quality').addEventListener('click',()=>{
 $('png4k').addEventListener('click',async()=>{
  if(!ready||busy)return;
  busy=true;$('png4k').disabled=true;
+ const originalPreviewCamera=renderer.getCamera();
  try{
+  const [yaw,pitch]=views[mode];
+  const nativeArtworkFrame=planAIGReal3DNativeOutputWithinArtwork({
+   scene:activeScene(),artworkWidth:v102Artwork.width,
+   artworkHeight:v102Artwork.height,subjectROI:v102Artwork.roi,
+   originalImageSha256:imported.originalImageSha256,
+   sourceRevision:v102SourceEpoch,
+   outputWidth:3840,outputHeight:2160,yaw,pitch
+  });
+  renderer.setCamera(nativeArtworkFrame.camera);
   const out=await captureAIGReal3DNative4K({
    renderer,scene:activeScene(),
    sourceSha256:imported.originalImageSha256,
    output:'UHD_4K',workingMemoryMB:256,
-   camera:renderer.getCamera(),requireSourceDetailPASS:false});
+   camera:nativeArtworkFrame.camera,requireSourceDetailPASS:false});
   if(fileURL)URL.revokeObjectURL(fileURL);
   fileURL=URL.createObjectURL(out.pngBlob);
   const a=document.createElement('a');a.href=fileURL;
@@ -148,58 +219,146 @@ $('png4k').addEventListener('click',async()=>{
   qa.actualNativeGPUFrameWidth=out.width;
   qa.actualNativeGPUFrameHeight=out.height;
   qa.actualNativeGPUReadback=out.trueGPUReadPixels;
+  qa.V102NativePictureContentFrame=nativeArtworkFrame.nativeOutputFrameContentRect;
+  qa.V102OriginalImageCompositionNotStretched=true;
+  qa.V102SceneCameraOnlyOutput=true;
   qa.realSource4KPNG_SHA=out.sha256;
   qa.actualSource4KCloseUpGeometryGate=out.sourceGeometryProjectionQA?.sourceDetailCandidatePASS;
   $('proof').textContent=JSON.stringify(qa,null,2);
   status('已生成真正 3840×2160 GPU PNG（非 upscale）；來源外型仍不是正式人物身份認證。');
  }catch(e){status('BLOCK：'+String(e?.message??e));}
- finally{busy=false;$('png4k').disabled=!ready;}
+ finally{
+  if(renderer&&ready){
+   try{
+    renderer.setCamera(originalPreviewCamera);
+    renderer.render(activeScene());
+   }catch(e){status('BLOCK：V102預覽相機復原失敗 '+String(e?.message??e));}
+  }
+  busy=false;$('png4k').disabled=!ready;
+ }
 });
 
 $('repair101').addEventListener('click',()=>{
- if(!ready||busy||!imported)return;
- busy=true;$('repair101').disabled=true;
+ if(!ready||!imported||v102Worker)return;
+ const sourceSHA=imported.actualSourceModelSha256,
+  jobId=++v102SourceEpoch;
+ // V101 CPU source repair runs in its OWN actual Worker.
+ // Canvas and last source image are still available while this runs.
  try{
-  const result=remodelAIGReal3DGeometryBackend({
-   imported,allowDropDegenerate:false,acceptNormalRebuild:true,
-   observedImageViews:[],camera:renderer.getCamera()
-  });
-  v101=result;
-  const details={
-   schema:result.schema,status:result.status,
-   sourceImageSHA:result.sourceImageSHA,
-   sourceModelSHA:result.sourceMeshSHA,
-   assetId:result.originalAssetId??imported.assetId,
-   nodeReports:result.structural?.reports?.map(r=>({
-    nodeId:r.nodeId,status:r.status,
-    originalTriangles:r.before?.sourceTriangles,
-    revisedTriangles:r.after?.sourceTriangles??null,
-    invalidFaces:r.before?.degenerateFaceIDs.length,
-    originalWindingConflicts:r.before?.misorientedSharedEdges,
-    repairedWindingConflicts:r.after?.misorientedSharedEdges??null,
-    invertedOriginalFaceIDs:r.flippedOriginalFaceIDs??[],
-    sourceOpenBoundaryEdges:r.before?.openBoundaryEdges,
-    workOpenBoundaryEdges:r.after?.openBoundaryEdges??null,
-    originalDisconnectedComponents:r.before?.disconnectedFaceIslands,
-    workingDisconnectedComponents:r.after?.disconnectedFaceIslands??null
-   })),
-   sourceSHAUnmodified:true,
-   trainedNeuralRepairModelActuallyCalled:false,
-   authenticHeroineAppearanceCertified:false,releasePASS:false
+  if(typeof Worker!=='function')throw Error('WEB_WORKER_REQUIRED_FOR_NONBLOCKING_REMODELLING');
+  v102PreviewGate.setAIRebuilderBusy(true);
+  renderer.setQuality('performance');
+  v102Worker=new Worker(new URL('./aig-real3d-v102-remodel-worker.mjs',
+   import.meta.url),{type:'module'});
+  $('repair101').disabled=true;
+  status('V102：AI 模型結構修整在獨立 Worker 執行中；原始 3D 預覽不必等待它完成。');
+  const worker=v102Worker;
+  const done=()=>{
+   if(v102Worker===worker){worker.terminate();v102Worker=null;}
+   v102PreviewGate.setAIRebuilderBusy(false);
+   if(renderer)renderer.setQuality($('v102-quality').value==='duringAI'?
+    'performance':'balanced');
+   enable(ready);
   };
-  $('v101-report').textContent=JSON.stringify(details,null,2);
-  if(!result.workingScene){
-   status('V101 安全阻擋：模型有需要來源授權確認的非流形、重複或破損面；沒有製造假模型。');
-   return;
-  }
-  showRepaired=true;
-  focusCamera();const draw=renderer.render(activeScene());
-  if(draw.status!=='WEBGL_XYZ_TRIANGLES_RENDERED')throw Error('實際修整網格沒有繪製');
-  inspect();
-  status('V101 結構修整真幾何工作副本已完成，可切換原始／修整視角；' +
-   '未見的背面、缺口與身份仍維持 BLOCK');
+  worker.addEventListener('error',event=>{
+   if(jobId!==v102SourceEpoch)return;
+   status('BLOCK：V102 Worker 真實執行失敗：'+event.message);
+   done();
+  });
+  worker.addEventListener('message',event=>{
+   if(jobId!==v102SourceEpoch)return;
+   const msg=event.data;
+   if(msg?.jobId!==jobId||msg?.sourceSHA!==sourceSHA||
+    msg.type==='REMODEL_BLOCK'){
+    status('BLOCK：V102 Worker 回傳錯誤或來源 SHA 不符：'+msg?.reason);
+    done();return;
+   }
+   if(msg.type!=='REMODEL_RESULT'){status('BLOCK：不明 Worker 回覆');done();return;}
+   const result=msg.result;v101=result;
+   const details={
+    schema:result.schema,status:result.status,
+    sourceImageSHA:result.sourceImageSHA,
+    sourceModelSHA:result.sourceMeshSHA,
+    assetId:result.originalAssetId??imported.assetId,
+    independentRealWorkerExecuted:true,
+    nodeReports:result.structural?.reports?.map(r=>({
+     nodeId:r.nodeId,status:r.status,
+     originalTriangles:r.before?.sourceTriangles,
+     revisedTriangles:r.after?.sourceTriangles??null,
+     originalWindingConflicts:r.before?.misorientedSharedEdges,
+     repairedWindingConflicts:r.after?.misorientedSharedEdges??null,
+     invertedOriginalFaceIDs:r.flippedOriginalFaceIDs??[],
+     originalDisconnectedComponents:r.before?.disconnectedFaceIslands,
+     workingDisconnectedComponents:r.after?.disconnectedFaceIslands
+    })),
+    trainedAI3DGeneratorActuallyCalled:false,
+    trainedNeuralRepairModelActuallyCalled:false,
+    originalGLBPreserved:true,releasePASS:false
+   };
+   $('v101-report').textContent=JSON.stringify(details,null,2);
+   if(!result.workingScene){
+    status('BLOCK：來源結構不安全，修整 Worker 未產生偽造補洞模型。');
+    done();return;
+   }
+   showRepaired=true;
+   focusCamera();
+   // Return only the final GPU snapshot. AI's intermediate revisions
+   // never trigger the full native 4K PNG pipeline.
+   v102PreviewGate.enqueue({scene:activeScene(),
+    sourceRevision:v102SourceEpoch,sourceSHA});
+   done();
+   requestAnimationFrame(time=>{
+    try{
+     const r=v102PreviewGate.pump(time,scene=>renderer.render(scene));
+     if(r.status==='RENDERED_LATEST_SOURCE')
+      status('V102：修整後真 3D 工作副本已自適應原圖框架；獨立 Worker 完成，4K 按需輸出。');
+     else status('V102：預覽幀合併 '+r.status);
+    }catch(e){status('BLOCK：'+e.message);}
+   });
+  });
+  worker.postMessage({type:'REMODEL_SOURCE',jobId,sourceSHA,
+   imported,camera:renderer.getCamera()});
+ }catch(e){
+  if(v102Worker){v102Worker.terminate();v102Worker=null;}
+  v102PreviewGate.setAIRebuilderBusy(false);
+  if(renderer)renderer.setQuality('balanced');
+  status('BLOCK：'+e.message);enable(ready);
+ }
+});
+$('v102-colors').addEventListener('change',()=>{
+ if(!ready||!renderer||busy)return;
+ try{
+  const mode=$('v102-colors').value;
+  renderer.setColorPipeline(mode);
+  renderer.render(activeScene());
+  const receipt=JSON.parse($('proof').textContent);
+  receipt.sourceColorShaderMode=mode;
+  receipt.originalSourceMaterialFactorsNotRewritten=true;
+  receipt.materialTexturesAndTruePBRNotYetCertified=true;
+  $('proof').textContent=JSON.stringify(receipt,null,2);
+  status('已切換實際 GPU SDR 著色：'+mode+
+   '；不需要重新運算 AI 幾何模型，正式 HDR10／PBR 尚未驗證。');
  }catch(e){status('BLOCK：'+String(e?.message??e));}
- finally{busy=false;enable(ready);}
+});
+$('v102-quality').addEventListener('change',()=>{
+ if(!renderer||!ready)return;
+ try{
+  const during=$('v102-quality').value==='duringAI';
+  v102PreviewGate.setAIRebuilderBusy(during||v102Worker!==null);
+  renderer.setQuality(during?'performance':'balanced');
+  renderer.render(activeScene());
+  status(during?'V102 低負載預覽：AI 重製優先，4K 僅按需匯出。':'V102 平衡預覽：仍以原始 AI 圖框架為準。');
+ }catch(e){status('BLOCK：'+e.message);}
+});
+$('adapt102').addEventListener('click',()=>{
+ if(!ready||!renderer)return;
+ try{
+  focusCamera();
+  const result=renderer.render(activeScene());
+  if(result.status!=='WEBGL_XYZ_TRIANGLES_RENDERED')
+   throw Error('GPU自適應影格未輸出');
+  status('V102 已依原 AI 圖片比例／主體範圍重設真 3D 鏡頭，沒有改動模型或要求 AI 重製。');
+ }catch(e){status('BLOCK：'+e.message);}
 });
 for(const [id,repaired] of [['original101',false],['remodel101',true]]){
  $(id).addEventListener('click',()=>{

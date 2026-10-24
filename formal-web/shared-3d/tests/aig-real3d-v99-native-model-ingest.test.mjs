@@ -47,6 +47,13 @@ test('V99 actual glTF binary 3D POSITION/INDEX/NORMAL original topology, no fake
  assert.equal(result.scene.nodes[0].mesh.positions.length,f.original.positions.length);
  assert.equal(result.perMesh[0].originalDegenerateFaces,0);
  assert.equal(result.perMesh[0].originalFaceIndicesRetained,true);
+ assert.deepEqual(result.perMesh[0].materialSourceFactors.baseColor,[.43,.58,.8,1]);
+ assert.equal(result.perMesh[0].materialSourceFactors.metallic,.16);
+ assert.equal(result.perMesh[0].materialSourceFactors.roughness,.62);
+ assert.equal(result.scene.nodes[0].material.metallic,.16);
+ assert.equal(result.scene.nodes[0].material.roughness,.62);
+ assert.deepEqual(result.scene.nodes[0].material.baseColor,[.43,.58,.8,1]);
+ assert.equal(result.perMesh[0].textureAndVertexColorFidelityValidated,false);
  assert.equal(result.originalSourceVisualSimilarityMeasured,false);
  assert.equal(result.actualLocalNeuralInferenceRunByThisMethod,false);
  assert.equal(result.ownerApprovedFaceIdentity,false);

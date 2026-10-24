@@ -78,7 +78,12 @@ try{
   await page.locator(view).click();
  await page.locator('#quality').click();
  assert.ok((await page.locator('#status').textContent()).includes('4K 幾何'));
- const downloadPromise=page.waitForEvent('download',{timeout:90000});
+ const downloadPromise=page.waitForEvent('download',{timeout:40000}).catch(async error=>{
+  const status=await page.locator('#status').textContent().catch(()=>'(status unavailable)');
+  const proof=await page.locator('#proof').textContent().catch(()=>'(proof unavailable)');
+  throw Error('V102_DOWNLOAD_DIAGNOSTIC '+String(error.message??error)+
+   ' STATUS='+status+' PROOF='+String(proof).slice(-950));
+ });
  await page.locator('#png4k').click();
  const download=await downloadPromise;
  const image=await readFile(await download.path());

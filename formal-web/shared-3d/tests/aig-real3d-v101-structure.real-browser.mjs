@@ -63,7 +63,14 @@ try{
  await page.goto('http://127.0.0.1:8772/shared-3d/aig-real3d-v99-native-source-lab.html',{
   waitUntil:'domcontentloaded',timeout:30000
  });
- const source=Uint8Array.from({length:256},(_,i)=>i),
+ const pngB64=await page.evaluate(()=>{
+  const c=document.createElement('canvas');c.width=384;c.height=640;
+  const g=c.getContext('2d');
+  g.clearRect(0,0,384,640);
+  g.fillStyle='#c7b49c';g.fillRect(120,72,145,500);
+  return c.toDataURL('image/png').split(',')[1];
+ });
+ const source=Buffer.from(pngB64,'base64'),
   binary=originalGLB();
  await page.locator('#reference').setInputFiles({
   name:'V101-QA-NOT-HUMAN-SOURCE.png',mimeType:'image/png',buffer:Buffer.from(source)
@@ -85,7 +92,7 @@ try{
  await page.locator('#repair101').click();
  await page.waitForFunction(()=>{
   const s=document.querySelector('#status')?.textContent??'';
-  return s.includes('V101 結構修整')||s.startsWith('BLOCK');
+  return s.includes('V102：修整後真 3D')||s.includes('V101 結構修整')||s.startsWith('BLOCK');
  },null,{timeout:30000});
  const status=await page.locator('#status').textContent();
  if(status.startsWith('BLOCK'))throw Error('V101_BACKEND_REPAIR_BLOCK_'+status);
@@ -102,7 +109,12 @@ try{
  assert.equal(repaired.trainedNeuralRepairModelActuallyCalled,false);
  // Snapshot native GPU 4K before/after from the SAME original GLB source.
  const download=async()=>{
-  const pending=page.waitForEvent('download',{timeout:90000});
+  const pending=page.waitForEvent('download',{timeout:40000}).catch(async error=>{
+  const status=await page.locator('#status').textContent().catch(()=>'(status unavailable)');
+  const proof=await page.locator('#proof').textContent().catch(()=>'(proof unavailable)');
+  throw Error('V102_DOWNLOAD_DIAGNOSTIC '+String(error.message??error)+
+   ' STATUS='+status+' PROOF='+String(proof).slice(-950));
+ });
   await page.locator('#png4k').click();
   const result=await pending;
   const bytes=await readFile(await result.path());
