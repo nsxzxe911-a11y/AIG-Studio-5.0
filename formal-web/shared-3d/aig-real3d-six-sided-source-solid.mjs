@@ -173,7 +173,8 @@ export function auditAIGReal3DSixSourceSolid({
   relativeVolumeError:round(volumeError),
   exteriorSurfaceAreaSquareMeters:round(totalSurfaceArea),
   closedSingleManifold:closed,
-  outwardFacingSourceNormals:positiveOrientation&&wrongNormal===0,
+  outwardFacingSourceNormals:positiveOrientation&&wrongNormal===0&&
+   wrongPlane===0&&faceResults.every(x=>x.verifiedExistingSourceFaceCoverage),
   realSixSidedBoxSourceGatePASS:pass,
   missingSideGeometryCannotBeInferredFromTopBottomOnly:true,
   notAGeneralHumanOrAnimalSurfaceGate:true,
