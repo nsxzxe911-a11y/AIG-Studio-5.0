@@ -7,6 +7,7 @@ import {planAIGReal3DAdaptiveArtworkFrame,
  planAIGReal3DNativeOutputWithinArtwork,
  createAIGReal3DAdaptivePreviewGate}
  from '../aig-real3d-v102-adaptive-frame.mjs';
+import {auditAIGReal3D4KSourceProjection} from '../aig-real3d-v96-native-4k-pipeline.mjs';
 const sha='a'.repeat(64);
 function scene(){
  const scene=createAIG3DScene({id:'v102trueSource',consumer:'FastModel',
@@ -129,4 +130,19 @@ test('V102 neither fabricated image ROI nor forged mesh provenance is silently a
  const gate=createAIGReal3DAdaptivePreviewGate();
  assert.throws(()=>gate.enqueue({scene:s,sourceRevision:1,sourceSHA:'bad'}),
   /PREVIEW_SOURCE_VERSION_OR_SHA_REQUIRED/);
+});
+
+test('V103 formerly BLOCKED: native 4K source audit accepts actual V102 adaptive orthographic image camera',()=>{
+ const src=scene();
+ const fit=planAIGReal3DNativeOutputWithinArtwork({
+  scene:src,artworkWidth:384,artworkHeight:640,
+  subjectROI:{x:120,y:72,width:145,height:500},
+  outputWidth:3840,outputHeight:2160,originalImageSha256:sha});
+ assert.equal(fit.camera.fovDeg,55);
+ const proof=auditAIGReal3D4KSourceProjection({
+  scene:src,sourceSha256:sha,camera:fit.camera,
+  width:3840,height:2160});
+ assert.equal(proof.sourceTriangles,12);
+ assert.equal(proof.width,3840);
+ assert.equal(proof.height,2160);
 });
