@@ -85,9 +85,11 @@ document.addEventListener('aig-real3d-v104-source-ready',event=>{
  }
  imported=info.imported;scene=info.scene;
  sourceRevision=info.sourceRevision;
- observedTopCAD=null;
- $('v104-cad-outline').value='';
- $('v104-cad-observed').checked=false;
+ if(info.reason!=='V105_REGISTRATION'){
+  observedTopCAD=null;
+  $('v104-cad-outline').value='';
+  $('v104-cad-observed').checked=false;
+ }
  try{startInspector();}
  catch(e){inspector=null;setReady(false);fail(e);}
 });
