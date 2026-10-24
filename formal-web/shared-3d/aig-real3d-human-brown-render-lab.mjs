@@ -20,6 +20,8 @@ import {compareAIGNativeSourceDefects}
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {reviewAIGReal3DSourceEnvelope,compareAIGReal3DSourceEnvelopes}
  from './aig-real3d-source-envelope-review.mjs';
+import {auditAIGReal3DSceneCrossSections}
+ from './aig-real3d-native-body-cross-sections.mjs';
 import {
  auditAIG3DSourceSilhouette,validateAIGInspectionCapturePlan,
  AIG_INSPECTION_FRAME_SCHEMA
@@ -133,6 +135,8 @@ $('inspect').addEventListener('click',async()=>{
  currentNativeReview=null;$('compare-source').disabled=true;
  $('defect-edge-list').replaceChildren();
  $('defect-selected').textContent='尚未選取；匯入來源 OBJ 後可點選真異常邊。';
+ $('source-3d-slice-stats').textContent='尚未取得原始三角面截面，不能判定人型。';
+ $('source-3d-slice-table').replaceChildren();
  $('shape-envelope-stats').textContent='正面/背面寬幅尚未量測；不允許把合成橢球作人體成品。';
  $('shape-envelope-metrics').replaceChildren();
  $('repair-compare-table').replaceChildren();
@@ -176,6 +180,37 @@ $('inspect').addEventListener('click',async()=>{
     bytes,heightMm,sourceName:file.name,sourceSha256:hash
   });
   const audit=auditAIG3DSourceSilhouette(scene);
+  const source3DSections=auditAIGReal3DSceneCrossSections({
+   scene,sourceSha256:hash,sourceName:file.name,
+   sourceFormat:isOBJ?'OBJ':'GLB'
+  });
+  const sliceFlag=source3DSections.oneClosedLowerMassFlag;
+  const split=source3DSections.distinctSideBySideLowerLegSectionsObserved;
+  $('source-3d-slice-stats').textContent=sliceFlag?
+   'BLOCK：原始三角面在下肢高度僅有一個連續閉合截面，沒有兩條分開的腿；如穿長裙、連身衣或特殊姿態需用真人參考重新審核。':
+   split?'來源網格下半部觀察到兩個左右分離的閉合截面；這只是技術量測，不能保證自然人體。':
+   '外型需人工審查：下半身 3D 截面不足以驗證左右分腿，不能當作真人人型 PASS。';
+  const sectionTable=document.createElement('table'),sectionHead=document.createElement('thead'),
+   headRow=document.createElement('tr');
+  for(const label of ['原始 3D 截面','高度比例','相連截面數',
+    '完整閉合環數','真實相交三角面線段數','各環寬度（mm）']){
+   const th=document.createElement('th');th.textContent=label;headRow.append(th);
+  }
+  sectionHead.append(headRow);sectionTable.append(sectionHead);
+  const sectionBody=document.createElement('tbody');
+  for(const part of source3DSections.sections){
+   const tr=document.createElement('tr');tr.dataset.section=part.id;
+   for(const value of [part.id,
+    (part.heightFraction*100).toFixed(0)+'%',
+    part.significantSections,part.significantClosedLoops,
+    part.actualNativeIntersectingSegments,
+    part.components.filter(x=>!x.tooSmallForMajorBodyCrossSection)
+     .map(x=>x.widthMm.toFixed(1)).join(' / ')||'沒有合格截面']){
+    const td=document.createElement('td');td.textContent=String(value);tr.append(td);
+   }
+   sectionBody.append(tr);
+  }
+  sectionTable.append(sectionBody);$('source-3d-slice-table').append(sectionTable);
   const shapeEnvelope=reviewAIGReal3DSourceEnvelope({
    geometry:audit,sourceName:file.name,sourceSha256:hash
   });
@@ -254,6 +289,7 @@ $('inspect').addEventListener('click',async()=>{
    userSourceName:file.name,sourceSha256:hash,
    measuredHeightMm:heightMm,
    geometry:audit,originalGLB:evidence,sourceShapeEnvelope:shapeEnvelope,
+   source3DSections,
    sevenRealBrownGPUPasses:proofs,
    sharedWebGLBloomPresent:false,baseSourceUnchanged:true,
    brownFullBodyColorOverrideApplied:true,
@@ -507,14 +543,14 @@ $('inspect').addEventListener('click',async()=>{
   }};
   $('evidence').textContent=JSON.stringify(report,null,2);
   $('report-download').disabled=false;
-  setStatus((shapeEnvelope.fixtureExplicitlySyntheticNonhuman?
+  setStatus((sliceFlag?'BLOCK：下半身只有單一 3D 連續截面 ':shapeEnvelope.fixtureExplicitlySyntheticNonhuman?
     'BLOCK：合成非人體 QA 模型 ':nativeGeometryGatePASS?
     '來源 ':'BLOCK：來源 ')+file.name+' 完成 7 張唯讀 GPU 診斷圖；'+
    (!nativeGeometryGatePASS?'【原始幾何 FAIL：禁止正式發布】'+
      (evidence.geometricErrors??[]).join('、')+'。':
     (sourceReview.readyForHumanReferenceReview?
      '已具備人工外觀核對前置資料。':'來源或人體標記仍有 Gate 缺口。'))+
-   ' 自然人體／照片一比一始終 BLOCK。',nativeGeometryGatePASS&&!shapeEnvelope.fixtureExplicitlySyntheticNonhuman);
+   ' 自然人體／照片一比一始終 BLOCK。',nativeGeometryGatePASS&&!shapeEnvelope.fixtureExplicitlySyntheticNonhuman&&!sliceFlag);
  }catch(e){
   setStatus('BLOCK：'+(e?.message||String(e)));
   $('evidence').textContent='檢查未通過；已顯示的圖片不得作為完整證據。';
