@@ -223,7 +223,7 @@ export function inspectAIGReal3DSweptSourceRisk({
 export function createAIGReal3DThreeJointTimeline({
  dense,fingerJunction,manifest,targetAnglesDeg=[25,25,20],
  maxAngularStepDeg=6,displayFrameCount=3,contactBudget=120000,
- maxEdgeStrainPercent=20
+ maxEdgeStrainPercent=20,retainAllSourcePoses=false
 }={}){
  const prep=validate(dense,fingerJunction,manifest);
  if(!Array.isArray(targetAnglesDeg)||targetAnglesDeg.length!==3||
@@ -232,7 +232,7 @@ export function createAIGReal3DThreeJointTimeline({
   !Number.isInteger(displayFrameCount)||displayFrameCount<3||displayFrameCount>9||
   !Number.isInteger(contactBudget)||contactBudget<1||contactBudget>200000||
   !Number.isFinite(maxEdgeStrainPercent)||maxEdgeStrainPercent<1||
-  maxEdgeStrainPercent>100)
+  maxEdgeStrainPercent>100||typeof retainAllSourcePoses!=='boolean')
   fail('SAMPLING_OR_SAFETY_CONFIG_INVALID');
  const steps=Math.max(displayFrameCount-1,
   Math.ceil(Math.max(...targetAnglesDeg.map(Math.abs))/maxAngularStepDeg));
@@ -254,7 +254,7 @@ export function createAIGReal3DThreeJointTimeline({
   runtimeImageGPUChunksStillRebuiltPerCapture:true,
   noBenchmarkedFPSAssertion:true
  };
- const frames=[];let observedContact=false,unfinished=false,sweptRisk=false,
+ const frames=[];let previousPositions=null,observedContact=false,unfinished=false,sweptRisk=false,
   unsafeStrain=false,inverted=false,maxStretch=0;
  for(let i=0;i<=steps;i++){
   const t=i/steps,angles=targetAnglesDeg.map(a=>a*t),pose=deform(prep,angles),
@@ -264,9 +264,8 @@ export function createAIGReal3DThreeJointTimeline({
    positions:pose.positions,firstTriangles:groups.base,
    secondTriangles:groups.distal,maxPairs:contactBudget
   });
-  const previous=frames.at(-1);
-  const swept=previous?inspectAIGReal3DSweptSourceRisk({
-   from:previous.workingCopyPositions,to:pose.positions,
+  const swept=previousPositions?inspectAIGReal3DSweptSourceRisk({
+   from:previousPositions,to:pose.positions,
    groupA:groups.base,groupB:groups.distal,budget:contactBudget
   }):null;
   observedContact ||=contact.observedContactAtSample;
@@ -280,17 +279,26 @@ export function createAIGReal3DThreeJointTimeline({
    sampleIndex:i,timeFraction:round(t),anglesDeg:angles.map(round),
    worldJointPivots:pose.worldJointPivots,
    worldJointAxes:pose.worldJointAxes,
-   workingCopyPositions:pose.positions,
+   workingCopyPositions:retainAllSourcePoses||displays.includes(i)?
+    pose.positions:null,
    movedOriginalVertices:pose.moved,maxMovementMm:pose.maxMovementMm,
    deformation,contact,sweptRiskFromPriorSample:swept
   });
+  previousPositions=pose.positions;
  }
  return {
   schema:AIG_REAL3D_THREE_JOINT_SCHEMA,sourceSha256:prep.e.sourceSha256,
   jointNames:['Base','Middle','Distal'],
   sourceOriginalVertices:prep.e.originalVertexCount,
   sourceOriginalTriangles:prep.e.originalTriangleCount,
-  sourceMarkerSnaps:prep.snap,sparseSourceTopology:sparseStats,
+  sourceMarkerSnaps:prep.snap,sparseSourceTopology:{
+   ...sparseStats,
+   intermediateFramesRetainedInFullXYZ:retainAllSourcePoses,
+   numberOfFullXYZFramesRetained:retainAllSourcePoses?steps+1:displays.length,
+   discardedIntermediateFullXYZFrames:retainAllSourcePoses?0:steps+1-displays.length,
+   neighboringPoseKeptTemporarilyForSweptRisk:true,
+   gpuVisibleFrameOriginalXYZAlwaysRetained:true
+  },
   frameCount:frames.length,displayFrameIndexes:displays,
   maxActualAngularSampleStepDeg:round(
    Math.max(...targetAnglesDeg.map(Math.abs))/steps),
