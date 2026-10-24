@@ -1,3 +1,5 @@
+import {deduplicateAIGReal3DV114VerifiedOverlapGLB}
+ from './aig-real3d-v114-verified-overlap-dedup.mjs';
 import {auditAIGReal3DV113TwoViewOverlap}
  from './aig-real3d-v113-overlap-seam.mjs';
 import {buildAIGReal3DV112CalibratedMultiViewGLB}
@@ -89,7 +91,7 @@ function draw(){
 $('v112-build').addEventListener('click',async()=>{
  if(busy)return;
  busy=true;$('v112-build').disabled=true;$('v112-download').disabled=true;
- status('V112：正在核對雙來源 SHA、深度及相機配準…');
+ status('V114：正在核對來源 SHA、V113 接縫與可選重疊面整合…');
  try{
   if(!$('v112-calibration-confirm').checked)
    throw Error('V112_CALIBRATED_PHYSICAL_DEPTH_DECLARATION_NOT_CONFIRMED');
@@ -123,30 +125,45 @@ $('v112-build').addEventListener('click',async()=>{
    throw Error('V113_'+v113.geometryOverlapStatus+
     '_RMS_'+v113.overlapRmsMM+'_P95_'+v113.overlapP95MM);
   const {diagnostics:v113Diagnostics,...v113Summary}=v113;
+  const useV114=$('v114-dedup').checked;
+  const integrated=useV114?deduplicateAIGReal3DV114VerifiedOverlapGLB({
+   glbBytes:built.glbBytes,sourceGLBSha256:modelSHA,views,
+   depthToleranceMM:Number($('v113-depth-mm').value),
+   maxRawColorDifference:Number($('v114-color-threshold').value),
+   minimumTrianglesRemoved:Number($('v114-min-removed').value)
+  }):null;
+  const workingGLB=integrated?.glbBytes??built.glbBytes;
+  const workingSHA=integrated?await sha256AIGReal3DBytes(workingGLB):modelSHA;
+  if(integrated&&workingSHA===modelSHA)
+   throw Error('V114_NEW_WORKING_COPY_SHA_MUST_DIFFER');
   const result=await ingestAIGReal3DNativeGeneratedGLB({
-   glbBytes:built.glbBytes,referenceImageBytes:photo[0].bytes,
-   declaredImageSha256:photo[0].sha,declaredGLBSha256:modelSHA,
-   domain:'PERSON',assetId:'FastModelV112RegisteredTwoView',
+   glbBytes:workingGLB,referenceImageBytes:photo[0].bytes,
+   declaredImageSha256:photo[0].sha,declaredGLBSha256:workingSHA,
+   domain:'PERSON',assetId:useV114?'FastModelV114VerifiedOverlap':'FastModelV112RegisteredTwoView',
    outputOrigin:'SCAN',sourceUnits:'METERS'});
-  if(result.sourceTriangles!==built.receipt.observedTriangleCount)
-   throw Error('V112_SOURCE_TRIANGLES_CHANGED_ON_NATIVE_IMPORT');
+  const actualTriangles=integrated?.receipt.totalTrianglesAfter??built.receipt.observedTriangleCount;
+  if(result.sourceTriangles!==actualTriangles)
+   throw Error('V114_SOURCE_TRIANGLES_CHANGED_ON_NATIVE_IMPORT');
   if(renderer)renderer.destroy();
   renderer=createAIG3DRenderer($('v112-gl'),{
    quality:'balanced',pixelRatio:1,maxTriangles:200000,
    preserveDrawingBuffer:true,background:[.015,.028,.05,1]});
   if(renderer.status!=='READY')throw Error('V112_WEBGL_GPU_CONTEXT_REQUIRED');
   renderer.setInspectionMode('LIT');renderer.setColorPipeline('PBR_SDR');
-  const audit=auditAIGReal3DV107Source(result.scene,modelSHA),
+  const audit=auditAIGReal3DV107Source(result.scene,workingSHA),
    mn=audit.worldBounds.min,mx=audit.worldBounds.max,
    extent=Math.max(.05,mx[0]-mn[0],mx[1]-mn[1],mx[2]-mn[2]);
   renderer.setCamera({projection:'perspective',yaw:.55,pitch:.26,
    distance:extent*3.5,focus:audit.originalPivotWorld,
    fovDeg:48,orthoSpan:extent*1.1,near:.0001,far:2000});
-  imported=result;original={sha:modelSHA,bytes:built.glbBytes};
+  imported=result;original={sha:workingSHA,bytes:workingGLB};
   drawV113Mismatch(v113Diagnostics);
   $('v112-a').value='0';$('v112-b').value='0';$('v112-slice').value='100';
   report({...built.receipt,v113OverlapSeamAndMaterial:v113Summary,
-   actualModelSourceSha256:modelSHA,
+   v114VerifiedOverlapIntegration:integrated?.receipt??null,
+   v114IntegrationRequested:useV114,
+   untouchedV112OriginalGLBSha256:modelSHA,
+   actualModelSourceSha256:workingSHA,
    originalFirstPhotoSha256:photo[0].sha,
    secondIndependentPhotoSha256:photo[1].sha,
    trueNativeImportedTriangles:result.sourceTriangles,
