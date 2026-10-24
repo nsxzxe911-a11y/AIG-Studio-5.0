@@ -1,6 +1,6 @@
 <!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AIG Real3D V95｜肩部照片自動立體模型與動畫研究頁</title>
+<title>AIG Real3D V96｜肩部照片自動立體模型與原生4K GPU研究頁</title>
 <style>
 :root{color-scheme:dark;font:15px/1.6 system-ui,'Microsoft JhengHei',sans-serif;background:#020407;color:#e2f5ff}
 *{box-sizing:border-box}body{margin:0;padding:14px;background:#020407}
@@ -21,7 +21,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:370px;overflow:auto;f
 #status{border:1px solid #907044;color:#f8d598;padding:8px;border-radius:8px}
 input[type=range]{min-width:150px;flex:1}
 </style></head><body><main>
-<h1>Real3D V95｜單張照片 → 自動 3D 候選模型 → 骨架動畫</h1>
+<h1>Real3D V96｜單張照片 → 自動 3D → 原生 4K 電影繪圖</h1>
 <p>在本機放入肩膀以上照片，即可嘗試自動偵測臉部區域並生成具備真 3D XYZ 厚度與六關節的<strong>推估候選</strong>。這個版本使用本機像素啟發式，尚未接入經驗證的 AI 人臉／人體模型。原女主角臉部身份、未見的身體、側背面均不得冒充已驗證 1:1。</p>
 <section><div class="row">
 <label>原始肩膀以上照片 <input id="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>
@@ -39,6 +39,13 @@ input[type=range]{min-width:150px;flex:1}
 <button id="back" disabled>背面</button><button id="oblique" disabled>斜視</button>
 <button id="png" disabled>GPU PNG</button>
 <button id="webm" disabled>錄製短片 WebM</button>
+<label>輸出畫質<select id="output">
+<option value="FULL_HD">1920 × 1080</option>
+<option value="UHD_2K">2560 × 1440</option>
+<option value="UHD_4K" selected>3840 × 2160 原生 4K</option>
+</select></label>
+<button id="quality4k" disabled>檢查原始 3D 清晰度</button>
+<button id="capture4k" disabled>輸出真 GPU 4K PNG</button>
 <button id="plan">電影分段計畫 2:12:08</button>
 <button id="proof" disabled>來源／推估報告</button>
 </div>
@@ -48,6 +55,6 @@ input[type=range]{min-width:150px;flex:1}
 <p>這是幾何／骨架資料流驗證，不是電影級真人外觀；沒有原始掃描的區域皆為明確標記的推估模型。</p></section>
 <section><h2>輸入照片（僅作線索）</h2>
 <canvas id="source-photo" width="320" height="240" aria-label="來源照片預覽"></canvas>
-<h2>來源與身分驗證</h2><pre id="evidence">待載入照片。</pre>
+<h2>來源與身分驗證</h2><pre id="evidence">待載入照片。</pre><h2>4K 幾何／輸出品質 Gate</h2><pre id="quality-report">未驗證 4K 來源或 GPU。</pre>
 <p id="download"></p></section></div>
 </main><script type="module" src="./aig-real3d-v95-auto-film-lab.mjs"></script></body></html>
