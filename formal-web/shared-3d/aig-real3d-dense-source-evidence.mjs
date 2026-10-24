@@ -56,7 +56,7 @@ export function buildAIGReal3DDenseEvidencePacket({
   },
   imageContentNotIndependentlyAuthenticated:true,
   identicalPersonAcrossViewsNotProven:true,
-  3DReconstructionFromPhotosNotPerformed:true,
+  reconstructionFromPhotosNotPerformed:true,
   fineAnatomicalLandmarksStillNeedInspection:true,
   sourceHumanScanVerified:false,
   referencePhotosMatchedToMesh:false,
