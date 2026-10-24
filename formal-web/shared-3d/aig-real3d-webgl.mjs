@@ -112,9 +112,10 @@ const lineVs=[
 ].join('\n');
 const lineFs=['precision mediump float;uniform vec4 uColor;',
  'void main(){gl_FragColor=uColor;}'].join('\n');
-export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,maxFramePixels=3100000,preserveDrawingBuffer=false,background=[.004,.012,.024,1]}={}){
+export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,maxFramePixels=3100000,maxTriangles=200000,preserveDrawingBuffer=false,background=[.004,.012,.024,1]}={}){
  if(!canvas||typeof canvas.getContext!=='function'||!finite(pixelRatio)||pixelRatio<.5||
  !Number.isInteger(maxFramePixels)||maxFramePixels<200000||maxFramePixels>3200000||
+ !Number.isInteger(maxTriangles)||maxTriangles<200000||maxTriangles>700000||
  pixelRatio>3||!Array.isArray(background)||background.length!==4||
  !background.every(v=>finite(v)&&v>=0&&v<=1))throw Error('AIG3D_RENDER_TARGET_INVALID');
  getAIG3DQuality(quality);
@@ -353,7 +354,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
   let triangles=0,nodes=0,rapid=0,feed=0;
   for(const node of scene.nodes)if(node.visible){
-   if(triangles+node.mesh.triangleCount>200000)
+   if(triangles+node.mesh.triangleCount>maxTriangles)
     throw Error('AIG3D_GPU_TRIANGLE_BUDGET_BLOCKED');
    if(inspectionMode!=='BLACK_CONTOUR')
     meshDraw(node,getAIG3DWorldMatrix(scene,node.id),vp,eye);
