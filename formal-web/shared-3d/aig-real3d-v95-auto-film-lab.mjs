@@ -3,6 +3,10 @@ import {runAIGReal3DLocalPortraitToRig,createAIGReal3DResourceScheduler,
  planAIGReal3DFilmSegments}
  from './aig-real3d-v95-ai-orchestrator.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
+import {runAIGReal3DV97PhotoConstrainedModel}
+ from './aig-real3d-v97-auto-constrained-model.mjs';
+import {exportAIGReal3DV97AnimatedGLB}
+ from './aig-real3d-v97-export-animated-glb.mjs';
 import {planAIGReal3DNative4K,auditAIGReal3D4KSourceProjection,
  captureAIGReal3DNative4K,AIG_REAL3D_V96_OUTPUTS}
  from './aig-real3d-v96-native-4k-pipeline.mjs';
@@ -11,14 +15,15 @@ const canvas=$('model'),scheduler=createAIGReal3DResourceScheduler(),
  CANON_PREVIOUSLY_RECORDED_SHA='fbf47f32a844a80e1bb39cb23084527baaf1350427c20d2b49d21fdc453444d6';
 let renderer=null,out=null,frame=0,playing=false,raf=null,start=0,busy=false,
  cameraMode='oblique',reportURL=null,videoURL=null,photoURL=null,lastDrawMs=0,
- highQualityURL=null,last4KReport=null;
+ highQualityURL=null,last4KReport=null,lastPortrait=null,animatedGLBURL=null;
 const cameraAngles={front:[0,.1],side:[Math.PI/2,.1],back:[Math.PI,.1],
  oblique:[.65,.23]};
 function status(t){$('status').textContent=t;}
 function setReady(ready){
- for(const k of ['play','front','side','back','oblique','png','webm','proof','quality4k','capture4k'])
+ for(const k of ['play','front','side','back','oblique','png','webm','proof','quality4k','capture4k','fit97'])
   $(k).disabled=!ready;
  $('pause').disabled=true;
+ $('glb97').disabled=!ready||out?.schema!=='AIG_REAL3D_V97_IMAGE_CONSTRAINED_3D_ACTOR_V1';
 }
 function stop(){
  playing=false;if(raf!==null)cancelAnimationFrame(raf);raf=null;
@@ -56,6 +61,8 @@ function proof(){
   sourceSceneNeverPromotedToFormalIdentity:true,
   cachedResources:scheduler.snapshot(),
   currentSDRColorPipeline:renderer?.getColorPipeline?.()??null,
+  observedColorHeadFit:out.candidate.observedColorContourFit??null,
+  V97IsActual3DImageGeometryCandidate:out.schema==='AIG_REAL3D_V97_IMAGE_CONSTRAINED_3D_ACTOR_V1',
   lastGPUFrameCostMs:lastDrawMs,
   twoHourFilmActuallyProduced:false,formalReleasePASS:false
  },null,2);
@@ -92,6 +99,7 @@ async function build(){
   const ctx=tmp.getContext('2d',{willReadFrequently:true});
   ctx.drawImage(bitmap,0,0,w,h);bitmap.close();
   const rgba=ctx.getImageData(0,0,w,h).data;
+  lastPortrait={rgba,width:w,height:h,imageSha256:sha};
   const preview=$('source-photo'),pctx=preview.getContext('2d');
   pctx.clearRect(0,0,preview.width,preview.height);
   pctx.drawImage(tmp,0,0,preview.width,preview.height);
@@ -304,6 +312,70 @@ $('colorPipeline').addEventListener('change',()=>{
   render(frame);
   qualityDiagnostics();
  }catch(e){status('BLOCK：'+e.message);}
+});
+
+$('fit97').addEventListener('click',()=>{
+ if(!lastPortrait||busy||!out)return;
+ busy=true;stop();$('fit97').disabled=true;$('glb97').disabled=true;
+ try{
+  const fitted=runAIGReal3DV97PhotoConstrainedModel({
+   ...lastPortrait,approvedIdentitySha256:CANON_PREVIOUSLY_RECORDED_SHA,
+   approvedIdentitySourcePresent:false,wrapMode:$('mode').value
+  });
+  if(!fitted.candidate)throw Error('沒有足夠來源臉部色彩輪廓');
+  // Only a separate WORKING COPY is changed; approved canonical identity
+  // source remains locked. No imaginary 1:1 face precision is promoted.
+  out=fitted;
+  if(renderer)renderer.destroy();
+  renderer=createAIG3DRenderer(canvas,{pixelRatio:1,quality:'balanced',
+   maxTriangles:200000,preserveDrawingBuffer:true,
+   background:[.017,.034,.058,1]});
+  if(renderer.status!=='READY')throw Error('真 WebGL 3D 不可用');
+  renderer.setInspectionMode('LIT');
+  renderer.setColorPipeline($('colorPipeline').value);
+  frame=0;render(0);
+  const report={
+   schema:fitted.schema,imageSHA:fitted.imageSha256,
+   actualColorMaskObserved:fitted.actualColorMaskObserved,
+   realOriginalHeadVerticesMoved:fitted.actualHeadVerticesMoved,
+   measuredContourErrorBefore:fitted.contourErrorBefore,
+   measuredContourErrorAfter:fitted.contourErrorAfter,
+   contourFitImproved:fitted.actualFaceContourFitImprovementMeasured,
+   source3DTriangles:fitted.real3DSkinnedTriangles,
+   originalFaceIndicesPreserved:true,rigJoints:fitted.real3DAnimatedJoints,
+   hiddenHeadAndBackDepthRemainEstimated:true,
+   trainedAIFaceReconstructionModelLoaded:false,
+   heroineIdentityPersonallyVerified:false,
+   anatomyOrMovieQualityAccepted:false,releasePASS:false
+  };
+  $('v97-report').textContent=JSON.stringify(report,null,2);
+  setReady(true);proof();
+  status('V97 真 3D 頭部頂點約束 '+fitted.actualHeadVerticesMoved+
+   '；來源輪廓誤差 '+String(fitted.contourErrorBefore?.toFixed(3)??'無')+
+   ' → '+String(fitted.contourErrorAfter?.toFixed(3)??'無')+
+   '；身份與電影級外觀仍 BLOCK');
+ }catch(e){status('BLOCK：'+String(e?.message??e));}
+ finally{busy=false;$('fit97').disabled=!out;}
+});
+$('glb97').addEventListener('click',()=>{
+ if(!out||out.schema!=='AIG_REAL3D_V97_IMAGE_CONSTRAINED_3D_ACTOR_V1'||busy){
+  status('BLOCK：先執行 V97 真照片輪廓約束後才能產生動畫 GLB');return;
+ }
+ try{
+  stop();
+  const result=exportAIGReal3DV97AnimatedGLB({
+   candidate:out.candidate,sourceImageSha256:out.imageSha256
+  });
+  if(animatedGLBURL)URL.revokeObjectURL(animatedGLBURL);
+  animatedGLBURL=URL.createObjectURL(new Blob([result.bytes],{type:'model/gltf-binary'}));
+  const a=document.createElement('a');a.href=animatedGLBURL;
+  a.download='Real3D-V97-SOURCE-CONSTRAINED-3D-MORPH-ANIMATED.glb';
+  a.textContent='下載真 Indexed XYZ 3D 動作模型 GLB（候選）';
+  $('download').replaceChildren(a);a.click();
+  status('已輸出真正 glTF2 GLB '+result.bytes.byteLength+
+   ' bytes，'+result.actualMoving3DMorphTargets+
+   ' 個真 3D 變形目標；不等於原生骨架／原女主角臉部已認證');
+ }catch(e){status('BLOCK：'+String(e?.message??e));}
 });
 $('output').addEventListener('change',()=>{
  if(out&&!busy){
