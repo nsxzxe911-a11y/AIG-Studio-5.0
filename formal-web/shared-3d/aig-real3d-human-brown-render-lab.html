@@ -74,6 +74,19 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <div id="six-solid-gallery" class="gallery" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px" aria-label="上下面及前後左右六個原始網格 GPU 視角"></div>
 <pre id="six-solid-evidence">缺少原始來源幾何。</pre>
 </section>
+<section class="panel" id="curved-six-native-depth">
+<h2>極速 V85｜真曲面六方向原始深度／遮蔽／來源缺口</h2>
+<p>適用於已提供的原始曲面 OBJ，不要求六個平坦方塊面。從正、背、左右、上下六方向，以真正 Indexed XYZ 投影到 32×32 深度格線，記錄最近的原始三角面、前後深度差、方向表面、原始接縫／破洞。<strong>六個渲染方向不是六份獨立掃描資料</strong>；即使六張 GPU 圖成功，未取得原始側面照片／掃描證據的區域仍標示未知。</p>
+<div class="row">
+<label>可選：同 SHA 的方向觀測宣告 JSON（未獨立認證）
+<input id="curved-six-scan-evidence" type="file" accept=".json,application/json"></label>
+<button id="curved-six-run" disabled type="button">六方向原始曲面深度／遮蔽＋真 GPU 六視圖</button>
+<button id="curved-six-download" disabled type="button">下載六方向深度／原始 SHA／GPU PNG 報告</button>
+</div>
+<div id="curved-six-status" class="status" role="status">BLOCK：尚未匯入來源曲面 OBJ。</div>
+<div id="curved-six-gallery" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px" aria-label="六方向原始曲面真 GPU 畫面"></div>
+<pre id="curved-six-evidence">無原始曲面／掃描側面證據。</pre>
+</section>
 <section class="panel" id="dense-native-anatomy">
 <h2>高密度原始 3D 解剖五區＋四視角 GPU 檢查</h2>
 <p>先按上方高密度 OBJ 真匯入，再提供本機 21 點解剖 JSON（五指檢查另需左右手的 MiddleTip、RingTip、PinkyTip 六點）。
