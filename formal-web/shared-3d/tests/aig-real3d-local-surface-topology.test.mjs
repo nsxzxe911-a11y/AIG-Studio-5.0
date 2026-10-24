@@ -80,6 +80,11 @@ test('Actual missing neck triangle is detected as open local boundary with measu
  assert.ok(near.openEdges>0,JSON.stringify(near));
  assert.ok(near.anomalyCodes.includes('NEARBY_OPEN_EDGES'));
  assert.ok(near.anomalyWorldPositionSamples.length>0);
+ assert.ok(near.anomalyExactWorldEdges.length>0);
+ assert.ok(near.anomalyExactWorldEdges.every(z=>z.type==='OPEN_BOUNDARY'&&
+   Array.isArray(z.startWorldMeters)&&z.startWorldMeters.length===3&&
+   Array.isArray(z.endWorldMeters)&&z.endWorldMeters.length===3));
+ assert.equal(near.anomalyEdgeEvidenceTruncated,false);
  assert.equal(bad.releasePASS,false);
 });
 test('Reversed indexed face near neck flags inconsistent winding with original triangles',()=>{
@@ -87,6 +92,8 @@ test('Reversed indexed face near neck flags inconsistent winding with original t
  assert.ok(bad.regions[0].inconsistentFaceWindingEdges>0,
   JSON.stringify(bad.regions[0]));
  assert.ok(bad.regions[0].anomalyCodes.includes('INCONSISTENT_FACE_WINDING'));
+ assert.ok(bad.regions[0].anomalyExactWorldEdges.some(e=>
+   e.type==='WINDING_CONFLICT'&&e.startVertexIndex!==e.endVertexIndex));
  assert.equal(bad.trianglesAddedOrSmoothed,false);
  assert.equal(bad.releasePASS,false);
 });
