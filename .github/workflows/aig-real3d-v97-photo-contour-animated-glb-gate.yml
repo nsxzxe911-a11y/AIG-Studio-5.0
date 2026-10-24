@@ -1,0 +1,63 @@
+name: Real3D V97 Original Photo Contour to Native Animated GLB and GPU Gate
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v97-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v97-*'
+      - 'formal-web/shared-3d/aig-real3d-v95-provisional-rig.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v95-auto-film-lab.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v95-auto-film-lab.html'
+      - '.github/workflows/aig-real3d-v97-photo-contour-animated-glb-gate.yml'
+      - 'docs/REAL3D-V97-*'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: real3d-v97-source-glb-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  original-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: True portrait observed contour, source topology and animated GLB binary Gate
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-v97-portrait-silhouette.mjs
+          node --check formal-web/shared-3d/aig-real3d-v97-auto-constrained-model.mjs
+          node --check formal-web/shared-3d/aig-real3d-v97-export-animated-glb.mjs
+          node --check formal-web/shared-3d/aig-real3d-v95-provisional-rig.mjs
+          node --check formal-web/shared-3d/aig-real3d-v95-auto-film-lab.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-v97-contour-glb.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v97-contour-glb.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v95-auto-pipeline.test.mjs
+  native-chromium-gpu:
+    needs: original-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install genuine Chromium WebGL
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Original source contour 3D fit, real GPU and GLB export Gate
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v97-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v95-auto-film-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v97-contour-glb.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V97-Observed-Contour-Animated-GLB-Real-GPU
+          path: artifacts/aig-real3d-v97-photo-constrained/
+          if-no-files-found: warn

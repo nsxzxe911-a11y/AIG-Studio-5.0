@@ -21,7 +21,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:370px;overflow:auto;f
 #status{border:1px solid #907044;color:#f8d598;padding:8px;border-radius:8px}
 input[type=range]{min-width:150px;flex:1}
 </style></head><body><main>
-<h1>Real3D V96｜單張照片 → 自動 3D → 原生 4K 電影繪圖</h1>
+<h1>Real3D V97｜照片輪廓約束 → 真 3D 動畫 GLB → 原生 4K</h1>
 <p>在本機放入肩膀以上照片，即可嘗試自動偵測臉部區域並生成具備真 3D XYZ 厚度與六關節的<strong>推估候選</strong>。這個版本使用本機像素啟發式，尚未接入經驗證的 AI 人臉／人體模型。原女主角臉部身份、未見的身體、側背面均不得冒充已驗證 1:1。</p>
 <section><div class="row">
 <label>原始肩膀以上照片 <input id="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>
@@ -29,6 +29,8 @@ input[type=range]{min-width:150px;flex:1}
 <option value="FULL_WRAP">全包覆＋全骨架</option>
 <option value="HALF_WRAP">半包覆＋全骨架</option></select></label>
 <button id="build">AI 輔助自動建模</button>
+<button id="fit97" disabled>V97 照片輪廓約束重建</button>
+<button id="glb97" disabled>輸出可動畫 GLB</button>
 <button id="play" disabled>播放真 3D 骨架</button>
 <button id="pause" disabled>暫停</button>
 </div>
@@ -59,6 +61,6 @@ input[type=range]{min-width:150px;flex:1}
 <p>這是幾何／骨架資料流驗證，不是電影級真人外觀；沒有原始掃描的區域皆為明確標記的推估模型。</p></section>
 <section><h2>輸入照片（僅作線索）</h2>
 <canvas id="source-photo" width="320" height="240" aria-label="來源照片預覽"></canvas>
-<h2>來源與身分驗證</h2><pre id="evidence">待載入照片。</pre><h2>4K 幾何／輸出品質 Gate</h2><pre id="quality-report">未驗證 4K 來源或 GPU。</pre>
+<h2>來源與身分驗證</h2><pre id="evidence">待載入照片。</pre><h2>V97 輪廓與 3D 重建實測誤差</h2><pre id="v97-report">尚未執行 V97 照片約束。</pre><h2>4K 幾何／輸出品質 Gate</h2><pre id="quality-report">未驗證 4K 來源或 GPU。</pre>
 <p id="download"></p></section></div>
 </main><script type="module" src="./aig-real3d-v95-auto-film-lab.mjs"></script></body></html>

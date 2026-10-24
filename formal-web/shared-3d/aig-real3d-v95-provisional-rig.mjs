@@ -10,12 +10,15 @@ import {createAIGReal3DRigWrap,AIG_REAL3D_V92_RIG_SCHEMA}
  from './aig-real3d-rig-wrap-contact.mjs';
 import {AIG_REAL3D_V95_VISION_SCHEMA}
  from './aig-real3d-v95-photo-vision.mjs';
+import {fitAIGReal3DHeadGeometryFromObservedMask}
+ from './aig-real3d-v97-portrait-silhouette.mjs';
 export const AIG_REAL3D_V95_BODY_SCHEMA='AIG_REAL3D_V95_AUTO_INFERRED_RIG_CANDIDATE_V1';
 const fail=x=>{throw Error('REAL3D_V95_BODY_'+x);};
 const sha=x=>typeof x==='string'&&/^[a-f0-9]{64}$/i.test(x);
 export function buildAIGReal3DProvisionalBody({
  vision,approvedIdentitySha256,sourceImageSha256,
- approvedIdentitySourcePresent=false,wrapMode='FULL_WRAP'
+ approvedIdentitySourcePresent=false,wrapMode='FULL_WRAP',
+ silhouetteEvidence=null
 }={}){
  if(vision?.schema!==AIG_REAL3D_V95_VISION_SCHEMA||
   vision.result!=='INFERRED_MODEL_CANDIDATE_ONLY'||
@@ -106,7 +109,39 @@ export function buildAIGReal3DProvisionalBody({
  limb('LEFT_LEG_ESTIMATED',.90,.08,-.098,-.105,.090,'hipL');
  limb('RIGHT_LEG_ESTIMATED',.90,.08,.098,.105,.090,'hipR');
  // No generated anatomical claims beyond this minimal rig.
- const mesh=createAIG3DMesh({positions,normals,indices,
+ let headFit=null,sourcePositions=positions,sourceNormals=normals;
+ if(silhouetteEvidence!==null){
+  if(silhouetteEvidence.imageSha256!==sourceImageSha256)
+   fail('V97_PHOTO_SOURCE_HASH_NOT_MATCHED');
+  headFit=fitAIGReal3DHeadGeometryFromObservedMask({
+   positions,silhouette:silhouetteEvidence,
+   headVertexStart:0,headSteps:28,headRows:14,
+   headCenterY:1.515,headRadiusY:headHeight*.53
+  });
+  sourcePositions=headFit.positions;
+  sourceNormals=[...normals];
+  const headVertexCount=2+13*28,acc=new Float64Array(headVertexCount*3);
+  const headEnd=sections[0].triangleCount*3;
+  for(let k=0;k<headEnd;k+=3){
+   const [a,b,c]=indices.slice(k,k+3);
+   const ia=a*3,ib=b*3,ic=c*3,
+    ux=sourcePositions[ib]-sourcePositions[ia],
+    uy=sourcePositions[ib+1]-sourcePositions[ia+1],
+    uz=sourcePositions[ib+2]-sourcePositions[ia+2],
+    vx=sourcePositions[ic]-sourcePositions[ia],
+    vy=sourcePositions[ic+1]-sourcePositions[ia+1],
+    vz=sourcePositions[ic+2]-sourcePositions[ia+2],
+    n=[uy*vz-uz*vy,uz*vx-ux*vz,ux*vy-uy*vx];
+   for(const id of [a,b,c])for(let j=0;j<3;j++)acc[id*3+j]+=n[j];
+  }
+  for(let v=0;v<headVertexCount;v++){
+   const xyz=Array.from(acc.slice(3*v,3*v+3)),
+    len=Math.hypot(...xyz);
+   if(len>1e-9)for(let j=0;j<3;j++)
+    sourceNormals[v*3+j]=xyz[j]/len;
+  }
+ }
+ const mesh=createAIG3DMesh({positions:sourcePositions,normals:sourceNormals,indices,
   provenance:'V95_AUTO_ESTIMATED_FROM_SHOULDER_PORTRAIT_PROXY_NOT_SCANNED'});
  const scene=createAIG3DScene({id:'real3dV95Candidate',
   consumer:'FastModel',units:'METERS',
@@ -145,6 +180,13 @@ export function buildAIGReal3DProvisionalBody({
   sourceMeasuredFullBodyHeightMeters:null,
   originalSourcePhotoFaceNotAltered:true,
   generatedProxyNotRealPhotoFacialReconstruction:true,
+  observedColorContourFit:headFit?{
+   before:headFit.meanNormalizedContourErrorBefore,
+   after:headFit.meanNormalizedContourErrorAfter,
+   actuallyMovedHeadVertices:headFit.changedOriginalHeadVertices,
+   headZDepthStillInferred:true,
+   guaranteedIdentitySimilarity:false
+  }:null,
   sourcePartCount:sections.length,sectionProvenance:sections,
   realIndexed3DTriangles:mesh.triangleCount,
   realSkinnedJoints:rig.boneCount,
