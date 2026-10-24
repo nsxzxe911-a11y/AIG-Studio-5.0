@@ -4,6 +4,7 @@ import {createAIG3DScene,createAIG3DBox,addAIG3DNode}
  from '../aig-real3d-core.mjs';
 import {planAIGReal3DAdaptiveArtworkFrame,
  findAIGReal3DVisibleAlphaROI,collectAIGReal3DSourceBoundingCorners,
+ planAIGReal3DNativeOutputWithinArtwork,
  createAIGReal3DAdaptivePreviewGate}
  from '../aig-real3d-v102-adaptive-frame.mjs';
 const sha='a'.repeat(64);
@@ -92,6 +93,28 @@ test('V102 coalesces AI generated snapshots into one GPU frame, throttles while 
  assert.equal(gate.snapshot().no4KReadbackTriggeredByPreview,true);
  assert.equal(gate.snapshot().actualAIPipelineRunInParallelThread,false);
  assert.equal(gate.pump(750,drawn).status,'SKIPPED_NO_NEW_FRAME');
+});
+test('V102 native 4K cinematic output keeps portrait AI composition via actual camera, not a stretched 4K canvas',()=>{
+ const s=scene(),saved=JSON.stringify(s);
+ const out=planAIGReal3DNativeOutputWithinArtwork({
+  scene:s,artworkWidth:384,artworkHeight:640,
+  subjectROI:{x:120,y:72,width:145,height:500},
+  outputWidth:3840,outputHeight:2160,
+  yaw:.58,pitch:.2,originalImageSha256:sha});
+ assert.equal(out.artworkWidth,3840);
+ assert.equal(out.artworkHeight,2160);
+ assert.equal(out.originalArtworkWidth,384);
+ assert.equal(out.originalArtworkHeight,640);
+ assert.equal(out.nativeOutputFrameContentRect.height,2160);
+ assert.equal(out.nativeOutputFrameContentRect.width,1296);
+ assert.equal(out.nativeOutputFrameContentRect.x,1272);
+ assert.equal(out.modelFitsInsideOriginalArtworkROI,true);
+ assert.equal(out.pillarboxOrLetterboxNeeded,true);
+ assert.equal(out.originalArtworkAspectNeverStretched,true);
+ assert.ok(out.projected3DBoundsInArtworkPixels.minX>1272);
+ assert.ok(out.projected3DBoundsInArtworkPixels.maxX<2568);
+ assert.equal(out.sourceGeometryUnaffected,true);
+ assert.equal(JSON.stringify(s),saved);
 });
 test('V102 neither fabricated image ROI nor forged mesh provenance is silently allowed',()=>{
  const s=scene();
