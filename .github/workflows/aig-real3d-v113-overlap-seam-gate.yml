@@ -1,0 +1,63 @@
+name: Real3D V113 Two-View True Depth Overlap Seam and Material GPU Gate
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v113-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v113-*'
+      - 'formal-web/shared-3d/aig-real3d-v112-calibrated-multiview-ui.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v112-calibrated-multiview-lab.html'
+      - 'formal-web/shared-3d/tests/aig-real3d-v112-calibrated-multiview.real-browser.mjs'
+      - 'docs/REAL3D-V113-*'
+      - '.github/workflows/aig-real3d-v113-overlap-seam-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: real3d-v113-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  independent-depth-and-color-seam-math:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Bidirectional true world XYZ depth reprojection vs source RGB, no fake mesh welding
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-v113-overlap-seam.mjs
+          node --check formal-web/shared-3d/aig-real3d-v112-calibrated-multiview-ui.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-v112-calibrated-multiview.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v113-overlap-seam.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v112-calibrated-multiview.test.mjs
+  real-chromium-calibrated-overlap-and-fiveaxis:
+    needs: independent-depth-and-color-seam-math
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install Chromium with genuine WebGL ANGLE SwiftShader
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Two true source GLB patches, V113 local 9mm residual BLOCK, material warn and V107 A/B GPU
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v113-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v112-calibrated-multiview-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v112-calibrated-multiview.real-browser.mjs
+          node formal-web/shared-3d/tests/aig-real3d-v111-seeded-segmentation.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V113-Source-Depth-Seam-Material-Warnings-True-5AX-GPU
+          path: |
+            artifacts/aig-real3d-v112/
+            artifacts/aig-real3d-v111/
+          if-no-files-found: warn

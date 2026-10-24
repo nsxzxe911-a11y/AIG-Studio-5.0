@@ -1,6 +1,6 @@
 <!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Real3D V112｜雙視角實測深度配準與五軸 GPU</title>
+<title>Real3D V113｜多視角接縫深度與色彩 Gate</title>
 <style>
 :root{color-scheme:dark;background:#020407;color:#e4f3ff;font:15px/1.6 system-ui,"Microsoft JhengHei",sans-serif}
 body{margin:0;padding:16px}main{max-width:1380px;margin:auto}
@@ -18,7 +18,7 @@ canvas{display:block;width:100%;height:auto;background:#020407;border-radius:10p
 pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:520px;overflow:auto;font:12px/1.5 ui-monospace,monospace}
 #status{color:#f5d5a4}
 </style></head><body><main>
-<h1>FastModel Real3D V112｜雙視角實測深度 → 共用世界座標 → 真五軸 GPU</h1>
+<h1>FastModel Real3D V113｜雙視角曲面接縫與原圖材質一致性</h1>
 <p>本階要有兩張<strong>獨立相機圖片</strong>、與圖片像素一一對應的<strong>實測毫米深度 JSON</strong>、兩組相機內外參，以及至少三組非共線共享特徵點。若只有單張照片、沒有測得深度或校正，就不能假造背面立體幾何。</p>
 <section><h2>兩個獨立來源</h2><div class="row">
 <label>相機 1｜原始 PNG <input id="v112-photo-0" type="file" accept="image/png"></label>
@@ -43,6 +43,12 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:520px;overflow:auto;f
  "step":2,"maxSurfaceEdgeMM":35,"maxCorrespondenceRmsMM":1
 }</textarea>
 <p><small>以上填入的相機數值只是一組測試示例，不能當作實際相機的校正數據。</small></p>
+<section id="v113-gate-panel">
+<h2>V113｜雙向重疊深度與原始色彩 Gate</h2>
+<p>以相機內外參將每一片已量測曲面投影到另一相機，量測重疊區實際深度差。任何超過毫米容許值的局部突起都 BLOCK；兩來源色差只標示警告，不自動改顏色，也不把未知表面縫成假模型。</p>
+<div class="row"><label>重疊深度容許差（mm）<input id="v113-depth-mm" type="number" value="2" min="0.001" max="20" step=".1"></label>
+<label>原圖色彩警報界線（RGB RMS）<input id="v113-color-rms" type="number" value="38" min="5" max="150" step="1"></label></div>
+</section>
 <div class="row"><button id="v112-build">驗證雙來源 → 配準 → 真 GLB → GPU</button>
 <button id="v112-download" disabled>下載兩視角真 GLB 工作副本</button>
 <a style="color:#8ee1ff" href="./aig-real3d-v109-photo-surface-lab.html">返回 V111 前景工作頁</a>
@@ -59,7 +65,10 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:520px;overflow:auto;f
 </div>
 <p>雙視角輸出是同一世界座標下的<strong>兩片實測可見曲面</strong>；尚未銲接成閉合人體或補齊未知表面。角度或切片不改動 GLB 來源。</p>
 </section>
-<section><h2>來源配準與 GPU 稽核</h2><pre id="v112-report">尚無證據。</pre></section>
+<section><h2>V113 重疊誤差診斷（相機 1）</h2>
+<canvas id="v113-seam-mask" width="320" height="320" aria-label="深度超差點以紅色標示"></canvas>
+<p><small>紅色：抽樣相機 1 在相機 2 配對後深度不一致；背景空白不表示其他表面已被測量。原圖與 GLB 未更改。</small></p>
+<h2>來源配準、材質與 GPU 稽核</h2><pre id="v112-report">尚無證據。</pre></section>
 </div></main>
 <script type="module" src="./aig-real3d-v112-calibrated-multiview-ui.mjs"></script>
 </body></html>
