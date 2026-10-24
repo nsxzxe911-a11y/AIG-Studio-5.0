@@ -104,6 +104,15 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
  <div id="defect-edge-list" class="row" aria-label="原始異常邊可選取清單"></div>
  <div id="defect-selected" class="status" role="status" aria-live="polite">尚未選取；請先匯入真正有異常的 OBJ。</div>
 </div>
+<div class="panel diagnostic-inner" id="local-patch-panel">
+ <h3>真三角面小破洞 → 獨立修補工作副本（不覆寫原始 OBJ）</h3>
+ <p>只允許對已完整檢查的 OBJ 小型、平面、凸形閉合缺口，沿真正的原始邊緣補上必要三角面。保持原始頂點與舊面完全不變，嚴格檢查候選網格；不補人臉、手指、身材，也不宣稱真人外型合格。</p>
+ <div class="row">
+  <button type="button" id="make-local-working-copy" disabled>建立真正三角面修補工作副本</button>
+  <a id="local-working-copy-download" hidden download="AIG-Real3D-PATCH-WORKING-COPY.obj">下載獨立工作副本 OBJ</a>
+ </div>
+ <div id="local-working-copy-stats" class="status" role="status" aria-live="polite">先匯入原始 OBJ 並執行來源檢查。原檔案不會被修改。</div>
+</div>
 <div class="panel diagnostic-inner" id="repair-diff-panel">
  <h3>修復前／後原始 OBJ 唯讀比較</h3>
  <p>以剛才完成的 OBJ 作為修復前版本；可另選修復後 OBJ。兩份模型各自建立 SHA、相同身高／朝上軸與標記審核，再對比新舊局部破洞與錯面片。**異常減少不是自動修復、更不代表自然人體 PASS。**</p>
