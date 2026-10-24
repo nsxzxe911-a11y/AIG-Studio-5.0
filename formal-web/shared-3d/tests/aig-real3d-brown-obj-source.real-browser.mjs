@@ -121,7 +121,7 @@ try{
  assert.equal(proof.source3DSections.sections[0].significantClosedLoops,1);
  assert.equal(proof.source3DSections.releasePASS,false);
  assert.equal(await page.locator('#source-3d-slice-table tbody tr').count(),4);
- assert.match(await page.locator('#source-3d-slice-stats').textContent(),/只有一個連續閉合截面/);
+ assert.match(await page.locator('#source-3d-slice-stats').textContent(),/僅有一個連續閉合截面/);
  assert.equal(proof.sourceReview.model.sha256,hash);
  assert.equal(proof.sourceReview.computedEvidence.nativeMeshGeometryGatePASS,true);
  assert.equal(proof.sourceReview.computedEvidence.fourRealGpuOrthographicAnglesCaptured,true);
