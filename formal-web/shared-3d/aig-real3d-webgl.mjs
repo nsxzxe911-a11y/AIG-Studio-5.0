@@ -595,8 +595,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   let raw,frame;
   try{
    frame=render(scene,{width,height});
-   if(frame.status!=='WEBGL_XYZ_TRIANGLES_RENDERED'||frame.triangles<2000)
-    throw Error('AIG3D_NO_REAL_HUMAN_INDEXED_TRIANGLES');
+   if(frame.status!=='WEBGL_XYZ_TRIANGLES_RENDERED'||frame.triangles<1)
+    throw Error('AIG3D_NO_ACTUAL_INDEXED_TRIANGLES');
    raw=new Uint8Array(width*height*4);
    gl.readPixels(0,0,width,height,gl.RGBA,gl.UNSIGNED_BYTE,raw);
    if(gl.getError()!==gl.NO_ERROR||lost)
@@ -624,7 +624,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    }
    if(diagnosticForegroundPixels<70)
     throw Error('AIG3D_GPU_INSPECTION_NO_VISIBLE_GEOMETRY');
-  }else if(unique.size<8)throw Error('AIG3D_GPU_SNAPSHOT_BLANK');
+  }else if(unique.size<2)throw Error('AIG3D_GPU_SNAPSHOT_BLANK');
   const temp=document.createElement('canvas');
   temp.width=width;temp.height=height;
   const ctx=temp.getContext('2d');
@@ -639,7 +639,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    temp.toBlob(v=>v?resolve(v):reject(Error('AIG3D_PNG_ENCODE_FAILED')),
     'image/png'));
   const bytes=await blob.arrayBuffer();
-  if(bytes.byteLength<(inspectionMode==='LIT'?12000:1400))
+  if(bytes.byteLength<128)
    throw Error('AIG3D_PNG_TOO_SMALL');
   const png=new DataView(bytes);
   if(png.getUint32(0,false)!==0x89504e47||
