@@ -87,6 +87,22 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <div id="curved-six-gallery" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px" aria-label="六方向原始曲面真 GPU 畫面"></div>
 <pre id="curved-six-evidence">無原始曲面／掃描側面證據。</pre>
 </section>
+<section class="panel" id="v89-source-calibrated-multiview-atlas">
+<h2>極速 V89｜多照片原始 3D 重投影、遮蔽與未知面</h2>
+<p>共用 V88 原始 UV。照片提供真實像素，外部已標定相機提供方向，原始三角面執行深度測試；未拍到的表面保留<strong>洋紅色 UNKNOWN</strong>。不自動解算相機、不捏造背面或修改原始 XYZ。</p>
+<div class="row">
+<label>UV0 JSON<input id="v89-uv" type="file" accept=".json,application/json"></label>
+<label>相機標定 manifest JSON<input id="v89-camera-manifest" type="file" accept=".json,application/json"></label>
+<label>來源照片 PNG/WebP（1～6 張）<input id="v89-photos" type="file" accept=".png,.webp,image/png,image/webp" multiple></label>
+<label>Atlas 尺寸<select id="v89-resolution"><option value="64">64</option><option value="128" selected>128</option><option value="256">256</option></select></label>
+<button id="v89-run" type="button" disabled>極速逆向｜多視角真 GPU</button>
+<button id="v89-download" type="button" disabled>下載 SHA／覆蓋率報告</button>
+</div>
+<p>相機 JSON 格式見 <code>docs/REAL3D-V89-CALIBRATED-MULTIVIEW-ATLAS-20261024.md</code>。V89 目前只接受單節點真來源；多 Chunk 遮蔽與單照片完整 3D 還沒有通過。</p>
+<div id="v89-status" class="status" role="status">BLOCK：請先匯入原始 OBJ、UV 與來源相機。</div>
+<div id="v89-gallery" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px"></div>
+<pre id="v89-evidence">尚未產生真實來源覆蓋率證據。</pre>
+</section>
 <section class="panel" id="v88-source-authored-uv-normal-materials">
 <h2>極速 V88｜通用 UV／Albedo／Normal 貼圖＋Clearcoat 節點</h2>
 <p>與 V87 一樣共用單一 WebGL 著色器。必須提供來源相符的 UV0 座標才能正確使用貼圖；法線貼圖以三角面原始 XYZ 與 UV 計算的 Tangent Space 呈現，Clearcoat 為非物理近似的反光強度。<strong>沒有 UV 就 BLOCK，不捏造未知側面或改寫原始 OBJ。</strong></p>

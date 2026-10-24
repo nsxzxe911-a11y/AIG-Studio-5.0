@@ -46,6 +46,7 @@ on:
       - 'formal-web/shared-3d/aig-real3d-material-recipe-ui.mjs'
       - 'formal-web/shared-3d/aig-real3d-material-texture-nodes.mjs'
       - 'formal-web/shared-3d/aig-real3d-material-texture-ui.mjs'
+      - 'formal-web/shared-3d/aig-real3d-multiview-projection*.mjs'
       - 'formal-web/shared-3d/aig-real3d-six-sided-source-ui.mjs'
       - 'formal-web/shared-3d/aig-sixdof-geoglobe-*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-dense-source*.mjs'
@@ -70,6 +71,7 @@ on:
       - 'formal-web/shared-3d/tests/aig-real3d-separate-fur-cloth-material.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-material-recipe-engine.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-material-texture-nodes.test.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-multiview-projection*.mjs'
       - 'formal-web/shared-3d/tests/aig-sixdof-geoglobe-space.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-fast-sparse-fk.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs'
@@ -240,6 +242,10 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-material-texture-nodes.mjs
           node --check formal-web/shared-3d/aig-real3d-material-texture-ui.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-material-texture-nodes.test.mjs
+          node --check formal-web/shared-3d/aig-real3d-multiview-projection.mjs
+          node --check formal-web/shared-3d/aig-real3d-multiview-projection-ui.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-multiview-projection.test.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-multiview-projection.real-browser.mjs
           node --test formal-web/shared-3d/tests/aig-sixdof-geoglobe-space.test.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-dense-source.real-browser.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs
@@ -287,6 +293,7 @@ jobs:
           node formal-web/shared-3d/tests/aig-real3d-human-brown-render.real-browser.mjs
           node formal-web/shared-3d/tests/aig-real3d-brown-obj-source.real-browser.mjs
           node formal-web/shared-3d/tests/aig-real3d-dense-source.real-browser.mjs
+          node formal-web/shared-3d/tests/aig-real3d-multiview-projection.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -296,4 +303,5 @@ jobs:
             artifacts/aig-real3d-brown-4pass-real-gpu/
             artifacts/aig-real3d-brown-source-obj-review/
             artifacts/aig-real3d-dense-original-source/
+            artifacts/aig-real3d-v89-calibrated-multiview/
           if-no-files-found: warn
