@@ -830,6 +830,120 @@ try{
  assert.equal(globe.actualGlobeTerrainStreaming,false);
  await writeFile(dir+'/NONHUMAN-SIXDOF-WGS84-GLOBE-LOCAL-MM.json',
   JSON.stringify(globe,null,2));
+ // V84: verify the original SIX geometric sides are real, not merely a
+ // front/back texture or an extruded guess. NONHUMAN rectangular box only.
+ const cuboid=await page.evaluate(()=>{
+  const surfaces=[
+   {id:'RIGHT_POS_X',fixed:[0,.5],u:[1,1.25],v:[2,.35]},
+   {id:'LEFT_NEG_X',fixed:[0,-.5],u:[2,.35],v:[1,1.25]},
+   {id:'TOP_POS_Y',fixed:[1,1.25],u:[2,.35],v:[0,.5]},
+   {id:'BOTTOM_NEG_Y',fixed:[1,-1.25],u:[0,.5],v:[2,.35]},
+   {id:'FRONT_POS_Z',fixed:[2,.35],u:[0,.5],v:[1,1.25]},
+   {id:'BACK_NEG_Z',fixed:[2,-.35],u:[1,1.25],v:[0,.5]}
+  ];
+  const build=onlyTopBottom=>{
+   const v=[],f=[],lookup=new Map(),grid=24;
+   const index=p=>{
+    const k=p.map(x=>x.toFixed(8)).join(',');
+    if(lookup.has(k))return lookup.get(k);
+    const n=v.length/3;v.push(...p);lookup.set(k,n);return n;
+   };
+   for(const face of surfaces){
+    if(onlyTopBottom&&!face.id.includes('POS_Y')&&
+     !face.id.includes('NEG_Y'))continue;
+    const coord=(i,j)=>{
+     const p=[0,0,0];p[face.fixed[0]]=face.fixed[1];
+     p[face.u[0]]=face.u[1]*(-1+2*i/grid);
+     p[face.v[0]]=face.v[1]*(-1+2*j/grid);
+     return index(p);
+    };
+    for(let a=0;a<grid;a++)for(let b=0;b<grid;b++){
+     const p=coord(a,b),q=coord(a+1,b),u=coord(a,b+1),w=coord(a+1,b+1);
+     f.push(p,q,w,p,w,u);
+    }
+   }
+   const lines=[];
+   for(let k=0;k<v.length;k+=3)lines.push('v '+v.slice(k,k+3).join(' '));
+   for(let k=0;k<f.length;k+=3)lines.push(
+    'f '+(f[k]+1)+' '+(f[k+1]+1)+' '+(f[k+2]+1));
+   return {obj:lines.join('\n'),vertices:v,triangles:f,
+    nativeSourceFaceCount:f.length/3};
+  };
+  return {full:build(false),caps:build(true)};
+ });
+ assert.equal(cuboid.full.nativeSourceFaceCount,6912);
+ assert.equal(cuboid.caps.nativeSourceFaceCount,2304);
+ const capAudit=await page.evaluate(async data=>{
+  const {auditAIGReal3DSixSourceSolid}=await import(
+   './aig-real3d-six-sided-source-solid.mjs');
+  return auditAIGReal3DSixSourceSolid({
+   positions:new Float32Array(data.vertices),
+   indices:new Uint32Array(data.triangles),sourceSha256:'a'.repeat(64)
+  });
+ },cuboid.caps);
+ assert.equal(capAudit.realSixSidedBoxSourceGatePASS,false);
+ assert.equal(capAudit.missingOrIncompleteSides.length,4);
+ assert.ok(capAudit.indexedTopology.originalOpenEdges>0);
+ assert.equal(capAudit.syntheticMissingSideFacesGenerated,0);
+ const cuboidBytes=Buffer.from(cuboid.full.obj,'utf8');
+ const cuboidSHA=createHash('sha256').update(cuboidBytes).digest('hex');
+ await page.locator('#model-file').setInputFiles({
+  name:'SIX_TRUE_SIDES_NONHUMAN_RECTANGULAR_SOURCE.obj',
+  mimeType:'text/plain',buffer:cuboidBytes
+ });
+ await page.locator('#body-height').fill('1680');
+ await page.locator('#up-axis').selectOption('Y');
+ await page.locator('#dense-source-run').click();
+ await page.waitForFunction(()=>{
+  const text=document.querySelector('#dense-source-status')?.textContent||'';
+  return !document.querySelector('#dense-source-run')?.disabled&&
+   (text.startsWith('高密度來源')||text.startsWith('BLOCK'));
+ },null,{timeout:180000});
+ assert.match(await page.locator('#dense-source-status').textContent(),
+  /高密度來源原生 GPU PASS/);
+ assert.equal(await page.locator('#six-solid-run').isDisabled(),false);
+ await page.locator('#six-solid-run').click();
+ await page.waitForFunction(()=>{
+  const message=document.querySelector('#six-solid-status')?.textContent||'';
+  return document.querySelector('#six-solid-run')?.disabled===false&&
+   (message.includes('技術 PASS')||message.startsWith('BLOCK'));
+ },null,{timeout:180000});
+ const sideStatus=await page.locator('#six-solid-status').textContent();
+ assert.match(sideStatus,/六面封閉立體技術 PASS/,sideStatus);
+ const sixReport=JSON.parse(await page.locator('#six-solid-evidence').textContent());
+ assert.equal(sixReport.sourceSha256,cuboidSHA);
+ assert.equal(sixReport.originalTriangleCount,6912);
+ assert.equal(sixReport.sixOriginalSidesPresent,true);
+ assert.equal(sixReport.closedSingleManifold,true);
+ assert.equal(sixReport.indexedTopology.originalOpenEdges,0);
+ assert.equal(sixReport.indexedTopology.originalWindingConflicts,0);
+ assert.equal(sixReport.syntheticMissingSideFacesGenerated,0);
+ assert.equal(sixReport.realSixSidedBoxSourceGatePASS,true);
+ assert.equal(sixReport.originalSixFaceGPUReadbackPASS,true);
+ assert.equal(sixReport.originalSixFaceGPUViews.length,6);
+ assert.ok(sixReport.sixSides.every(x=>
+  x.originalTriangleCount===1152&&x.verifiedExistingSourceFaceCoverage));
+ assert.ok(sixReport.originalSixFaceGPUViews.every(x=>
+  x.sourceSha256===cuboidSHA&&x.width===640&&x.height===640&&
+  x.genuineOriginalGPUReadback===true));
+ assert.equal(await page.locator('#six-solid-gallery figure img').count(),6);
+ const firstSide=page.waitForEvent('download',{timeout:15000});
+ await page.locator('#six-solid-gallery figure').first().locator('a').click();
+ const downloadedSide=await firstSide;
+ const actualSideBytes=await readFile(await downloadedSide.path());
+ assert.equal(actualSideBytes.readUInt32BE(16),640);
+ assert.equal(actualSideBytes.readUInt32BE(20),640);
+ assert.equal(createHash('sha256').update(actualSideBytes).digest('hex'),
+  sixReport.originalSixFaceGPUViews[0].sha256);
+ await copyFile(await downloadedSide.path(),
+  dir+'/NONHUMAN-V84-CUBOID-ORIGINAL-RIGHT-SIDE-GPU.png');
+ const sixDownload=page.waitForEvent('download',{timeout:15000});
+ await page.locator('#six-solid-download').click();
+ const sideReportDownload=await sixDownload;
+ const sideReportJSON=JSON.parse(await readFile(await sideReportDownload.path()));
+ assert.equal(sideReportJSON.realSixSidedBoxSourceGatePASS,true);
+ await writeFile(dir+'/NONHUMAN-V84-SIX-TRUE-BOX-SIDES-AND-NATIVE-GPU.json',
+  JSON.stringify({sixReport,onlyTopAndBottomSourceRejected:capAudit},null,2));
  assert.deepEqual(errors,[]);
  await page.screenshot({path:dir+'/DENSE-SOURCE-ORIGINAL-GPU-INTAKE.png',fullPage:true});
  await writeFile(dir+'/proof.json',JSON.stringify({
@@ -840,7 +954,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_V83_REAL_SOURCE_MULTIMODULE_WORKER_AND_GPU_STAGE_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_V84_SIX_NATIVE_SOURCE_SIDES_MISSING_FOUR_WALLS_BLOCK_GPU_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;
