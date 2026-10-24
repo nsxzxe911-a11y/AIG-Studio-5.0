@@ -14,6 +14,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-source-defect-*.mjs'
       - 'formal-web/shared-3d/aig-real3d-defect-edge-picker.mjs'
       - 'formal-web/shared-3d/aig-real3d-immutable-defect-diff.mjs'
+      - 'formal-web/shared-3d/aig-real3d-source-envelope-review.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-source-envelope-review.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-defect-picker-diff.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-source-defect-projection.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-local-surface-topology.test.mjs'
@@ -38,6 +40,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-source-defect-*.mjs'
       - 'formal-web/shared-3d/aig-real3d-defect-edge-picker.mjs'
       - 'formal-web/shared-3d/aig-real3d-immutable-defect-diff.mjs'
+      - 'formal-web/shared-3d/aig-real3d-source-envelope-review.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-source-envelope-review.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-defect-picker-diff.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-source-defect-projection.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-local-surface-topology.test.mjs'
@@ -77,6 +81,8 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-source-defect-overlay.mjs
           node --check formal-web/shared-3d/aig-real3d-defect-edge-picker.mjs
           node --check formal-web/shared-3d/aig-real3d-immutable-defect-diff.mjs
+          node --check formal-web/shared-3d/aig-real3d-source-envelope-review.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-source-envelope-review.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-defect-picker-diff.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-source-defect-projection.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-local-surface-topology.test.mjs
