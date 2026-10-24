@@ -1,5 +1,9 @@
 import {buildAIGReal3DGLBStatic} from './aig-real3d-glb-native-mesh.mjs';
 import {buildAIGReal3DScanNative} from './aig-real3d-scan-native-mesh.mjs';
+import {buildAIGReal3DDenseOBJSource}
+ from './aig-real3d-dense-source-obj.mjs';
+import {buildAIGReal3DDenseEvidencePacket}
+ from './aig-real3d-dense-source-evidence.mjs';
 import {buildAIGReal3DSourceReview,validateAIGReal3DLandmarkSidecar} from './aig-real3d-source-review-gate.mjs';
 import {compareAIGReal3DReferencePNGs} from './aig-real3d-reference-silhouette-browser.mjs';
 import {evaluateAIGReal3DFourViewComparisons} from './aig-real3d-reference-silhouette.mjs';
@@ -982,4 +986,129 @@ $('make-curved-junction-copy').addEventListener('click',async()=>{
   running=false;
   $('make-curved-junction-copy').disabled=!currentNativeReview;
  }
+});
+
+
+let latestDenseSourceEvidence=null;
+$('dense-source-run').addEventListener('click',async()=>{
+ if(running){$('dense-source-status').textContent='BLOCK：另一項 GPU 工作尚未完成。';return;}
+ const f=$('model-file').files?.[0],
+  heightMm=Number($('body-height').value),upAxis=$('up-axis').value;
+ if(!f||!/\.obj$/i.test(f.name)||!Number.isInteger(heightMm)||
+ heightMm<900||heightMm>2200){
+  $('dense-source-status').textContent='BLOCK：須先選擇真正本機 OBJ 與校正身高 mm。';return;
+ }
+ running=true;
+ $('dense-source-run').disabled=true;
+ $('inspect').disabled=true;
+ $('dense-source-download').hidden=true;
+ $('dense-evidence-download').disabled=true;
+ $('dense-source-figure').hidden=true;
+ $('dense-source-evidence').textContent='GPU 工作進行中；尚未確認來源。';
+ $('dense-source-status').textContent='解析原始高密度三角面、分塊並檢查真 GPU 輸出中…';
+ let gpu=null;
+ try{
+  if(f.size>50_000_000)throw Error('OBJ 檔案大於單次 50MB 安全上限');
+  const bytes=await f.arrayBuffer();
+  const sourceSha256=Array.from(
+   new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),
+   v=>v.toString(16).padStart(2,'0')).join('');
+  const objText=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+  const dense=buildAIGReal3DDenseOBJSource({
+   objText,sourceSha256,sourceName:f.name,heightMm,upAxis
+  });
+  gpu=createAIG3DRenderer($('native-webgl'),{
+   quality:'balanced',pixelRatio:1,maxTriangles:700000,
+   background:[.769,.745,.702,1]
+  });
+  if(gpu.status!=='READY')throw Error('本地 GPU 尚未啟用，無法產生真實圖片');
+  if(gpu.getGpuLimit()<1920)throw Error('GPU 尺寸不足 1080×1920 原生來源畫面');
+  const camera=validateAIGInspectionCapturePlan({
+   heightMeters:heightMm/1000,angle:'front',mode:'ALBEDO'
+  });
+  gpu.setCamera(camera.camera);
+  gpu.setInspectionMode('BROWN_VOLUME');
+  const frame=await gpu.captureNativePNG(dense.scene,{
+   width:1080,height:1920
+  });
+  if(!frame.genuineGpuReadback||frame.width!==1080||frame.height!==1920||
+   frame.resampledFromSmallerImage!==false)
+   throw Error('高密度來源圖片不是原生 GPU 讀回 PNG');
+  const references=[];
+  for(const angle of ['front','side','back','threeQuarter']){
+   const file=$('reference-'+angle).files?.[0];
+   if(!file)continue;
+   if(file.size<100||file.size>35_000_000||!/\.png$/i.test(file.name))
+    throw Error(angle+' 參考圖必須是本機有效 PNG');
+   const raw=await file.arrayBuffer(),sig=new Uint8Array(raw,0,8);
+   if(sig.join(',')!=='137,80,78,71,13,10,26,10')
+    throw Error(angle+' 參考圖的真 PNG 標頭錯誤');
+   const bitmap=await createImageBitmap(file);
+   const width=bitmap.width,height=bitmap.height;bitmap.close();
+   references.push({
+    angle,name:file.name,width,height,
+    sha256:Array.from(
+     new Uint8Array(await crypto.subtle.digest('SHA-256',raw)),
+     v=>v.toString(16).padStart(2,'0')).join('')
+   });
+  }
+  const packet=buildAIGReal3DDenseEvidencePacket({
+   sourceEvidence:dense.evidence,sourceSha256,referenceImages:references,
+   sourceOrigin:$('source-origin').value,
+   claimedMethod:$('capture-method').value,
+   authorizedByClaimant:$('source-rights').checked
+  });
+  latestDenseSourceEvidence={
+   ...packet,
+   realGPUFront:{width:1080,height:1920,sha256:frame.sha256,
+    trueHardwarePixelsReadBack:true},
+   originalMeshUnmodified:true,
+   previewPassOnlyNotHumanAcceptance:true
+  };
+  const href=URL.createObjectURL(frame.blob);urlPool.add(href);
+  $('dense-source-download').href=href;
+  $('dense-source-download').download='AIG-Real3D-DENSE-RAW-FRONT-GPU.png';
+  $('dense-source-download').hidden=false;
+  $('dense-source-figure').hidden=false;
+  $('dense-source-image').src=href;
+  $('dense-source-caption').textContent=
+   '原始 '+dense.evidence.originalVertexCount+' 頂點／'+
+   dense.evidence.originalTriangleCount+' 真三角面；'+
+   dense.evidence.gpuChunkCount+' 個 GPU 分塊；正面 1080×1920 真 GPU。';
+  $('dense-source-evidence').textContent=
+   JSON.stringify(latestDenseSourceEvidence,null,2);
+  $('dense-evidence-download').disabled=false;
+  $('dense-source-status').textContent=
+   '高密度來源原生 GPU PASS（不代表真人人體）：原始頂點 '+
+   dense.evidence.originalVertexCount+'、三角面 '+
+   dense.evidence.originalTriangleCount+
+   '，分塊後三角面 '+dense.evidence.renderedTriangleCount+
+   '（減面 0）；GPU 圖與來源 SHA 已記錄。'+
+   (packet.completeFourViewReferenceSet?
+    '四個來源 PNG SHA 已完整鎖定，但照片真實性／同一人物仍未驗證。':
+    '四視角原始參考 PNG 尚未齊全，真人外觀驗收 BLOCK。');
+ }catch(error){
+  latestDenseSourceEvidence=null;
+  $('dense-source-evidence').textContent='BLOCK：'+(error?.message||String(error));
+  $('dense-source-status').textContent='BLOCK：'+(error?.message||String(error))+
+   '。來源沒有通過驗證時不能宣稱高密度 GPU 匯入成功。';
+  $('dense-source-download').hidden=true;
+  $('dense-evidence-download').disabled=true;
+  $('dense-source-figure').hidden=true;
+ }finally{
+  gpu?.destroy?.();
+  running=false;
+  $('dense-source-run').disabled=false;
+  $('inspect').disabled=false;
+ }
+});
+$('dense-evidence-download').addEventListener('click',()=>{
+ if(!latestDenseSourceEvidence)return;
+ const blob=new Blob([JSON.stringify(latestDenseSourceEvidence,null,2)],
+  {type:'application/json'});
+ const url=URL.createObjectURL(blob);
+ urlPool.add(url);
+ const a=document.createElement('a');
+ a.href=url;a.download='AIG-Real3D-DENSE-SOURCE-SHA-REFERENCES.json';
+ a.click();
 });
