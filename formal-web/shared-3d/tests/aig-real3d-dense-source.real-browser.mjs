@@ -98,6 +98,15 @@ try{
  assert.equal(anatomy.digitBranching.originalVertexCount,vertices);
  assert.equal(anatomy.digitBranching.originalTriangleCount,triangles);
  assert.equal(anatomy.digitBranching.gpuChunkBoundariesExcluded,true);
+ assert.equal(anatomy.fingerJunction.originalVertexCount,vertices);
+ assert.equal(anatomy.fingerJunction.originalTriangleCount,triangles);
+ assert.equal(anatomy.fingerJunction.fingersReported,10);
+ assert.equal(anatomy.fingerJunction.requiredAdditionalSourceMarkers,20);
+ assert.equal(anatomy.fingerJunction.missingAdditionalSourceMarkers.length,20);
+ assert.equal(anatomy.fingerJunction.highDensityGPUChunkBoundariesExcludedFromSurfaceTopology,true);
+ assert.equal(anatomy.fingerJunction.animationRigPASS,false);
+ assert.equal(anatomy.fingerJunction.naturalFingerAndPalmAnatomyPASS,false);
+ assert.equal(anatomy.fingerJunction.releasePASS,false);
  assert.equal(anatomy.digitBranching.handReports.length,2);
  assert.equal(anatomy.digitBranching.bothFiveDistalBranchTechnicalObservations,false);
  assert.equal(anatomy.digitBranching.sourceActuallyContainsFiveHumanFingersProven,false);
