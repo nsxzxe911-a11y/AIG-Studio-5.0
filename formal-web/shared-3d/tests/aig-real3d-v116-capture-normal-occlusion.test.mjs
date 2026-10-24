@@ -79,8 +79,8 @@ test('V116 local non-landmark depth change blocks true measured normal or geomet
  arr[14*32+14]=1050;a.views[1]={...a.views[1],depthValuesMM:arr};
  const r=auditAIGReal3DV116CaptureNormalAndOcclusion(a);
  assert.equal(r.researchGate,'BLOCK');
- assert.equal(r.normalAndSurfaceGate,'BLOCK_SOURCE_NORMAL_OR_SPATIAL_DISCONTINUITY');
- assert.ok(r.matchedWorldPositionMaxMM>=50);
+ assert.equal(r.normalAndSurfaceGate,'BLOCK_UNREVIEWED_DEPTH_OCCLUSION_CANDIDATES');
+ assert.ok(r.unreviewedDepthDiscontinuityCandidates>0);
  assert.ok(r.directions.some(d=>d.candidateDiscontinuityOrOcclusionCount>0));
 });
 test('V116 loss of independent opposite depth becomes BLOCK rather than unknown surface completion',async()=>{
