@@ -944,6 +944,106 @@ try{
  assert.equal(sideReportJSON.realSixSidedBoxSourceGatePASS,true);
  await writeFile(dir+'/NONHUMAN-V84-SIX-TRUE-BOX-SIDES-AND-NATIVE-GPU.json',
   JSON.stringify({sixReport,onlyTopAndBottomSourceRejected:capAudit},null,2));
+ // V85: genuine original curved NONHUMAN ellipsoid source; six depth maps
+ // and six real 512x512 GPU views must describe its existing XYZ surfaces,
+ // never inferred geometry. Only two caps are deliberately open/unobserved.
+ const curved=(()=>{
+  const rings=32,segments=72,v=[0,.9,0],faces=[];
+  const index=(j,k)=>1+(j-1)*segments+(k+segments)%segments;
+  for(let j=1;j<rings;j++){
+   const phi=Math.PI*j/rings;
+   for(let k=0;k<segments;k++){
+    const theta=2*Math.PI*k/segments;
+    v.push(.45*Math.sin(phi)*Math.cos(theta),
+     .9*Math.cos(phi),.28*Math.sin(phi)*Math.sin(theta));
+   }
+  }
+  const bottom=v.length/3;v.push(0,-.9,0);
+  for(let k=0;k<segments;k++)faces.push(0,index(1,k+1),index(1,k));
+  const topBottomFaces=faces.slice();
+  for(let j=1;j<rings-1;j++)for(let k=0;k<segments;k++){
+   const a=index(j,k),b=index(j,k+1),c=index(j+1,k),d=index(j+1,k+1);
+   faces.push(a,b,d,a,d,c);
+  }
+  for(let k=0;k<segments;k++)faces.push(index(rings-1,k),index(rings-1,k+1),bottom);
+  const caps=[...topBottomFaces,...faces.slice(-segments*3)];
+  const lines=[];
+  for(let i=0;i<v.length;i+=3)lines.push('v '+v.slice(i,i+3).join(' '));
+  for(let i=0;i<faces.length;i+=3)lines.push(
+   'f '+(faces[i]+1)+' '+(faces[i+1]+1)+' '+(faces[i+2]+1));
+  return {bytes:Buffer.from(lines.join('\n'),'utf8'),
+   positions:v,indices:faces,caps,
+   sourceVertices:v.length/3,sourceTriangles:faces.length/3};
+ })();
+ assert.ok(curved.sourceTriangles>2000);
+ const curvedMissing=await page.evaluate(async input=>{
+  const {auditAIGReal3DCurvedSixDirections}=await import(
+   './aig-real3d-curved-six-direction-depth.mjs');
+  return auditAIGReal3DCurvedSixDirections({
+   positions:new Float32Array(input.positions),
+   indices:new Uint32Array(input.caps),
+   sourceSha256:'e'.repeat(64),gridSize:16
+  });
+ },{positions:curved.positions,caps:curved.caps});
+ assert.equal(curvedMissing.realClosedCurvedSourceSurfaceGatePASS,false);
+ assert.ok(curvedMissing.originalSourceTopology.openEdges>0);
+ assert.equal(curvedMissing.inferredUnobservedSurfaceCount,0);
+ const curvedSHA=createHash('sha256').update(curved.bytes).digest('hex');
+ await page.locator('#model-file').setInputFiles({
+  name:'V85-NONHUMAN-REAL-CURVED-ELLIPSOID.obj',
+  mimeType:'text/plain',buffer:curved.bytes
+ });
+ await page.locator('#body-height').fill('1680');
+ await page.locator('#up-axis').selectOption('Y');
+ await page.locator('#dense-source-run').click();
+ await page.waitForFunction(()=>{
+  const txt=document.querySelector('#dense-source-status')?.textContent||'';
+  return document.querySelector('#dense-source-run')?.disabled===false&&
+   (txt.startsWith('高密度來源')||txt.startsWith('BLOCK'));
+ },null,{timeout:210000});
+ assert.match(await page.locator('#dense-source-status').textContent(),
+  /高密度來源原生 GPU PASS/);
+ assert.equal(await page.locator('#curved-six-run').isDisabled(),false);
+ await page.locator('#curved-six-run').click();
+ await page.waitForFunction(()=>{
+  const txt=document.querySelector('#curved-six-status')?.textContent||'';
+  return document.querySelector('#curved-six-run')?.disabled===false&&
+   (txt.includes('技術 PASS')||txt.startsWith('BLOCK'));
+ },null,{timeout:210000});
+ const curvedStatus=await page.locator('#curved-six-status').textContent();
+ assert.match(curvedStatus,/原始曲面六向幾何＋真 GPU 技術 PASS/,curvedStatus);
+ const curvedReport=JSON.parse(await page.locator('#curved-six-evidence').textContent());
+ assert.equal(curvedReport.schema,'AIG_REAL3D_V85_SIX_DIRECTION_CURVED_ORIGINAL_SOURCE_DEPTH_V1');
+ assert.equal(curvedReport.sourceSha256,curvedSHA);
+ assert.equal(curvedReport.originalTriangleCount,curved.sourceTriangles);
+ assert.equal(curvedReport.realClosedCurvedSourceSurfaceGatePASS,true);
+ assert.equal(curvedReport.originalSourceTopology.openEdges,0);
+ assert.equal(curvedReport.sixDirectionsHaveOriginalSourceSurfaceGeometry,true);
+ assert.equal(curvedReport.sixDirectionalGeometryProjections.length,6);
+ assert.ok(curvedReport.sixDirectionalGeometryProjections.every(v=>
+  v.originalGeometryCoveredPixels>0&&
+  v.pixelsWithDistinctNearFarDepth>0&&
+  v.scannerEvidenceStatus==='UNKNOWN_NO_VIEW_SCAN_PROVENANCE'));
+ assert.equal(curvedReport.inferredUnobservedSurfaceCount,0);
+ assert.equal(curvedReport.hasAuthenticatedSixScanDirectionObservations,false);
+ assert.equal(curvedReport.nativeSixGPUReadbackPASS,true);
+ assert.equal(curvedReport.nativeOriginalGPUSixViews.length,6);
+ assert.ok(curvedReport.nativeOriginalGPUSixViews.every(v=>
+  v.width===512&&v.height===512&&v.sourceSha256===curvedSHA&&
+  v.originalMeshReadback===true));
+ assert.equal(await page.locator('#curved-six-gallery figure img').count(),6);
+ const firstCurve=page.waitForEvent('download',{timeout:30000});
+ await page.locator('#curved-six-gallery figure').first().locator('a').click();
+ const curvedPNG=await firstCurve;
+ const curvedPNGBytes=await readFile(await curvedPNG.path());
+ assert.equal(curvedPNGBytes.readUInt32BE(16),512);
+ assert.equal(curvedPNGBytes.readUInt32BE(20),512);
+ assert.equal(createHash('sha256').update(curvedPNGBytes).digest('hex'),
+  curvedReport.nativeOriginalGPUSixViews[0].sha256);
+ await copyFile(await curvedPNG.path(),
+  dir+'/NONHUMAN-V85-CURVED-SOURCE-REAL-FRONT-GPU.png');
+ await writeFile(dir+'/NONHUMAN-V85-CURVED-SIX-DEPTH-OCCLUSION-NO-INFERRED-SIDES.json',
+  JSON.stringify({curvedReport,missingObservedSidesBLOCK:curvedMissing},null,2));
  assert.deepEqual(errors,[]);
  await page.screenshot({path:dir+'/DENSE-SOURCE-ORIGINAL-GPU-INTAKE.png',fullPage:true});
  await writeFile(dir+'/proof.json',JSON.stringify({
@@ -954,7 +1054,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_V84_SIX_NATIVE_SOURCE_SIDES_MISSING_FOUR_WALLS_BLOCK_GPU_PASS_NONHUMAN');
+ console.log('REAL3D_V85_SIX_CURVED_SOURCE_DEPTH_OCCLUSION_UNOBSERVED_REMAINS_UNKNOWN_GPU_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;

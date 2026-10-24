@@ -38,6 +38,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-persistent-vpu.mjs'
       - 'formal-web/shared-3d/aig-real3d-staged-orchestrator.mjs'
       - 'formal-web/shared-3d/aig-real3d-six-sided-source-solid.mjs'
+      - 'formal-web/shared-3d/aig-real3d-curved-six-direction-depth.mjs'
+      - 'formal-web/shared-3d/aig-real3d-curved-six-direction-ui.mjs'
       - 'formal-web/shared-3d/aig-real3d-six-sided-source-ui.mjs'
       - 'formal-web/shared-3d/aig-sixdof-geoglobe-*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-dense-source*.mjs'
@@ -58,6 +60,7 @@ on:
       - 'formal-web/shared-3d/tests/aig-real3d-persistent-vpu.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-staged-orchestrator.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-six-sided-source-solid.test.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-curved-six-direction-depth.test.mjs'
       - 'formal-web/shared-3d/tests/aig-sixdof-geoglobe-space.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-fast-sparse-fk.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs'
@@ -216,6 +219,9 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-six-sided-source-solid.mjs
           node --check formal-web/shared-3d/aig-real3d-six-sided-source-ui.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-six-sided-source-solid.test.mjs
+          node --check formal-web/shared-3d/aig-real3d-curved-six-direction-depth.mjs
+          node --check formal-web/shared-3d/aig-real3d-curved-six-direction-ui.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-curved-six-direction-depth.test.mjs
           node --test formal-web/shared-3d/tests/aig-sixdof-geoglobe-space.test.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-dense-source.real-browser.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs
