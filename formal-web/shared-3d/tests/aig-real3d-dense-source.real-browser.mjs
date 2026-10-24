@@ -369,6 +369,29 @@ try{
  assert.equal(await page.locator('#three-joint-pool-run').isDisabled(),false);
  assert.equal(await page.locator('#three-joint-vpu-run').isDisabled(),false);
  assert.equal(await page.locator('#three-joint-v82-run').isDisabled(),false);
+ assert.equal(await page.locator('#three-joint-v83-run').isDisabled(),false);
+ await page.locator('#three-joint-v83-run').click();
+ await page.waitForFunction(()=>document.querySelector('#three-joint-evidence')
+  ?.textContent.includes('"multimoduleV83Orchestration"'),null,{timeout:120000});
+ const v83Report=JSON.parse(await page.locator('#three-joint-evidence').textContent());
+ const v83=v83Report.multimoduleV83Orchestration;
+ assert.equal(v83.schema,'AIG_REAL3D_V83_SOURCE_MULTIMODULE_ORCHESTRATOR_V1');
+ assert.equal(v83.sourceSha256,inputSha);
+ assert.deepEqual(v83.stageOrder,[
+  'ORIGINAL_INDEXED_GEOMETRY','SOURCE_FK_POSE',
+  'SAMPLED_CONTACT_AND_SWEPT_RISK','GENUINE_GPU_FRAMES']);
+ assert.equal(v83.stages[0].originalSourceTriangles,triangles);
+ assert.equal(v83.gpuDraws.length,3);
+ assert.ok(v83.gpuDraws.every(f=>f.originalSourceTrianglesRendered===triangles));
+ assert.ok(v83.gpuDraws.slice(1).every(f=>f.frameReusedOriginalGPUBuffers===true));
+ assert.ok(v83.workerResults.every(x=>x.sourceFKStrainParity===true));
+ assert.equal(v83.stages[2].continuousTimeCollisionFreeGuaranteed,false);
+ assert.equal(v83.originalSourceXYZAndFaceIndicesUnmodified,true);
+ assert.equal(v83.overallReleasePASS,false);
+ assert.equal(v83.realDeviceStableFPSAndThermalPASS,false);
+ await writeFile(dir+'/NONHUMAN-V83-ACTUAL-DENSE-GEOMETRY-FK-CONTACT-WEBGL-ORCHESTRATION.json',
+  JSON.stringify(v83,null,2));
+
  assert.equal(triple.adaptiveRealSourceGPUFrameBudget.schema,
   'AIG_REAL3D_SOURCE_POSE_ADAPTIVE_RAF_BUDGET_V1');
  assert.equal(triple.adaptiveRealSourceGPUFrameBudget.requestedMode,'AUTO');
@@ -817,7 +840,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_V82_PERSISTENT_WORKER_POOL_SOURCE_SHA_PARITY_GPU_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_V83_REAL_SOURCE_MULTIMODULE_WORKER_AND_GPU_STAGE_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;
