@@ -13,7 +13,7 @@ const delta=(p,q)=>[p[0]-q[0],p[1]-q[1],p[2]-q[2]];
 const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
 const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
 const len=p=>Math.hypot(...p);
-const round=x=>Math.round(x*1000)/1000;
+const round=x=>{const v=Math.round(x*1000)/1000;return Object.is(v,-0)?0:v;};
 const edge=(a,b,v)=>len(delta(pos(v,a),pos(v,b)));
 function segmentTriangle(a,b,p,q,r){
  const d=delta(b,a),u=delta(q,p),v=delta(r,p),h=cross(d,v);
