@@ -50,12 +50,14 @@ const vs=[
  'attribute vec3 aPosition,aNormal;',
  'attribute vec2 aTexUV;',
  'attribute vec4 aTangent;',
- 'uniform mat4 uModel,uVP;',
+ 'uniform mat4 uModel,uVP,uV107OriginalModel;',
  'uniform mat3 uNormal;',
  'varying vec3 vNormal,vWorld;',
+ 'varying float vV107OriginalHeight;',
  'varying vec2 vUV;',
  'varying vec3 vTangent,vBiTangent;',
  'void main(){vec4 world=uModel*vec4(aPosition,1.0);vWorld=world.xyz;',
+ 'vV107OriginalHeight=(uV107OriginalModel*vec4(aPosition,1.0)).y;',
  'vNormal=normalize(uNormal*aNormal);',
  'vec3 tn=normalize(uNormal*aTangent.xyz);',
  'vTangent=tn;vBiTangent=normalize(cross(vNormal,tn))*aTangent.w;',
@@ -68,6 +70,8 @@ const fs=[
  'precision mediump float;',
  '#endif',
  'varying vec3 vNormal,vWorld;',
+ 'varying float vV107OriginalHeight;',
+ 'uniform float uV107FootHeadClipEnabled,uV107FootHeadMaxY;',
  'uniform vec4 uColor;',
  'uniform vec3 uEye,uEmission;',
  'uniform float uMetallic,uRoughness,uInspectMode,uColorPipeline,uUsePBR;',
@@ -93,7 +97,9 @@ const fs=[
  'return ndv/max(0.0001,ndv*(1.0-k)+k);}',
  'vec3 fresnel5(float hdotv,vec3 f0){return f0+(1.0-f0)*pow(1.0-hdotv,5.0);}',
  'vec3 srgbLinear(vec3 srgb){return pow(max(srgb,vec3(0.0)),vec3(2.2));}',
- 'void main(){vec3 n=normalize(vNormal),l=normalize(vec3(0.42,0.79,0.55));',
+ 'void main(){if(uV107FootHeadClipEnabled>0.5 &&',
+ 'vV107OriginalHeight>uV107FootHeadMaxY+0.00000001)discard;',
+ 'vec3 n=normalize(vNormal),l=normalize(vec3(0.42,0.79,0.55));',
  'if(uHasNormalMap>0.5&&uInspectMode<0.5){',
  'vec3 mapped=texture2D(uNormalMap,vUV).rgb*2.0-1.0;',
  'mapped.xy*=uNormalMapStrength;',
@@ -211,6 +217,9 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   texUV:gl.getAttribLocation(meshProg,'aTexUV'),
   tangent:gl.getAttribLocation(meshProg,'aTangent'),
   model:gl.getUniformLocation(meshProg,'uModel'),vp:gl.getUniformLocation(meshProg,'uVP'),
+  v107OriginalModel:gl.getUniformLocation(meshProg,'uV107OriginalModel'),
+  v107ClipEnabled:gl.getUniformLocation(meshProg,'uV107FootHeadClipEnabled'),
+  v107ClipMaxY:gl.getUniformLocation(meshProg,'uV107FootHeadMaxY'),
   normalMatrix:gl.getUniformLocation(meshProg,'uNormal'),
   color:gl.getUniformLocation(meshProg,'uColor'),
   eye:gl.getUniformLocation(meshProg,'uEye'),
@@ -247,6 +256,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  const INSPECTION_MODES=['LIT','SILHOUETTE','NORMALS','ALBEDO',
   'BLACK_CONTOUR','BROWN_FLAT','BROWN_VOLUME','BROWN_FINISH'];
  let inspectionMode='LIT',colorPipelineMode='LEGACY';
+ let v107VirtualStage=null;
  let currentQuality=quality,lastFrameBudget=null;
  let edgeProg=null,edgeUniforms=null,edgeQuad=null;
  let maskFbo=null,maskTexture=null,maskDepth=null,maskSize=[0,0];
@@ -441,7 +451,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    orthographic(camera.orthoSpan,canvas.width/Math.max(1,canvas.height),camera.near,camera.far);
   return {eye,vp:multiply(projection,lookAt(eye,f,[0,1,0]))};
  }
- function meshDraw(node,model,vp,eye,forcedInspection=null){
+ function meshDraw(node,model,vp,eye,forcedInspection=null,originalModel=model){
   const mesh=bufferMesh(node.mesh),mat=node.material;
   gl.useProgram(meshProg);
   gl.bindBuffer(gl.ARRAY_BUFFER,mesh.pos);
@@ -461,6 +471,9 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   }
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,mesh.indices);
   gl.uniformMatrix4fv(u.model,false,new Float32Array(model));
+  gl.uniformMatrix4fv(u.v107OriginalModel,false,new Float32Array(originalModel));
+  gl.uniform1f(u.v107ClipEnabled,v107VirtualStage?.clipEnabled?1:0);
+  gl.uniform1f(u.v107ClipMaxY,v107VirtualStage?.sourceMaxY??0);
   gl.uniformMatrix4fv(u.vp,false,vp);
   gl.uniformMatrix3fv(u.normalMatrix,false,normalMatrix(model));
   gl.uniform4fv(u.color,new Float32Array(mat.baseColor));
@@ -542,6 +555,30 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   }
   return {rapid:rapid.length/6,feed:feed.length/6};
  }
+ function setVirtualStageV107(config=null){
+  if(config===null){v107VirtualStage=null;return {enabled:false};}
+  const {matrix,sourceScene,sourceMaxY,sourceGLBSha256,clipEnabled=true}=config;
+  if(!Array.isArray(matrix)||matrix.length!==16||!matrix.every(finite)||
+   sourceScene?.schema!=='AIG_REAL3D_SCENE_V1'||
+   !Array.isArray(sourceScene.nodes)||!sourceScene.nodes.length||
+   !finite(sourceMaxY)||typeof sourceGLBSha256!=='string'||
+   !/^[0-9a-f]{64}$/i.test(sourceGLBSha256))
+   throw Error('AIG3D_V107_REAL_SOURCE_GPU_STAGE_INVALID');
+  v107VirtualStage={matrix:[...matrix],sourceScene,sourceMaxY,
+   sourceGLBSha256,clipEnabled:clipEnabled===true};
+  return {enabled:true,sourceGLBSha256,clipEnabled:v107VirtualStage.clipEnabled};
+ }
+ function getVirtualStageV107(){return v107VirtualStage?{...v107VirtualStage,
+  matrix:[...v107VirtualStage.matrix]}:null;}
+ function modelWorldV107(scene,node){
+  const srcWorld=getAIG3DWorldMatrix(scene,node.id);
+  if(!v107VirtualStage)return {model:srcWorld,sourceModel:srcWorld};
+  const origin=v107VirtualStage.sourceScene.nodes.find(n=>n.id===node.id);
+  if(!origin||origin.mesh!==node.mesh)
+   throw Error('AIG3D_V107_SOURCE_NODE_OR_MESH_SHA_MISMATCH');
+  return {model:multiply(v107VirtualStage.matrix,srcWorld),
+   sourceModel:getAIG3DWorldMatrix(v107VirtualStage.sourceScene,node.id)};
+ }
  function render(scene,exactOutput=null){
   if(dead)throw Error('AIG3D_RENDERER_DESTROYED');
   if(lost)return {status:'WEBGL_CONTEXT_LOST'};
@@ -571,7 +608,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
    for(const node of scene.nodes)if(node.visible){
     // White mask uses original indexed XYZ triangles in the very same GPU.
-    meshDraw(node,getAIG3DWorldMatrix(scene,node.id),vp,eye,1);
+    meshDraw(node,modelWorldV107(scene,node).model,vp,eye,1,modelWorldV107(scene,node).sourceModel);
    }
    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
    gl.viewport(0,0,canvas.width,canvas.height);
@@ -583,7 +620,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    if(triangles+node.mesh.triangleCount>maxTriangles)
     throw Error('AIG3D_GPU_TRIANGLE_BUDGET_BLOCKED');
    if(inspectionMode!=='BLACK_CONTOUR')
-    meshDraw(node,getAIG3DWorldMatrix(scene,node.id),vp,eye);
+    meshDraw(node,modelWorldV107(scene,node).model,vp,eye,null,modelWorldV107(scene,node).sourceModel);
    triangles+=node.mesh.triangleCount;nodes++;
   }
   if(brown)compositeBlackOuterOutline(canvas.width,canvas.height);
@@ -591,6 +628,9 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    const x=renderPaths(overlay.segments,vp);rapid+=x.rapid;feed+=x.feed;
   }
   last={status:'WEBGL_XYZ_TRIANGLES_RENDERED',webglVersion:webgl2?2:1,
+   V107FiveAxisSourcePoseActive:Boolean(v107VirtualStage),
+   V107OriginalFootHeadGPUSliceEnabled:Boolean(v107VirtualStage?.clipEnabled),
+   V107ClipSourceOriginalWorldY:v107VirtualStage?.sourceMaxY??null,
    triangles,nodes,rapid,feed,cameraProjection:camera.projection,
    inspectionMode,colorPipelineMode,
    postProcessFilmSDRActuallyEnabled:colorPipelineMode!=='LEGACY',
@@ -813,6 +853,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  return {status:'READY',contextVersion:webgl2?2:1,render,destroy,
   setCamera,getCamera,setInspectionMode,getInspectionMode,
   setColorPipeline,getColorPipeline,
+  setVirtualStageV107,getVirtualStageV107,
   setQuality,getQuality,releaseMesh,updateMeshVertices,measureCompletedFrame,captureNativePNG,getGPUResourceAccounting,
   getGpuLimit:()=>lost||dead?0:Math.min(
    gl.getParameter(gl.MAX_TEXTURE_SIZE),gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)),
