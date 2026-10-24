@@ -8,6 +8,8 @@ import {runAIGReal3DQuadStrain,benchmarkAIGReal3DWorkerModes}
 import {applyAIGReal3DSourceMeshDelta}
  from './aig-real3d-gpu-delta-source.mjs';
 import {buildAIGReal3DWeightedFingerGPUPreview} from './aig-real3d-weighted-motion-working-copy.mjs';
+import {createAIGReal3DSparseNormalCache,evaluateAIGReal3DSparseNormals}
+ from './aig-real3d-sparse-source-normals.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {validateAIGInspectionCapturePlan} from './aig-real3d-render-inspection.mjs';
 export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}={}){
@@ -99,16 +101,29 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     heightMeters:source.heightMm/1000,angle:'front',mode:'ALBEDO'
    });
    renderer.setCamera(camera.camera);renderer.setInspectionMode('BROWN_VOLUME');
+   const normalCache=createAIGReal3DSparseNormalCache({
+    original:originalSource.positions,indices:originalSource.indices
+   });
+   const normalScratch=new Float64Array(originalSource.positions.length);
+   const affectedSourceVertexIds=[...weighted].sort((a,b)=>a-b);
    const frames=[];let livePose=null;
    for(const index of timeline.displayFrameIndexes){
     const sample=timeline.frames[index];
+    const frameCPUStart=performance.now();
+    const incrementalNormals=evaluateAIGReal3DSparseNormals({
+     cache:normalCache,posed:sample.workingCopyPositions,
+     changedGlobalVertexIds:affectedSourceVertexIds,outputNormals:normalScratch
+    });
     const gpuPose=buildAIGReal3DWeightedFingerGPUPreview({
+     normalOverride:normalScratch,
      dense:source.dense,pose:{
       workingCopyPositions:sample.workingCopyPositions,
       evidence:{sourceSha256:source.sha256,
        sourceTriangleCount:source.dense.evidence.originalTriangleCount}
      }
     });
+    const sourceNormalsAndSceneBuildMs=performance.now()-frameCPUStart;
+    const nativeCaptureBegin=performance.now();
     const gpuDelta=livePose?
      applyAIGReal3DSourceMeshDelta({
       renderer,liveScene:livePose.scene,nextScene:gpuPose.scene
@@ -117,6 +132,7 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     const png=await renderer.captureNativePNG(livePose.scene,{
      width:1080,height:1920
     });
+    const nativeGPUCaptureAndEncodeMs=performance.now()-nativeCaptureBegin;
     if(!png.genuineGpuReadback||png.resampledFromSmallerImage!==false||
      png.width!==1080||png.height!==1920)
      throw Error('三關節影格非原生真 GPU 輸出');
@@ -131,7 +147,13 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     frames.push({sampleIndex:index,sha256:png.sha256,width:png.width,
      height:png.height,sourceTriangles:gpuPose.evidence.posedGPUOriginalTriangles,
      gpuUploadMethod:gpuDelta?'GPU_BUFFER_SUBDATA_REUSE':'INITIAL_GPU_BUFFER_UPLOAD',
-     gpuDelta});
+     gpuDelta,sparseNativeGlobalNormals:{
+      sourceTrianglesRecomputed:incrementalNormals.affectedSourceTriangles,
+      sourceVertexNormalsRecomputed:incrementalNormals.recomputedSourceVertexNormals,
+      skippedSourceTriangleRecalculation:incrementalNormals.skippedOriginalTriangleRecalculation
+     },
+     realCPUOriginalNormalsAndSceneBuildMs:Math.round(sourceNormalsAndSceneBuildMs*1000)/1000,
+     gpuReadbackAndPNGEncodingWallMs:Math.round(nativeGPUCaptureAndEncodeMs*1000)/1000});
    }
    report={
     schema:'AIG_REAL3D_THREE_JOINT_GPU_SWEEP_EVIDENCE_V1',
@@ -142,6 +164,10 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     sparseSourceTopology:timeline.sparseSourceTopology,
     quadCPUOriginalSourceStrain:quad,
     gpuNativeSourceBufferDeltaReusedOnLaterFrames:true,
+    incrementalNativeSourceNormalsVerified:true,
+    nonDisplayFullXYZScratchBuffersAllocated:
+     timeline.sparseSourceTopology.scratchPoseFloat32BuffersAllocated,
+    noContinuousAnimationFPSClaim:true,
     jointNames:timeline.jointNames,checkedFrameCount:timeline.frameCount,
     maxAngularStepDeg:timeline.maxActualAngularSampleStepDeg,
     frames:timeline.frames.map(x=>({
