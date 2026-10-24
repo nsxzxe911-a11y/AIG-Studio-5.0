@@ -106,11 +106,12 @@ export function createAIGReal3DSport3DReplay({trajectory,id='sportsBall'}={}){
    calibratedSportsMovieCertified:false,releasePASS:false})};
 }
 export async function recordAIGReal3DSportFilmWebM({
- replay,renderer,canvas,requestFrame=typeof requestAnimationFrame==='function'?
+ replay,renderer,canvas,beforeRenderFrame=null,requestFrame=typeof requestAnimationFrame==='function'?
   requestAnimationFrame:null
 }={}){
  if(replay?.schema!==AIG_REAL3D_V91_REPLAY_SCHEMA||
-  typeof renderer?.render!=='function'||!canvas||
+  typeof renderer?.render!=='function'||
+  (beforeRenderFrame!==null&&typeof beforeRenderFrame!=='function')||!canvas||
   typeof canvas.captureStream!=='function'||
   typeof MediaRecorder!=='function'||typeof MediaRecorder.isTypeSupported!=='function'||
   typeof requestFrame!=='function')
@@ -143,6 +144,7 @@ export async function recordAIGReal3DSportFilmWebM({
    // Skip superseded render frames rather than pretending 60 FPS was achieved.
    const frame=Math.min(maxFrames-1,Math.floor(elapsed*targetRate+1e-8));
    if(frame<=lastRendered)continue;
+   if(beforeRenderFrame)beforeRenderFrame(replay.frameAt(frame));
    replay.renderFrame(renderer,frame);
    video.requestFrame();
    completed++;lastRendered=frame;
