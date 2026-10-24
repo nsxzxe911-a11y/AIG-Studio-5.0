@@ -128,9 +128,46 @@ pre{font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anyw
 
 </div>
 </div>
+</section>
+<section id="v107-panel" aria-label="第三專案 FastModel V107 五軸逐層繪圖引擎">
+<h2>V107｜第三專案・五軸 XYZ＋A 搖籃＋B 轉盤｜腳→頭逐層繪製</h2>
+<p>上方 XYZ 調整虛擬觀察位移；下方 A 上下翻轉，B 裝在 A 上沿局部轉軸 360° 旋轉。所有動作直接作用於唯一真 GLB 的 GPU 變換矩陣。依原始身高高度由底往上顯示，並非程序性生成人體或 CNC 實機控制。</p>
+<div class="grid">
+<div>
+<div class="row">
+<label>X mm <input type="number" id="v107-x" value="0" min="-500" max="500" step="1"></label>
+<label>Y mm <input type="number" id="v107-y" value="0" min="-500" max="500" step="1"></label>
+<label>Z mm <input type="number" id="v107-z" value="0" min="-500" max="500" step="1"></label>
+</div>
+<div class="row">
+<label>A 上下翻轉 <input type="range" id="v107-a" value="0" min="-180" max="180" step="1"></label>
+<output id="v107-a-val">0°</output>
+</div>
+<div class="row">
+<label>B（A 子軸）水平旋轉 <input type="range" id="v107-b" value="0" min="0" max="360" step="1"></label>
+<output id="v107-b-val">0°</output>
+</div>
+<div class="row">
+<label>由腳到頭 <input type="range" id="v107-progress" value="100" min="0" max="100" step="1"></label>
+<output id="v107-progress-val">100%</output>
+</div>
+<div class="row">
+<button id="v107-start" disabled>從腳開始逐層播放</button>
+<button id="v107-step" disabled>向頭頂繪製一層</button>
+<button id="v107-pause" disabled>暫停</button>
+<button id="v107-resume" disabled>繼續</button>
+<button id="v107-full" disabled>完整顯示／重設</button>
+</div>
+<p id="v107-stage-status" role="status">尚未載入真 3D GLB。此模式是第三專案虛擬五軸繪圖，不向 Fanuc 或 CNC 發命令。</p>
+</div>
+<div>
+<pre id="v107-stage-report">待驗證 A→B 子軸、原始模型高度、每階段 GPU 來源幾何。</pre>
+</div>
+</div>
 </section></main>
 <script type="module" src="./aig-real3d-v99-native-source-lab.mjs"></script>
 <script type="module" src="./aig-real3d-v104-cad-top-ui.mjs"></script>
 <script type="module" src="./aig-real3d-v105-cad-registration-ui.mjs"></script>
 <script type="module" src="./aig-real3d-v106-photo-cad-ui.mjs"></script>
+<script type="module" src="./aig-real3d-v107-five-axis-ui.mjs"></script>
 </body></html>
