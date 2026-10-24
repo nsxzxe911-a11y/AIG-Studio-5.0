@@ -290,11 +290,19 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   let m=cache.get(mesh);if(m)return m;
   const n=mesh.positions.length/3;
   if(n>65535&&!uintExt)throw Error('AIG3D_UINT_INDEX_EXTENSION_REQUIRED');
-  const idx=n>65535?new Uint32Array(mesh.indices):new Uint16Array(mesh.indices);
-  m={pos:createBuffer(gl.ARRAY_BUFFER,new Float32Array(mesh.positions)),
-   norm:createBuffer(gl.ARRAY_BUFFER,new Float32Array(mesh.normals)),
-   indices:createBuffer(gl.ELEMENT_ARRAY_BUFFER,idx),
-   count:idx.length,type:n>65535?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT};
+  if(mesh.originalSourceGeometryMesh){
+   const base=mesh.originalSourceGeometryMesh;
+   if(base.positions!==mesh.positions||base.normals!==mesh.normals||
+    base.indices!==mesh.indices||base.vertexCount!==mesh.vertexCount)
+    throw Error('AIG3D_TEXTURE_SOURCE_GEOMETRY_MISMATCH');
+   m={...bufferMesh(base),sharesOriginalGeometry:true};
+  }else{
+   const idx=n>65535?new Uint32Array(mesh.indices):new Uint16Array(mesh.indices);
+   m={pos:createBuffer(gl.ARRAY_BUFFER,new Float32Array(mesh.positions)),
+    norm:createBuffer(gl.ARRAY_BUFFER,new Float32Array(mesh.normals)),
+    indices:createBuffer(gl.ELEMENT_ARRAY_BUFFER,idx),
+    count:idx.length,type:n>65535?gl.UNSIGNED_INT:gl.UNSIGNED_SHORT};
+  }
   if(mesh.uvs||mesh.tangents){
    if(!Array.isArray(mesh.uvs)||mesh.uvs.length!==n*2||
     !Array.isArray(mesh.tangents)||mesh.tangents.length!==n*4||
