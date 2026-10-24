@@ -3,6 +3,8 @@ import {auditAIGReal3DDenseAnatomy,reviewAIGReal3DDenseFourView}
  from './aig-real3d-dense-anatomy-review.mjs';
 import {auditAIGReal3DDenseFiveDigitBranches}
  from './aig-real3d-dense-digit-branch-gate.mjs';
+import {auditAIGReal3DFingerJointSurface}
+ from './aig-real3d-native-finger-junction-gate.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {validateAIGInspectionCapturePlan}
  from './aig-real3d-render-inspection.mjs';
@@ -58,6 +60,11 @@ export function mountAIGReal3DDenseAnatomyControls({
     sourceEvidence:source.dense.evidence,
     sourceSha256:source.sha256,anatomy,landmarks
    });
+   const fingerJunction=auditAIGReal3DFingerJointSurface({
+    sourceGeometry:source.dense.sourceGeometry,
+    sourceEvidence:source.dense.evidence,
+    sourceSha256:source.sha256,anatomy,digitBranching,landmarks
+   });
    const heading=['原始 3D 區域','來源三角面','開放邊','非流形邊',
     '最大邊 P95 mm','三維 XYZ 延展 mm','來源診斷'];
    const tab=document.createElement('table'),head=document.createElement('tr');
@@ -103,6 +110,33 @@ export function mountAIGReal3DDenseAnatomyControls({
     branchTable.append(tr);
    }
    table.append(branchTable);
+   const jointsHeader=document.createElement('h3');
+   jointsHeader.textContent='原始手指根部／中段表面：接縫、面片折角與標記彎曲';
+   table.append(jointsHeader);
+   const jointTable=document.createElement('table'),
+    jointHead=document.createElement('tr');
+   for(const name of ['手指','標記彎曲 °','根部真開放邊',
+    '中段真開放邊','中段法線折角 P95 °','資料狀態']){
+    const th=document.createElement('th');th.textContent=name;
+    jointHead.append(th);
+   }
+   jointTable.append(jointHead);
+   for(const finger of fingerJunction.fingers){
+    const row=document.createElement('tr');
+    for(const item of [
+     finger.side+' '+finger.finger,
+     finger.declaredMarkerBendDegrees??'未標記',
+     finger.palmRootRegion?.sourceOpenEdges??'未量測',
+     finger.middleJointRegion?.sourceOpenEdges??'未量測',
+     finger.middleJointRegion?.unsignedAdjacentFaceNormalDeltaP95Degrees??'未量測',
+     finger.warningCodes.join('、')||'技術量測完成；非真人認證'
+    ]){
+     const cell=document.createElement('td');cell.textContent=String(item);
+     row.append(cell);
+    }
+    jointTable.append(row);
+   }
+   table.append(jointTable);
    gpu=createAIG3DRenderer($('native-webgl'),{
     quality:'balanced',pixelRatio:1,maxTriangles:700000,
     background:[.769,.745,.702,1]
@@ -164,7 +198,8 @@ export function mountAIGReal3DDenseAnatomyControls({
     sourceSha256:source.sha256,
     sourceOriginalTriangles:source.dense.evidence.originalTriangleCount,
     sourceGpuRenderedTriangles:source.dense.evidence.renderedTriangleCount,
-    anatomy,digitBranching,fourView,verifiedTrueHumanSource:false,
+    anatomy,digitBranching,fingerJunction,fourView,
+    verifiedTrueHumanSource:false,
     naturalHumanAppearancePASS:false,releasePASS:false
    };
    evidence.textContent=JSON.stringify(report,null,2);
@@ -176,7 +211,8 @@ export function mountAIGReal3DDenseAnatomyControls({
     ' 視角；五指立體分叉技術線索：'+
     (digitBranching.bothFiveDistalBranchTechnicalObservations?
      '兩側可量測':'尚未兩側確認')+
-    '。真人來源與自然外觀維持 BLOCK。';
+    '；手指根部／關節待複核：'+fingerJunction.fingersWithTechnicalWarnings+
+    '/10。真人來源、靜態網格無法證明的真關節動態與自然外觀維持 BLOCK。';
   }catch(error){
    report=null;download.disabled=true;
    evidence.textContent='BLOCK：'+String(error?.message||error);
