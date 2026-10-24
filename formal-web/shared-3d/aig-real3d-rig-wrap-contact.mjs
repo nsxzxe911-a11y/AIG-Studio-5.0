@@ -163,7 +163,7 @@ export function createAIGReal3DRigWrap({sourceScene,manifest,sourceSha256,
    originalFaceCountsPreserved:true,sourceGeometryUntouched:true};
  }
  let currentPose=null,rendered=0,subdata=0;
- function updateGPU(renderer,timeSec,{showNodes=null}={}){
+ function updateGPU(renderer,timeSec,{showNodes=null,deferCompositeRender=false}={}){
   if(typeof renderer?.render!=='function'||typeof renderer?.updateMeshVertices!=='function')
    err('REAL_GPU_SOURCE_RENDERER_REQUIRED');
   const state=pose(timeSec);
@@ -199,11 +199,11 @@ export function createAIGReal3DRigWrap({sourceScene,manifest,sourceSha256,
    const visible=new Set(showNodes);
    for(const node of workingScene.nodes)node.visible=visible.has(node.id);
   }else for(const node of workingScene.nodes)node.visible=true;
-  const r=renderer.render(workingScene);
-  if(r?.status!=='WEBGL_XYZ_TRIANGLES_RENDERED')err('REAL_SOURCE_GPU_FRAME_MISSING');
+  const r=deferCompositeRender?null:renderer.render(workingScene);
+  if(r&&r.status!=='WEBGL_XYZ_TRIANGLES_RENDERED')err('REAL_SOURCE_GPU_FRAME_MISSING');
   rendered++;
   return {timeSec,actualOriginalTriangleCount:[...originals.values()].reduce((n,m)=>n+m.triangleCount,0),
-   renderedSourceTriangles:r.triangles,gpuSubdataCalls:subdata,
+   renderedSourceTriangles:r?.triangles??null,gpuSubdataCalls:subdata,
    sampledJoints:spec.joints.size,sourceTopologyPreserved:true,
    halfModeDoesNotFreezeInvisibleBones:true};
  }
