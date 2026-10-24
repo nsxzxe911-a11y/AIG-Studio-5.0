@@ -53,7 +53,7 @@ function reset(){
  stop();
  if(renderer)renderer.destroy();
  renderer=createAIG3DRenderer(canvas,{quality:'balanced',pixelRatio:1,
-  maxTriangles:20000,preserveDrawingBuffer:true,background:[.02,.038,.07,1]});
+  maxTriangles:200000,preserveDrawingBuffer:true,background:[.02,.038,.07,1]});
  if(renderer.status!=='READY')throw Error('WebGL GPU source is BLOCKED');
  renderer.setInspectionMode('LIT');
  test=buildAIGReal3DV92NonhumanQA({
