@@ -5,6 +5,8 @@ import {runAIGReal3DLocalPortraitToRig,createAIGReal3DResourceScheduler,
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {runAIGReal3DV97PhotoConstrainedModel}
  from './aig-real3d-v97-auto-constrained-model.mjs';
+import {createAIGReal3DUnifiedAssetPipeline,rebindAIGReal3DUnifiedObservedActor}
+ from './aig-real3d-v98-ai-3d-bridge.mjs';
 import {exportAIGReal3DV97AnimatedGLB}
  from './aig-real3d-v97-export-animated-glb.mjs';
 import {planAIGReal3DNative4K,auditAIGReal3D4KSourceProjection,
@@ -15,12 +17,13 @@ const canvas=$('model'),scheduler=createAIGReal3DResourceScheduler(),
  CANON_PREVIOUSLY_RECORDED_SHA='fbf47f32a844a80e1bb39cb23084527baaf1350427c20d2b49d21fdc453444d6';
 let renderer=null,out=null,frame=0,playing=false,raf=null,start=0,busy=false,
  cameraMode='oblique',reportURL=null,videoURL=null,photoURL=null,lastDrawMs=0,
- highQualityURL=null,last4KReport=null,lastPortrait=null,animatedGLBURL=null;
+ highQualityURL=null,last4KReport=null,lastPortrait=null,animatedGLBURL=null,
+ v98Pipeline=null;
 const cameraAngles={front:[0,.1],side:[Math.PI/2,.1],back:[Math.PI,.1],
  oblique:[.65,.23]};
 function status(t){$('status').textContent=t;}
 function setReady(ready){
- for(const k of ['play','front','side','back','oblique','png','webm','proof','quality4k','capture4k','fit97'])
+ for(const k of ['play','front','side','back','oblique','png','webm','proof','quality4k','capture4k','fit97','bridge98','fit98'])
   $(k).disabled=!ready;
  $('pause').disabled=true;
  $('glb97').disabled=!ready||out?.schema!=='AIG_REAL3D_V97_IMAGE_CONSTRAINED_3D_ACTOR_V1';
@@ -100,6 +103,8 @@ async function build(){
   ctx.drawImage(bitmap,0,0,w,h);bitmap.close();
   const rgba=ctx.getImageData(0,0,w,h).data;
   lastPortrait={rgba,width:w,height:h,imageSha256:sha};
+  v98Pipeline=null;
+  $('v98-report').textContent='尚未執行共用來源映射。';
   const preview=$('source-photo'),pctx=preview.getContext('2d');
   pctx.clearRect(0,0,preview.width,preview.height);
   pctx.drawImage(tmp,0,0,preview.width,preview.height);
@@ -326,6 +331,8 @@ $('fit97').addEventListener('click',()=>{
   // Only a separate WORKING COPY is changed; approved canonical identity
   // source remains locked. No imaginary 1:1 face precision is promoted.
   out=fitted;
+  v98Pipeline=null;
+  $('v98-report').textContent='V97 已更新，請重新執行 V98 共用投影。';
   if(renderer)renderer.destroy();
   renderer=createAIG3DRenderer(canvas,{pixelRatio:1,quality:'balanced',
    maxTriangles:200000,preserveDrawingBuffer:true,
@@ -381,4 +388,111 @@ $('output').addEventListener('change',()=>{
  if(out&&!busy){
   try{qualityDiagnostics();}catch(e){status('BLOCK：'+e.message);}
  }
+});
+
+function currentV98SourceImageView(observations=null){
+ if(!lastPortrait||!out?.candidate?.scene)
+  throw Error('請先建立具有原始 SHA 的照片 3D 候選');
+ const c={projection:'orthographic',yaw:0,pitch:0,
+  focus:[0,.84,0],orthoSpan:2.15,distance:4,fovDeg:55};
+ return observations??[{
+  viewId:'frontAIUnverified',imageSha256:lastPortrait.imageSha256,
+  width:320,height:240,camera:c,anchors:[],
+  sourceVisibility:'AI_ESTIMATED',
+  landmarkSource:'REFERENCE_ONLY'
+ }];
+}
+function currentV98Pipeline(imageViews,correctionEnabled=false){
+ return createAIGReal3DUnifiedAssetPipeline({
+  assetId:'StarJourneyLockedHeroineCandidate',domain:'PERSON',
+  scene:out.candidate.scene,
+  originalImageSha256:lastPortrait.imageSha256,
+  approvedIdentitySha256:CANON_PREVIOUSLY_RECORDED_SHA,
+  imageViews,projectedViewId:imageViews[0]?.viewId??null,
+  correctionEnabled
+ });
+}
+function paintV98Wireframe(projected){
+ const ctx=$('v98-projection').getContext('2d'),canvas=$('v98-projection');
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ ctx.fillStyle='#030a12';ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.strokeStyle='rgba(68,173,244,.55)';ctx.lineWidth=.48;
+ ctx.beginPath();
+ for(const edge of projected?.edges??[]){
+  ctx.moveTo(...edge.from);ctx.lineTo(...edge.to);
+ }
+ ctx.stroke();
+}
+$('bridge98').addEventListener('click',()=>{
+ if(!out||!lastPortrait||busy)return;
+ try{
+  const pipeline=currentV98Pipeline(currentV98SourceImageView());
+  v98Pipeline=pipeline;paintV98Wireframe(pipeline.projected);
+  $('v98-report').textContent=JSON.stringify({
+   schema:pipeline.schema,
+   domain:pipeline.record.domain,assetId:pipeline.record.assetId,
+   identityReferenceSHA:pipeline.record.approvedIdentitySha256,
+   true3DSourceTriangles:pipeline.sourceGeometryNodes[0]?.sourceTriangles,
+   real3DProjectedEdges:pipeline.projected.edges.length,
+   sourcePhotoSHA:pipeline.record.originalImageSha256,
+   independentPhotoAnchors:0,
+   estimatedViewCannotProveGeometry:true,
+   sharedModelAnimationAnd4KPreviewAvailable:true,
+   pretrainedImageTo3DModelActuallyCalled:false,
+   sourceHeroineIdentityCertified:false,releasePASS:false
+  },null,2);
+  status('V98 已由同一真 XYZ 模型投影出 '+pipeline.projected.edges.length+
+   ' 條 2D 邊；可加入經確認的照片／頂點對應再校正。');
+ }catch(e){status('BLOCK：'+String(e?.message??e));}
+});
+$('fit98').addEventListener('click',()=>{
+ if(!out||!lastPortrait||busy)return;
+ busy=true;stop();
+ try{
+  const raw=$('v98-observations').value;
+  if(raw.length<50||raw.length>150000)
+   throw Error('請提供來源照片 SHA、相機參數與三個以上真人工／可信模型標記點');
+  const data=JSON.parse(raw);
+  if(!Array.isArray(data?.imageViews)||!data.imageViews.length)
+   throw Error('JSON 必須包含 imageViews');
+  const known=data.imageViews.some(v=>v.sourceVisibility==='OBSERVED'&&
+   v.imageSha256===lastPortrait.imageSha256);
+  if(!known)throw Error('至少一張觀察圖必須綁定目前實際上傳照片 SHA');
+  const pipeline=currentV98Pipeline(data.imageViews,true);
+  const fitted=pipeline.fit;
+  const rebuilt=rebindAIGReal3DUnifiedObservedActor({
+   candidate:out.candidate,fit:fitted
+  });
+  // Real 3D source faces stay original. The V92 same six-joint rig
+  // is rebound on a separate measured working copy, so animations and 4K
+  // use the same corrected mesh. Photo identity remains unverified.
+  out={...out,candidate:rebuilt};
+  v98Pipeline=pipeline;
+  if(renderer)renderer.destroy();
+  renderer=createAIG3DRenderer(canvas,{pixelRatio:1,
+   quality:'balanced',maxTriangles:200000,preserveDrawingBuffer:true,
+   background:[.017,.034,.058,1]});
+  if(renderer.status!=='READY')throw Error('真 GPU 不可用，不能將來源修正直接投入電影');
+  renderer.setInspectionMode('LIT');
+  renderer.setColorPipeline($('colorPipeline').value);
+  frame=0;render(0);
+  paintV98Wireframe(pipeline.projected);
+  $('v98-report').textContent=JSON.stringify({
+   schema:fitted.schema,originalPhotoSHA:fitted.originalImageSha256,
+   observedPixelRMSEBefore:fitted.measured2DPixelRMSEBefore,
+   observedPixelRMSEAfter:fitted.measured2DPixelRMSEAfter,
+   realSourceVerticesMoved:fitted.actuallyMovedOriginalSourceVertices,
+   originalFaceIndicesUnmodified:true,
+   real3D6JointRuntimeRebound:true,
+   sourcePhotoIdentityNotCertified:true,
+   independentDepthMeasurementStillRequired:true,
+   releasePASS:false
+  },null,2);
+  proof();setReady(true);
+  status('V98 實測2D→真3D 修正已接入骨架／GPU：誤差 '+
+   fitted.measured2DPixelRMSEBefore.toFixed(3)+' → '+
+   fitted.measured2DPixelRMSEAfter.toFixed(3)+
+   ' px；原女主角身份與電影級外型仍 BLOCK');
+ }catch(e){status('BLOCK：'+String(e?.message??e));}
+ finally{busy=false;$('fit98').disabled=!out;}
 });
