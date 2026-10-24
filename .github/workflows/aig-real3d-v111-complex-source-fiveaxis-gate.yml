@@ -1,0 +1,65 @@
+name: Real3D V111 Complex Background User-Seeded GLB Five-Axis GPU Gate
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v111-*'
+      - 'formal-web/shared-3d/aig-real3d-v109-photo-surface-ui.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v109-photo-surface-lab.html'
+      - 'formal-web/shared-3d/tests/aig-real3d-v111-*'
+      - 'docs/REAL3D-V111-*'
+      - '.github/workflows/aig-real3d-v111-complex-source-fiveaxis-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: real3d-v111-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  source-seed-mask-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Strict source SHA, true pixel color seed classes, connected mask fail closed
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-v111-seeded-segmentation.mjs
+          node --check formal-web/shared-3d/aig-real3d-v109-photo-surface-ui.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-v111-seeded-segmentation.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v111-seeded-segmentation.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v110-source-mask.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v109-photo-surface.test.mjs
+  real-chromium-seeded-photo-glb-5axis:
+    needs: source-seed-mask-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install genuine Chromium WebGL ANGLE SwiftShader
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Complex background user seeds to true GLB and 5AX true GPU + V110 regression
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v111-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v109-photo-surface-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v111-seeded-segmentation.real-browser.mjs
+          node formal-web/shared-3d/tests/aig-real3d-v110-source-mask.real-browser.mjs
+          node formal-web/shared-3d/tests/aig-real3d-v109-photo-surface.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V111-Complex-Photo-User-Marks-True-5AX-GPU-Source-Evidence
+          path: |
+            artifacts/aig-real3d-v111/
+            artifacts/aig-real3d-v110/
+            artifacts/aig-real3d-v109/
+          if-no-files-found: warn

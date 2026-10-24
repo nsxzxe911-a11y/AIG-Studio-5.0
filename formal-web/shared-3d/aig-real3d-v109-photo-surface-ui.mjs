@@ -1,3 +1,5 @@
+import {segmentAIGReal3DV111FromUserSeeds}
+ from './aig-real3d-v111-seeded-segmentation.mjs';
 import {extractAIGReal3DV110Foreground}
  from './aig-real3d-v110-source-mask.mjs';
 import {buildAIGReal3DV109PhotoSurfaceGLB}
@@ -27,6 +29,58 @@ async function pngFromFile(file){
    rgba:ctx.getImageData(0,0,c.width,c.height).data};
  }finally{bitmap.close();}
 }
+let v111Photo=null;
+const v111Seeds={foreground:[],background:[]};
+const v111Canvas=$('v111-source-canvas');
+const v111Ctx=v111Canvas.getContext('2d');
+function v111Reflect(){
+ $('v111-count').textContent='主體 '+v111Seeds.foreground.length+
+  ' 點／背景 '+v111Seeds.background.length+' 點';
+ if(!v111Photo)return;
+ v111Canvas.width=v111Photo.width;v111Canvas.height=v111Photo.height;
+ const data=new ImageData(new Uint8ClampedArray(v111Photo.rgba),
+  v111Photo.width,v111Photo.height);
+ v111Ctx.putImageData(data,0,0);
+ const radius=Math.max(3,Math.min(v111Photo.width,v111Photo.height)*.012);
+ for(const [kind,points] of Object.entries(v111Seeds))
+  for(const p of points){
+   v111Ctx.beginPath();v111Ctx.arc(p.x+.5,p.y+.5,radius,0,Math.PI*2);
+   v111Ctx.fillStyle=kind==='foreground'?'#fb374b':'#3fbfff';
+   v111Ctx.fill();
+   v111Ctx.strokeStyle='#fff';v111Ctx.lineWidth=1;
+   v111Ctx.stroke();
+  }
+}
+$('photo').addEventListener('change',async()=>{
+ v111Seeds.foreground=[];v111Seeds.background=[];v111Photo=null;
+ $('v111-count').textContent='讀取來源圖片中…';
+ try{
+  const f=$('photo').files?.[0];if(!f)throw Error('NO_IMAGE');
+  v111Photo=await pngFromFile(f);v111Reflect();
+ }catch(e){$('v111-count').textContent='圖片讀取失敗：'+String(e?.message??e);}
+});
+v111Canvas.addEventListener('click',e=>{
+ if(!v111Photo)return;
+ const rect=v111Canvas.getBoundingClientRect();
+ if(!rect.width||!rect.height)return;
+ const x=Math.max(0,Math.min(v111Photo.width-1,
+  Math.floor((e.clientX-rect.left)*v111Photo.width/rect.width))),
+  y=Math.max(0,Math.min(v111Photo.height-1,
+   Math.floor((e.clientY-rect.top)*v111Photo.height/rect.height)));
+ const kind=$('v111-kind').value,other=kind==='foreground'?'background':'foreground';
+ if(v111Seeds[kind].length>=80){status('BLOCK：單種來源標記最多 80 個');return;}
+ if(v111Seeds[kind].some(p=>p.x===x&&p.y===y)||
+  v111Seeds[other].some(p=>p.x===x&&p.y===y)){
+  status('BLOCK：主體／背景標記不可使用同一來源像素');return;
+ }
+ v111Seeds[kind].push({x,y});v111Reflect();
+ status('V111 已紀錄來源像素 ('+x+','+y+')：'+
+  (kind==='foreground'?'主體':'背景')+'。至少各 2 點再執行。');
+});
+$('v111-clear').addEventListener('click',()=>{
+ v111Seeds.foreground=[];v111Seeds.background=[];v111Reflect();
+ status('V111 主體／背景標記已清除，原圖不變。');
+});
 async function createV110AlphaWorkingCopy(photo,originalImageSha){
  const maskFile=$('v110-mask-file').files?.[0]??null;
  const external=maskFile?await pngFromFile(maskFile):null;
@@ -34,7 +88,24 @@ async function createV110AlphaWorkingCopy(photo,originalImageSha){
   throw Error('V110_EXTERNAL_MASK_PIXEL_DIMENSIONS_MISMATCH');
  const externalMaskSha256=external?
   await sha256AIGReal3DBytes(external.bytes):null;
- const result=extractAIGReal3DV110Foreground({
+ const seeded=$('v111-enable').checked;
+ if(seeded&&external)throw Error('V111_SEEDS_AND_EXTERNAL_MASK_ARE_MUTUALLY_EXCLUSIVE');
+ const segmentation=seeded?segmentAIGReal3DV111FromUserSeeds({
+  rgba:photo.rgba,width:photo.width,height:photo.height,
+  imageSha256:originalImageSha,
+  foregroundSeeds:v111Seeds.foreground,
+  backgroundSeeds:v111Seeds.background
+ }):null;
+ const result=seeded?{
+  ...segmentation,
+  maskedRGBA:segmentation.originalWorkingRGBA,
+  sourceMode:segmentation.segmentationMode,
+  foreground:segmentation.foregroundPixelCount,
+  foregroundFraction:segmentation.foregroundFraction,
+  maxBorderRGBDistance:null,
+  fractionAmbiguousSourceBoundary:segmentation.uncertainBoundaryFraction,
+  originalImageColorPixelsPreserved:segmentation.originalSourceRGBPreserved
+ }:extractAIGReal3DV110Foreground({
   rgba:photo.rgba,width:photo.width,height:photo.height,
   imageSha256:originalImageSha,
   externalMaskRGBA:external?.rgba??null,
@@ -67,6 +138,10 @@ async function createV110AlphaWorkingCopy(photo,originalImageSha){
   PNGTransparentRGBColorCanonicalizationPossible:true,
   actualNeuralForegroundSegmentationRun:false,
   originalSourceCannotBeClaimedAsFull3D:true,
+  v111UserSeededSegmentation:seeded,
+  foregroundSeedCount:seeded?v111Seeds.foreground.length:null,
+  backgroundSeedCount:seeded?v111Seeds.background.length:null,
+  v111OnlySourceConnectedColorNotSemanticAI:seeded,
   outputRequiresV109ActualGLBAndGPU:true,
   releasePASS:false};
  $('v110-mask-report').textContent=JSON.stringify(evidence,null,2);
