@@ -70,7 +70,7 @@ const fs=[
  'varying vec3 vNormal,vWorld;',
  'uniform vec4 uColor;',
  'uniform vec3 uEye,uEmission;',
- 'uniform float uMetallic,uRoughness,uInspectMode,uColorPipeline;',
+ 'uniform float uMetallic,uRoughness,uInspectMode,uColorPipeline,uUsePBR;',
  'uniform float uFurStrength,uFurFrequency;',
  'uniform sampler2D uAlbedoMap,uNormalMap;',
  'uniform float uHasAlbedoMap,uHasNormalMap,uNormalMapStrength,uClearcoat;',
@@ -87,6 +87,12 @@ const fs=[
  'return clamp(abs(normal.y),0.0,1.0);',
  '}',
 
+ 'float ggxD(float ndh,float rough){float a=rough*rough;float a2=a*a;', 
+ 'float t=ndh*ndh*(a2-1.0)+1.0;return a2/max(0.00001,3.14159265*t*t);}',
+ 'float ggxG1(float ndv,float rough){float k=pow(rough+1.0,2.0)/8.0;',
+ 'return ndv/max(0.0001,ndv*(1.0-k)+k);}',
+ 'vec3 fresnel5(float hdotv,vec3 f0){return f0+(1.0-f0)*pow(1.0-hdotv,5.0);}',
+ 'vec3 srgbLinear(vec3 srgb){return pow(max(srgb,vec3(0.0)),vec3(2.2));}',
  'void main(){vec3 n=normalize(vNormal),l=normalize(vec3(0.42,0.79,0.55));',
  'if(uHasNormalMap>0.5&&uInspectMode<0.5){',
  'vec3 mapped=texture2D(uNormalMap,vUV).rgb*2.0-1.0;',
@@ -114,6 +120,17 @@ const fs=[
  '}',
  'float coat=uClearcoat*pow(max(dot(n,halfV),0.0),140.0)*0.17;',
  'vec3 shaded=recipeAlbedo*(0.24+0.76*diffuse)+vec3(spec+coat)+uEmission;',
+ 'if(uUsePBR>0.5&&uInspectMode<0.5){',
+ 'float rough=clamp(recipeRough,0.04,1.0),metal=clamp(recipeMetal,0.0,1.0);',
+ 'float ndl=max(dot(n,l),0.0),ndv=max(dot(n,view),0.001);',
+ 'float ndh=max(dot(n,halfV),0.001),hdv=max(dot(halfV,view),0.0);',
+ 'vec3 base=srgbLinear(recipeAlbedo);',
+ 'vec3 f0=mix(vec3(0.04),base,metal),F=fresnel5(hdv,f0);',
+ 'float D=ggxD(ndh,rough),G=ggxG1(ndl,rough)*ggxG1(ndv,rough);',
+ 'vec3 specular=(D*G*F)/max(0.004,4.0*ndl*ndv);',
+ 'vec3 diffusePBR=(vec3(1.0)-F)*(1.0-metal)*base/3.14159265;',
+ 'shaded=(diffusePBR+specular)*ndl*2.1+base*0.045+uEmission;',
+ '}',
  'if(uFurStrength>0.001&&uInspectMode<0.5){',
  'vec3 p=floor(vWorld*uFurFrequency+normalize(vNormal)*3.0);',
  'float strand=hashFur(p)*0.6+hashFur(p*1.61)*0.4;',
@@ -202,6 +219,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   rough:gl.getUniformLocation(meshProg,'uRoughness'),
   inspect:gl.getUniformLocation(meshProg,'uInspectMode'),
   colorPipeline:gl.getUniformLocation(meshProg,'uColorPipeline'),
+  usePBR:gl.getUniformLocation(meshProg,'uUsePBR'),
   furStrength:gl.getUniformLocation(meshProg,'uFurStrength'),
   furFrequency:gl.getUniformLocation(meshProg,'uFurFrequency'),
   furUndercoat:gl.getUniformLocation(meshProg,'uFurUndercoat'),
@@ -369,13 +387,15 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  function getInspectionMode(){return inspectionMode;}
  function setColorPipeline(mode){
   if(dead||lost)throw Error('AIG3D_COLOR_PIPELINE_CONTEXT_UNAVAILABLE');
-  if(!['LEGACY','FILM_SDR'].includes(mode))
+  if(!['LEGACY','FILM_SDR','PBR_SDR'].includes(mode))
    throw Error('AIG3D_COLOR_PIPELINE_UNSUPPORTED');
   colorPipelineMode=mode;return getColorPipeline();
  }
  function getColorPipeline(){return {
   mode:colorPipelineMode,
-  measuredHDR10BitDepth:false,physicallyBasedBRDFImplemented:false,
+  measuredHDR10BitDepth:false,
+  physicallyBasedGGXDirectLighting:colorPipelineMode==='PBR_SDR',
+  completeIBLAndHDRPipelineCertified:false,
   fragmentHighpRequestedIfSupported:true,
   normalAndOriginalSourceGeometryNotModified:true
  };}
@@ -494,7 +514,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    .65,0,1,0,.65,0,1,0,.65,0,1,0,.65,0,1,0
   ]));
   gl.uniform1f(u.inspect,forcedInspection===null?INSPECTION_MODES.indexOf(inspectionMode):forcedInspection);
-  gl.uniform1f(u.colorPipeline,colorPipelineMode==='FILM_SDR'?1:0);
+  gl.uniform1f(u.colorPipeline,colorPipelineMode==='LEGACY'?0:1);
+  gl.uniform1f(u.usePBR,colorPipelineMode==='PBR_SDR'?1:0);
   if(mat.doubleSided)gl.disable(gl.CULL_FACE);else gl.enable(gl.CULL_FACE);
   gl.drawElements(gl.TRIANGLES,mesh.count,mesh.type,0);
   return mesh.count/3;
@@ -565,7 +586,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   last={status:'WEBGL_XYZ_TRIANGLES_RENDERED',webglVersion:webgl2?2:1,
    triangles,nodes,rapid,feed,cameraProjection:camera.projection,
    inspectionMode,colorPipelineMode,
-   postProcessFilmSDRActuallyEnabled:colorPipelineMode==='FILM_SDR',
+   postProcessFilmSDRActuallyEnabled:colorPipelineMode!=='LEGACY',
+   actualGGXDirectPBRShaderActive:colorPipelineMode==='PBR_SDR',
    sourceBRDFPhysicalAccuracyCertified:false,
    postProcessBloomApplied:false,
    exactCoffeeBrownOverride:brown&&inspectionMode!=='BLACK_CONTOUR',
