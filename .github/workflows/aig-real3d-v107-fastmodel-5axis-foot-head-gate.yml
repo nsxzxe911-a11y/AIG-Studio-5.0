@@ -1,0 +1,61 @@
+name: Real3D V107 FastModel Virtual Five Axis XYZ + A/B Foot Head Original Mesh GPU Gate
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v107-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v107-*'
+      - 'formal-web/shared-3d/aig-real3d-webgl.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v99-native-source-lab.*'
+      - 'docs/REAL3D-V107-*'
+      - '.github/workflows/aig-real3d-v107-fastmodel-5axis-foot-head-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: real3d-v107-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Real indexed XYZ source foot-head original height, A parented B and axis safety
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-v107-five-axis-foot-head.mjs
+          node --check formal-web/shared-3d/aig-real3d-v107-five-axis-ui.mjs
+          node --check formal-web/shared-3d/aig-real3d-webgl.mjs
+          node --check formal-web/shared-3d/aig-real3d-v99-native-source-lab.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-v107-five-axis-foot-head.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v107-five-axis-foot-head.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v106-photo-cad-contour.test.mjs
+  true-chromium-gpu:
+    needs: source-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 23
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install genuine Chromium WebGL
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Actual 12-triangle original binary GLB GPU 5AX A/B pose and progressive Y clip
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v107-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v99-native-source-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v107-five-axis-foot-head.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V107-Actual-5Axis-XYZ-A-B-FootHead-Source-GPU-Receipt
+          path: artifacts/aig-real3d-v107-five-axis/
+          if-no-files-found: warn

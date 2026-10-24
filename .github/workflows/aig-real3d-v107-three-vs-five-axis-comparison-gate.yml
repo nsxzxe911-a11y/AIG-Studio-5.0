@@ -1,0 +1,47 @@
+name: Real3D V107 Third Project Traditional 3D vs Virtual 5AX GPU A/B Comparison
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/tests/aig-real3d-v107-three-vs-five-axis.real-browser.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v107-five-axis-foot-head.mjs'
+      - 'formal-web/shared-3d/aig-real3d-webgl.mjs'
+      - 'docs/REAL3D-V107-THREE-VS-FIVE-AXIS-*'
+      - '.github/workflows/aig-real3d-v107-three-vs-five-axis-comparison-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: real3d-v107-3d5ax-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-chromium-paired-image-and-latency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Syntax + real 5AX matrix original source regression
+        run: |
+          node --check formal-web/shared-3d/tests/aig-real3d-v107-three-vs-five-axis.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v107-five-axis-foot-head.test.mjs
+      - name: Install actual Chromium WebGL software GPU backend
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Same GLB camera shader 3D vs 5AX baseline equality, A/B and foot-head visual difference, GPU completion wall samples
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v107-compare-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v99-native-source-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v107-three-vs-five-axis.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V107-Traditional-3D-Vs-5AX-True-GPU-Visual-Latency-Proof
+          path: artifacts/aig-real3d-v107-comparison/
+          if-no-files-found: warn
