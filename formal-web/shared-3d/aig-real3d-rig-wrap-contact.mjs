@@ -89,7 +89,7 @@ function validateRig({sourceScene,manifest,sourceSha256,keyframes}){
   err('CONTACT_ANCHORS_REQUIRED');
  for(const a of manifest.anchors){
   if(!id(a?.id)||anchorMap.has(a.id)||!joints.has(a.jointId)||
-   !vec(a.bindPoint)||!['HAND','FOOT','BAT','RACKET','PADDLE'].includes(a.apparatus))
+   !vec(a.bindPoint)||!id(a.actorId)||!['HAND','FOOT','BAT','RACKET','PADDLE'].includes(a.apparatus))
    err('CONTACT_ANCHOR_SOURCE_INVALID');
   anchorMap.set(a.id,a);
  }
@@ -120,6 +120,7 @@ export function createAIGReal3DRigWrap({sourceScene,manifest,sourceSha256,
  const workingScene={...sourceScene,nodes,
   overlays:[...sourceScene.overlays],revision:sourceScene.revision+1};
  const originals=new Map(sourceScene.nodes.map(n=>[n.id,n.mesh]));
+ const sourceContactManifest=Object.fromEntries([...spec.anchorMap]);
  function sample(timeSec){
   if(!finite(timeSec)||timeSec<0||timeSec>keyframes.at(-1).timeSec)
    err('RIG_SAMPLE_TIME_INVALID');
@@ -211,7 +212,7 @@ export function createAIGReal3DRigWrap({sourceScene,manifest,sourceSha256,
   return sample(timeSec).anchorPoints[anchorId];
  }
  return {schema:AIG_REAL3D_V92_RIG_SCHEMA,sourceSha256,sourceScene,
-  workingScene,wrapMode,sample,pose,anchorAt,updateGPU,
+  workingScene,wrapMode,sample,pose,anchorAt,updateGPU,sourceContactManifest,
   boneCount:spec.joints.size,anchors:[...spec.anchorMap.keys()],
   lastTimeSec:keyframes.at(-1).timeSec,
   stats:()=>({real3DFramesRendered:rendered,gpuSubDataCalls:subdata,
@@ -254,7 +255,6 @@ export function simulateAIGReal3DRigSportContact({
   err('RIG_BALL_SURFACE_CONTACT_DISTANCE_BLOCK');
  const normal=normalize(diff),relativeSpeed=dot(sub(velocity,ball.velocity),normal);
  if(relativeSpeed<=.05)err('RIG_CONTACT_NOT_APPROACHING_BALL');
- const anchorJoint=rig.anchors.indexOf(anchorId);
  // Apparatus comes from the protected rig manifest; never infer from sport.
  const sourceAnchor=rig.sourceContactManifest?.[anchorId];
  if(!sourceAnchor)err('RIG_ANCHOR_PROVENANCE_MISSING');
