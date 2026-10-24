@@ -208,6 +208,9 @@ export async function auditAIGReal3DV115ObservedBoundaryAtlas({
   }
   if(witness.length<16)witness.push({
    secondCameraOriginalEdgeVertexIds:[edge.from,edge.to],
+   secondCameraSourcePixelEndpoints:[
+    [a.uv[0]*(source.width-1),(1-a.uv[1])*(source.height-1)],
+    [b.uv[0]*(source.width-1),(1-b.uv[1])*(source.height-1)]],
    lengthMM,supportedByCamera0MeasuredSource:ok,
    unsupportedReasons:checks.filter(x=>!x.ok).map(x=>x.reason)});
  }
