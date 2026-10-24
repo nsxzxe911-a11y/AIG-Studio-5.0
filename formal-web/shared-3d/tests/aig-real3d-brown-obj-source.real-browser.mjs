@@ -114,6 +114,21 @@ try{
  assert.equal(proof.sourceShapeEnvelope.fixtureExplicitlySyntheticNonhuman,true);
  assert.equal(proof.sourceShapeEnvelope.noAutonomousBodyResizing,true);
  assert.equal(proof.sourceShapeEnvelope.releasePASS,false);
+ assert.equal(proof.sourceGeometryDetail.schema,
+  'AIG_REAL3D_SOURCE_TRIANGLE_DETAIL_AND_JUNCTION_V1');
+ assert.equal(proof.sourceGeometryDetail.sourceSha256,hash);
+ assert.equal(proof.sourceGeometryDetail.regionCount,5);
+ assert.equal(proof.sourceGeometryDetail.measuredFromSource3DTrianglesNotGPUPixels,true);
+ assert.equal(proof.sourceGeometryDetail.sourceOriginIndependentAuthenticationPASS,false);
+ assert.equal(proof.sourceGeometryDetail.releasePASS,false);
+ assert.equal(await page.locator('#detail-geometry-table tbody tr').count(),5);
+ assert.match(await page.locator('#detail-geometry-table').textContent(),/頭頸附近/);
+ assert.match(await page.locator('#detail-geometry-table').textContent(),/右腳附近/);
+ assert.ok(proof.sourceGeometryDetail.regions.every(x=>
+  x.actualSourceTrianglesTouchingRadius>0&&
+  Number.isFinite(x.localTriangleMaxEdgeP95Mm)&&
+  Number.isFinite(x.adjacentFaceBendP95Degrees)));
+
  assert.equal(proof.source3DSections.schema,'AIG_REAL3D_NATIVE_3D_TRIANGLE_CROSS_SECTIONS_V1');
  assert.equal(proof.source3DSections.oneClosedLowerMassFlag,true);
  assert.equal(proof.source3DSections.distinctSideBySideLowerLegSectionsObserved,false);
@@ -227,6 +242,10 @@ try{
  assert.ok(bad.localSurfaceTopology.globallyOpenEdges>0);
  assert.ok(bad.localSurfaceTopology.regions.some(x=>
   x.anomalyExactWorldEdges.some(e=>e.type==='OPEN_BOUNDARY')));
+ assert.equal(bad.sourceGeometryDetail.sourceSha256,brokenSha);
+ assert.ok(bad.sourceGeometryDetail.regions[0].warningCodes.includes('OPEN_SOURCE_JUNCTION'));
+ assert.equal(bad.sourceGeometryDetail.regions[0].certifiedHumanHeadNeckHandFootShape,false);
+
  assert.equal(bad.sourceDefectOverlay.images.length,4);
  assert.ok(bad.sourceDefectOverlay.images.every(x=>
   x.deduplicatedRawEdgeCount>0&&x.originalSourceTrianglesChanged===false));
@@ -383,6 +402,9 @@ try{
   optInActualOriginalIndexedTrianglePatchWorkingCopyGenerated:true,
   sourceOriginalVerticesAndFaceIndicesUnchanged:true,
   realCandidateOBJDownloadedAndHashVerified:true,
+  trueOriginalMeshTriangleMillimeterDetailAndFaceBendForFiveAreas:true,
+  originalBrokenNeckJunctionDetectedByGeometryDetailGate:true,
+  no3DGeometryDetailInventedBy4KDisplay:true,
   referencePictureWasSyntheticNotHuman:true,
   automaticHumanAppearanceApproval:false,
   noSyntheticHumanReconstruction:true,

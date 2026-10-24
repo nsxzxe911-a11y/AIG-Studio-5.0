@@ -15,6 +15,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-defect-edge-picker.mjs'
       - 'formal-web/shared-3d/aig-real3d-immutable-defect-diff.mjs'
       - 'formal-web/shared-3d/aig-real3d-source-envelope-review.mjs'
+      - 'formal-web/shared-3d/aig-real3d-source-geometry-detail.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-source-geometry-detail.test.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-body-cross-sections.mjs'
       - 'formal-web/shared-3d/aig-real3d-local-hole-working-copy.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-resolution.mjs'
@@ -47,6 +49,8 @@ on:
       - 'formal-web/shared-3d/aig-real3d-defect-edge-picker.mjs'
       - 'formal-web/shared-3d/aig-real3d-immutable-defect-diff.mjs'
       - 'formal-web/shared-3d/aig-real3d-source-envelope-review.mjs'
+      - 'formal-web/shared-3d/aig-real3d-source-geometry-detail.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-source-geometry-detail.test.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-body-cross-sections.mjs'
       - 'formal-web/shared-3d/aig-real3d-local-hole-working-copy.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-resolution.mjs'
@@ -94,6 +98,8 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-defect-edge-picker.mjs
           node --check formal-web/shared-3d/aig-real3d-immutable-defect-diff.mjs
           node --check formal-web/shared-3d/aig-real3d-source-envelope-review.mjs
+          node --check formal-web/shared-3d/aig-real3d-source-geometry-detail.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-source-geometry-detail.test.mjs
           node --check formal-web/shared-3d/aig-real3d-native-body-cross-sections.mjs
           node --check formal-web/shared-3d/aig-real3d-local-hole-working-copy.mjs
           node --check formal-web/shared-3d/aig-real3d-native-resolution.mjs
