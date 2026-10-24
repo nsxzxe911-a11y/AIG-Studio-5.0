@@ -1,0 +1,62 @@
+name: Real3D V98 Unified AI Image - Original 3D Geometry Source Gate
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v98-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v98-*'
+      - 'formal-web/shared-3d/aig-real3d-v95-provisional-rig.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v95-auto-film-lab.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v95-auto-film-lab.html'
+      - 'docs/REAL3D-V98-*'
+      - '.github/workflows/aig-real3d-v98-unified-2d-3d-source-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: real3d-v98-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: V98 source SHA, 2D↔3D original vertex reprojection and old rig continuity
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-v98-unified-source-projection.mjs
+          node --check formal-web/shared-3d/aig-real3d-v98-projection-fit.mjs
+          node --check formal-web/shared-3d/aig-real3d-v98-ai-3d-bridge.mjs
+          node --check formal-web/shared-3d/aig-real3d-v95-auto-film-lab.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v98-unified-source-projection.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v97-contour-glb.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v95-auto-pipeline.test.mjs
+  real-gpu:
+    needs: source
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install Chromium real WebGL
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: V98 shared original asset ID from photo to true 2D pixels and GPU moving XYZ
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v98-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v95-auto-film-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v98-unified-source.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V98-Unified-Image-XYZ-GPU-Proof
+          path: artifacts/aig-real3d-v98-unified/
+          if-no-files-found: warn
