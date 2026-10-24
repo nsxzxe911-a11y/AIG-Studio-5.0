@@ -165,6 +165,13 @@ try{
   assert.match(fourKStatus,/(?:GPU_TEXTURE_OR_RENDERBUFFER_LIMIT|4K_REQUIRES_HIGH_MEMORY_DEVICE|AIG3D_|WebGL|記憶體|GPU|原生)/);
   assert.equal(await page.locator('#native-output-download').isHidden(),true);
  }
+ console.log('REAL3D_NATIVE_RESOLUTION_GPU_EVIDENCE '+JSON.stringify({
+  true2KGPU1440x2560ShaVerified:true,
+  true4KGPU2160x3840ShaVerified:real4KProven,
+  fourKGPUResult:real4KProven?'NATIVE_GPU_4K_PASS':'HARDWARE_OR_MEMORY_BLOCK',
+  // Truncated on purpose: do not publish internal driver details as "PASS".
+  rendererHadErrors:errors.length>0
+ }));
  assert.deepEqual(errors,[]);
  await page.screenshot({path:folder+'/diagnostic-workbench.png',fullPage:true});
  await writeFile(folder+'/manifest.json',JSON.stringify({
