@@ -77,7 +77,7 @@ document.addEventListener('aig-real3d-v107-pose-request',event=>{
   const frame=renderer.render(activeScene());
   if(frame.status!=='WEBGL_XYZ_TRIANGLES_RENDERED'||
    !frame.V107FiveAxisSourcePoseActive||
-   !frame.V107OriginalFootHeadGPUSliceEnabled)
+   frame.V107OriginalFootHeadGPUSliceEnabled!==(pose.progress<1))
    throw Error('V107_TRUE_GPU_XYZ_AB_FOOT_HEAD_RENDER_BLOCK');
   document.dispatchEvent(new CustomEvent('aig-real3d-v107-pose-result',{
    detail:{ready:true,schema:pose.schema,
