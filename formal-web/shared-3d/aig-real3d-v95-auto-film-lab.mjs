@@ -244,7 +244,7 @@ function qualityDiagnostics(){
   outputPixelsAreActual4KIfNativeCaptureSucceeds:false,
   photoBasedAnatomical1to1PASS:false,
   native4KMaterialPBRPASS:false,
-  4K60FPSMoviePASS:false,releasePASS:false};
+  fourK60FPSMoviePASS:false,releasePASS:false};
  $('quality-report').textContent=JSON.stringify(last4KReport,null,2);
  return last4KReport;
 }
