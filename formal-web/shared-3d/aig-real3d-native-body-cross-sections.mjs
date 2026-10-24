@@ -191,7 +191,8 @@ export function auditAIGReal3DSceneCrossSections({
  }
  if(points.length<4||indices.length<12)
   throw Error('SCENE_SECTION_MESH_EMPTY');
- const ys=points.map(p=>p[1]),minY=Math.min(...ys),maxY=Math.max(...ys);
+ let minY=Infinity,maxY=-Infinity;
+ for(const p of points){minY=Math.min(minY,p[1]);maxY=Math.max(maxY,p[1]);}
  if(!(maxY-minY>1e-8))throw Error('SCENE_SECTION_HEIGHT_INVALID');
  const sections=PRESETS.map(({id,heightFraction})=>({
   id,heightFraction,...xySection(points,indices,minY+(maxY-minY)*heightFraction)
