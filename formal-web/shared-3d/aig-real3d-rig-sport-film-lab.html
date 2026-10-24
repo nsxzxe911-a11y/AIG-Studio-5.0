@@ -1,0 +1,42 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AIG Real3D V92｜來源骨架包覆 × 球類動力 GPU 工作區</title>
+<style>
+:root{color-scheme:dark;font:15px/1.55 system-ui,'Microsoft JhengHei',sans-serif;background:#020407;color:#e5f6ff}
+*{box-sizing:border-box}body{margin:0;padding:14px;background:#020407}
+main{max-width:1200px;margin:auto}section{border:1px solid #284b77;border-radius:12px;background:#07111b;padding:13px;margin-bottom:12px}
+h1{font-size:23px;margin:4px 0 8px}p{color:#bbd0e5}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button,select,input{background:#0b2334;color:#f0fcff;border:1px solid #4c82ab;border-radius:8px;padding:9px;font:inherit;min-height:44px}
+button{background:linear-gradient(110deg,#08546f,#353679,#7d3666);cursor:pointer}button:disabled{opacity:.45}
+label{color:#b2e7ff}canvas{width:100%;height:auto;max-height:69vh;background:#020407;border:1px solid #31577b;border-radius:10px;display:block}
+input[type=range]{flex:1;min-width:150px}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:290px;overflow:auto;font-size:12px}
+#status{color:#ffe0a4;border:1px solid #786744;border-radius:8px;padding:8px}a{color:#90efff}
+</style></head><body><main>
+<h1>Real3D V92｜動態骨架包覆 × 真球體碰撞</h1>
+<p><strong>研發 QA，不是真人模型。</strong> 橘色是 4,418 張原始三角面的非人體結構測試面，變形來自骨架角度與頂點權重；白球是 3D 球體。骨架接觸點真的計算出球的擊打速度。原始人體／動物掃描、球拍線床及電影級精度尚未驗證。</p>
+<section>
+<div class="row">
+<label>球類
+<select id="v92-sport"><option value="TENNIS">網球</option>
+<option value="BASEBALL">棒球</option><option value="BASKETBALL">籃球</option>
+<option value="SOCCER">足球</option><option value="TABLE_TENNIS">乒乓球</option></select></label>
+<label>包覆
+<select id="v92-wrap"><option value="FULL_WRAP">全包覆（全部真 3D 節點）</option>
+<option value="HALF_WRAP">半包覆（完整骨架＋可見區塊顯示）</option></select></label>
+<button id="v92-reset">建立真來源電影影格</button>
+<button id="v92-play">播放</button>
+<button id="v92-pause" disabled>暫停</button>
+<button id="v92-png">輸出真 GPU PNG</button>
+<button id="v92-webm">錄製 WebM</button>
+</div>
+<div class="row"><label for="v92-frame">真 3D 影格</label>
+<input id="v92-frame" type="range" min="0" max="1" value="0" step="1">
+<output id="v92-frame-number">0</output></div>
+<div id="status" role="status">準備真 3D WebGL...</div>
+</section>
+<section><canvas id="v92-scene" width="960" height="540" aria-label="同一 GPU 影格中的動態來源表面與真球體"></canvas>
+<p>影片輸出含真實 3D 表面形變與球體運動；半包覆依來源節點可見性最佳化，並不改寫原始骨架。若輸入缺少真實來源骨架／權重，正式模型必須 BLOCK。</p></section>
+<section><h2>來源／接觸／GPU 驗證</h2>
+<pre id="v92-evidence">尚未建立來源證據。</pre><p id="v92-download"></p></section>
+</main><script type="module" src="./aig-real3d-rig-sport-film-lab.mjs"></script></body></html>
