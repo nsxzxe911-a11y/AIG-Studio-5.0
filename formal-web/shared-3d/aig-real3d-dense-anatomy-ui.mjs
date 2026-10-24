@@ -1,6 +1,8 @@
 /** Standalone browser adapter. Invoked by real, source-bound workstation button. */
 import {auditAIGReal3DDenseAnatomy,reviewAIGReal3DDenseFourView}
  from './aig-real3d-dense-anatomy-review.mjs';
+import {auditAIGReal3DDenseFiveDigitBranches}
+ from './aig-real3d-dense-digit-branch-gate.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {validateAIGInspectionCapturePlan}
  from './aig-real3d-render-inspection.mjs';
@@ -51,6 +53,11 @@ export function mountAIGReal3DDenseAnatomyControls({
     sourceEvidence:source.dense.evidence,
     sourceSha256:source.sha256,landmarks
    });
+   const digitBranching=auditAIGReal3DDenseFiveDigitBranches({
+    sourceGeometry:source.dense.sourceGeometry,
+    sourceEvidence:source.dense.evidence,
+    sourceSha256:source.sha256,anatomy,landmarks
+   });
    const heading=['原始 3D 區域','來源三角面','開放邊','非流形邊',
     '最大邊 P95 mm','三維 XYZ 延展 mm','來源診斷'];
    const tab=document.createElement('table'),head=document.createElement('tr');
@@ -71,6 +78,31 @@ export function mountAIGReal3DDenseAnatomyControls({
     tab.append(tr);
    }
    table.append(tab);
+   const branchTitle=document.createElement('h3');
+   branchTitle.textContent='真 3D 左右五指分叉判讀（原始三角面）';
+   table.append(branchTitle);
+   const branchTable=document.createElement('table');
+   const branchHead=document.createElement('tr');
+   for(const name of ['原始手部','五指末端分離切面數','最少三維分叉線索',
+    '原始手腕連通','指尖標記異常／技術阻擋']){
+    const th=document.createElement('th');th.textContent=name;branchHead.append(th);
+   }
+   branchTable.append(branchHead);
+   for(const hand of digitBranching.handReports){
+    const tr=document.createElement('tr');
+    for(const value of [
+     hand.label,hand.technicalDiagnosticPlaneCount??0,
+     hand.technicalFiveDistalBranchesObserved?'看到五組末端源網格':
+      '未建立五個獨立末端',
+     hand.originalWristAndTipsIndexConnected===true?'有':
+      '未驗證／未連通',
+     (hand.reasonCodes??[]).join('、')||'幾何線索存在；真人自然度仍 BLOCK'
+    ]){
+     const td=document.createElement('td');td.textContent=String(value);tr.append(td);
+    }
+    branchTable.append(tr);
+   }
+   table.append(branchTable);
    gpu=createAIG3DRenderer($('native-webgl'),{
     quality:'balanced',pixelRatio:1,maxTriangles:700000,
     background:[.769,.745,.702,1]
@@ -132,7 +164,7 @@ export function mountAIGReal3DDenseAnatomyControls({
     sourceSha256:source.sha256,
     sourceOriginalTriangles:source.dense.evidence.originalTriangleCount,
     sourceGpuRenderedTriangles:source.dense.evidence.renderedTriangleCount,
-    anatomy,fourView,verifiedTrueHumanSource:false,
+    anatomy,digitBranching,fourView,verifiedTrueHumanSource:false,
     naturalHumanAppearancePASS:false,releasePASS:false
    };
    evidence.textContent=JSON.stringify(report,null,2);
@@ -141,7 +173,10 @@ export function mountAIGReal3DDenseAnatomyControls({
     anatomy.regionsRequiringReview+'/5 區，缺少來源標記 '+
     anatomy.missingRequiredMarkers.length+' 點、缺可比對 PNG '+
     fourView.missingValidatedReferenceComparisons.length+
-    ' 視角。真人來源與自然外觀維持 BLOCK。';
+    ' 視角；五指立體分叉技術線索：'+
+    (digitBranching.bothFiveDistalBranchTechnicalObservations?
+     '兩側可量測':'尚未兩側確認')+
+    '。真人來源與自然外觀維持 BLOCK。';
   }catch(error){
    report=null;download.disabled=true;
    evidence.textContent='BLOCK：'+String(error?.message||error);
