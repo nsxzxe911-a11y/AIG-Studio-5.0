@@ -1,0 +1,54 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Real3D V99｜AI 真 3D 模型來源接入與 4K</title>
+<style>
+:root{color-scheme:dark;background:#020407;color:#e5f4ff;font:15px/1.55 system-ui,'Microsoft JhengHei',sans-serif}
+body{margin:0;padding:15px}main{max-width:1380px;margin:auto}
+section{background:#07111b;border:1px solid #286185;border-radius:12px;padding:14px;margin:12px 0}
+h1{font-size:23px}h2{font-size:18px}p{color:#adc7d8}
+label{color:#b8deec}button,input,select{font:inherit;color:#fff;min-height:44px;
+background:#112a3d;border:1px solid #3a749e;border-radius:8px;padding:7px}
+button{cursor:pointer;background:linear-gradient(100deg,#064866,#34387b)}
+button:disabled{opacity:.48;cursor:default}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:12px}
+@media(max-width:850px){.grid{grid-template-columns:1fr}}
+canvas{width:100%;height:auto;display:block;background:#020407;border:1px solid #284e67;border-radius:8px}
+pre{font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:450px;overflow:auto}
+#status{color:#f5d79b;border:1px solid #926c37;border-radius:8px;padding:8px}
+</style></head><body><main>
+<h1>Real3D V99｜真 AI／掃描 3D 模型來源 → V98 共用核心 → 4K GPU</h1>
+<p>此工作頁只接收來源 GLB 內的真頂點、法線和三角面，不再以低階人形取代高精度來源。上傳定版參考圖與在本機生成／取得的真 GLB 後，可以查驗雙 SHA、缺面及 4K 技術畫面。<strong>此頁沒有內建或冒充已裝妥的神經網路權重。</strong></p>
+<section><div class="row">
+<label>來源照片／定版圖 <input id="reference" type="file" accept="image/png,image/jpeg,image/webp"></label>
+<label>AI／掃描生成的真 GLB <input id="mesh-file" type="file" accept=".glb,model/gltf-binary"></label>
+<label>資產類型<select id="domain">
+<option value="PERSON">女主角／人物</option>
+<option value="SHIP">飛船</option>
+<option value="ANIMAL">動物</option>
+<option value="ENVIRONMENT">星際場景</option>
+<option value="CNC_PART">CNC 零件</option>
+</select></label>
+<button id="import">驗證來源並載入真 3D</button>
+</div>
+<div class="row">
+<button id="front" disabled>正面</button>
+<button id="side" disabled>側面</button>
+<button id="back" disabled>背面</button>
+<button id="oblique" disabled>斜視</button>
+<button id="quality" disabled>來源幾何＋4K 品質 Gate</button>
+<button id="png4k" disabled>輸出原生 4K GPU PNG</button>
+</div>
+<div id="status" role="status">尚未取得相符 SHA 的照片與 GLB，正式女主角身份尚未驗證。</div>
+</section>
+<div class="grid">
+<section><h2>真 Indexed XYZ GPU 工作區</h2>
+<canvas id="model" width="960" height="640"></canvas>
+<p>原模型不做 Template Morph、Subdivision、SDF、Metaball 或假背面重建；來源不足就標 BLOCK。不同視角共用同一批三角面。</p></section>
+<section><h2>SHA／原始模型／4K 品質</h2>
+<pre id="proof">來源未載入。</pre>
+<h2>品質缺口</h2><p>光影、材質、精緻頭髮、AI 推論模型與真人 1:1 臉型相似度，必須另外驗證，不會由「成功讀取 GLB」自動放行。</p>
+</section>
+</div></main>
+<script type="module" src="./aig-real3d-v99-native-source-lab.mjs"></script>
+</body></html>
