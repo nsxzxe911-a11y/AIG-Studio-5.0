@@ -58,8 +58,8 @@ test('V114 verified redundant triangles removed only from source 2, source BIN a
  assert.equal(after.doc.meshes.length,2);
  assert.equal(after.doc.images.length,2);
  assert.equal(after.doc.materials.length,2);
- assert.equal(after.doc.accessors.length,before.doc.accessors.length);
- assert.equal(after.doc.bufferViews.length,before.doc.bufferViews.length+1);
+ assert.equal(after.doc.accessors.length,before.doc.accessors.length+1);
+ assert.equal(after.doc.bufferViews.length,before.doc.bufferViews.length+2);
  assert.deepEqual([...after.bin.slice(0,before.bin.length)],[...before.bin]);
  assert.deepEqual(after.doc.accessors[0],before.doc.accessors[0]);
  assert.deepEqual(after.doc.accessors[1],before.doc.accessors[1]);
@@ -68,6 +68,10 @@ test('V114 verified redundant triangles removed only from source 2, source BIN a
  assert.deepEqual(after.doc.accessors[5],before.doc.accessors[5]);
  assert.deepEqual(after.doc.accessors[6],before.doc.accessors[6]);
  assert.notEqual(after.doc.accessors[7].count,before.doc.accessors[7].count);
+ assert.equal(after.doc.meshes[1].primitives[0].attributes.TANGENT,8);
+ assert.equal(after.doc.accessors[8].type,'VEC4');
+ assert.equal(after.doc.accessors[8].count,before.doc.accessors[4].count);
+ assert.equal(r.originalTopologySupportedUVTangentsAdded,true);
  assert.equal(r.topologyWeldedAcrossSeam,false);
  assert.equal(r.verticesMovedOrSmoothed,false);
  assert.equal(r.unobservedSurfaceGenerated,false);
