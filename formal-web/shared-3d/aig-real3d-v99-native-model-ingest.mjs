@@ -55,7 +55,8 @@ function parseGLB(data){
  function accessor(id,type,accepted){
   const a=gltf.accessors[id];
   if(!a||a.type!==type||!accepted.includes(a.componentType)||
-   a.sparse||a.normalized||a.byteOffset% (a.componentType===5126||a.componentType===5125?4:2)!==0||
+   a.sparse||a.normalized||!Number.isInteger(a.byteOffset??0)||
+   (a.byteOffset??0)% (a.componentType===5126||a.componentType===5125?4:2)!==0||
    !Number.isInteger(a.count)||a.count<1||
    a.count>120000||!Number.isInteger(a.bufferView))
    fail('UNSUPPORTED_NATIVE_ACCESSOR');
