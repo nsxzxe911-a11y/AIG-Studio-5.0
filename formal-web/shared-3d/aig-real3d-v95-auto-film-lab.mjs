@@ -52,7 +52,7 @@ function proof(){
   sourceSceneNeverPromotedToFormalIdentity:true,
   cachedResources:scheduler.snapshot(),
   lastGPUFrameCostMs:lastDrawMs,
-  2hourFilmActuallyProduced:false,formalReleasePASS:false
+  twoHourFilmActuallyProduced:false,formalReleasePASS:false
  },null,2);
 }
 function render(index){
