@@ -105,16 +105,31 @@ export function auditAIGNativeOBJLocalSurface({
   for(let i=0;i<n;i++)if(anchors.some(p=>distSq(points[i],p)<=d2))
    allowed.add(i);
   let edgeCount=0,openEdges=0,nonManifold=0,windingConflicts=0;
-  const examplePositions=[];
+  const examplePositions=[],anomalyEdges=[];
+  // Keep exact original index-connected edge endpoints, not approximate
+  // centroid-only positions. Capped evidence but ALWAYS report truncation.
+  const EDGE_SAMPLE_LIMIT=96;
+  let totalAnomalyEdges=0;
   for(const item of edges.values()){
    if(!allowed.has(item.start)&&!allowed.has(item.end))continue;
    edgeCount++;
    if(item.faceCount===1)openEdges++;
    if(item.faceCount>2)nonManifold++;
    if(item.faceCount===2&&item.sameDirectionCount===1)windingConflicts++;
-   if(item.faceCount!==2&&examplePositions.length<6){
+   const type=item.faceCount===1?'OPEN_BOUNDARY':
+     item.faceCount>2?'NON_MANIFOLD':
+     item.sameDirectionCount===1?'WINDING_CONFLICT':null;
+   if(type){
+    totalAnomalyEdges++;
     const a=points[item.start],b=points[item.end];
-    examplePositions.push(a.map((v,k)=>round((v+b[k])/2)));
+    if(examplePositions.length<6)
+     examplePositions.push(a.map((v,k)=>round((v+b[k])/2)));
+    if(anomalyEdges.length<EDGE_SAMPLE_LIMIT)
+     anomalyEdges.push({
+      type,startVertexIndex:item.start,endVertexIndex:item.end,
+      startWorldMeters:a.map(round),endWorldMeters:b.map(round),
+      numberOfIncidentFaces:item.faceCount
+     });
    }
   }
   const comps=new Set(hits.map(h=>root(h.index)));
@@ -136,6 +151,10 @@ export function auditAIGNativeOBJLocalSurface({
     name:h.name,index:h.index,surfaceOffsetMm:h.distanceMm
    })),
    anomalyWorldPositionSamples:examplePositions,
+   anomalyExactWorldEdges:anomalyEdges,
+   anomalyEdgeCountUncapped:totalAnomalyEdges,
+   anomalyEdgeEvidenceTruncated:totalAnomalyEdges>anomalyEdges.length,
+   anomalySamplesAreExactSourceIndexedEdges:true,
    anomalyCodes:alerts,
    technicalSurfaceFlagsClear:alerts.length===0,
    humanAnatomicalNaturalnessVerified:false,
