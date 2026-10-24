@@ -4,7 +4,7 @@ import {mkdir,readFile,writeFile,copyFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 const dir='artifacts/aig-real3d-brown-source-obj-review';
-function syntheticOBJ(){
+function syntheticOBJ({hole=false}={}){
  const rings=42,segments=44,v=[],faces=[];
  for(let j=0;j<rings;j++){
   const t=j/(rings-1),r=Math.max(.008,Math.sin(Math.PI*t));
@@ -16,7 +16,8 @@ function syntheticOBJ(){
  for(let j=0;j<rings-1;j++)for(let k=0;k<segments;k++){
   const a=j*segments+k+1,b=j*segments+(k+1)%segments+1;
   const c=(j+1)*segments+k+1,d=(j+1)*segments+(k+1)%segments+1;
-  faces.push('f '+a+' '+b+' '+d,'f '+a+' '+d+' '+c);
+  if(!(hole&&j===34&&k===4))faces.push('f '+a+' '+b+' '+d);
+  faces.push('f '+a+' '+d+' '+c);
  }
  v.push('v 0 0 0','v 0 1 0');
  const up=rings*segments+1,down=up+1;
@@ -120,6 +121,12 @@ try{
  assert.equal(proof.localSurfaceTopology.originalSourceVerticesChanged,false);
  assert.equal(proof.localSurfaceTopology.naturalAnatomyAndFingersApproved,false);
  assert.equal(proof.localSurfaceTopology.releasePASS,false);
+ assert.equal(proof.sourceDefectOverlay.viewCount,4);
+ assert.equal(proof.sourceDefectOverlay.originalVertexMeshNeverModified,true);
+ assert.equal(proof.sourceDefectOverlay.images.length,4);
+ assert.equal(await page.locator('#defect-gallery figure').count(),4);
+ assert.ok(proof.sourceDefectOverlay.images.every(x=>
+  x.deduplicatedRawEdgeCount===0&&x.humanVisualApproval===false));
  assert.equal(proof.localSurfaceTopology.globallyOpenEdges,0);
  assert.equal(await page.locator('#surface-table tbody tr').count(),5);
  assert.match(await page.locator('#surface-table').textContent(),/頭頸附近/);
@@ -176,6 +183,54 @@ try{
  assert.equal(JSON.parse(record.toString('utf8')).sourceReview.releasePASS,false);
  await copyFile(await dl.path(),dir+'/AIG-NONHUMAN-Source-Review.json');
  await page.screenshot({path:dir+'/OBJ-BROWN-GPU-SOURCE-LAB.png',fullPage:true});
+ // Now remove an actual indexed triangle near one synthetic source marker
+ // and re-run real local OBJ -> FOUR new GPU defect maps without repairing it.
+ const brokenOBJ=syntheticOBJ({hole:true}),
+  brokenSha=createHash('sha256').update(brokenOBJ).digest('hex');
+ await page.locator('#model-file').setInputFiles({
+  name:'SYNTHETIC_NONHUMAN_TRUE_MISSING_NECK_TRIANGLE.obj',
+  mimeType:'text/plain',buffer:brokenOBJ
+ });
+ await page.locator('#inspect').click();
+ await page.waitForFunction(()=>{
+  const b=document.getElementById('inspect'),t=document.getElementById('status');
+  return !b?.disabled&&(t?.dataset.ready==='true'||t?.textContent?.startsWith('BLOCK'));
+ },null,{timeout:210000});
+ const blocked=await page.locator('#status').textContent();
+ assert.match(blocked,/BLOCK/);
+ assert.equal(await page.locator('#status').getAttribute('data-ready'),'false');
+ const bad=JSON.parse(await page.locator('#evidence').textContent());
+ assert.equal(bad.sourceSha256,brokenSha);
+ assert.equal(bad.rawNativeGeometryGatePASS,false);
+ assert.equal(bad.diagnosticOnlyWithBadSource,true);
+ assert.ok(bad.localSurfaceTopology.globallyOpenEdges>0);
+ assert.ok(bad.localSurfaceTopology.regions.some(x=>
+  x.anomalyExactWorldEdges.some(e=>e.type==='OPEN_BOUNDARY')));
+ assert.equal(bad.sourceDefectOverlay.images.length,4);
+ assert.ok(bad.sourceDefectOverlay.images.every(x=>
+  x.deduplicatedRawEdgeCount>0&&x.originalSourceTrianglesChanged===false));
+ assert.equal(bad.sourceDefectOverlay.releasePASS,false);
+ assert.equal(await page.locator('#defect-gallery figure').count(),4);
+ for(let i=0;i<4;i++){
+  const fig=page.locator('#defect-gallery figure').nth(i);
+  const promised=page.waitForEvent('download',{timeout:20000});
+  await fig.locator('a').click();
+  const dl=await promised,png=await readFile(await dl.path());
+  assert.equal(png.readUInt32BE(0),0x89504e47);
+  assert.equal(png.readUInt32BE(16),1080);
+  assert.equal(png.readUInt32BE(20),1920);
+  const sha=createHash('sha256').update(png).digest('hex');
+  assert.equal(sha,bad.sourceDefectOverlay.images[i].sha256);
+  await copyFile(await dl.path(),dir+'/BROKEN_OBJ_TRUE_GPU_DEFECT_OVERLAY_'+i+'.png');
+ }
+ const downloadBad=page.waitForEvent('download',{timeout:20000});
+ await page.locator('#report-download').click();
+ const badFile=await downloadBad;
+ const downloaded=JSON.parse((await readFile(await badFile.path())).toString());
+ assert.equal(downloaded.sourceDefectOverlay.releasePASS,false);
+ assert.equal(downloaded.localSurfaceTopology.sourceGeometryGatePASS,false);
+ await copyFile(await badFile.path(),dir+'/BROKEN_OBJ_SOURCE_DEFECT_REPORT.json');
+ await page.screenshot({path:dir+'/BROKEN_OBJ_4_GPU_DEFECT_VIEWS-LAB.png',fullPage:true});
  assert.deepEqual(errors,[]);
  await writeFile(dir+'/proof.json',JSON.stringify({
   schema:'AIG_REAL3D_BROWN_LOCAL_OBJ_SOURCE_REPORT_BROWSER_GATE_V1',
@@ -187,6 +242,8 @@ try{
   twelveBandActualPixelWidthProfilesFourView:true,
   meshAudited21SourceLandmarksProjectedOverTrueGpuFourViews:true,
   nativeFiveAreaTopologyChecksSourceTrianglesTrue:true,
+  brokenObjSourceHasRealRemovedTriangleAndFourVerifiedGPUEdgeOverlays:true,
+  badMeshAllowedReadOnlyButNeverReleasePass:true,
   referencePictureWasSyntheticNotHuman:true,
   automaticHumanAppearanceApproval:false,
   noSyntheticHumanReconstruction:true,
