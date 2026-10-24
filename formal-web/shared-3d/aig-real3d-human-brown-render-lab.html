@@ -137,9 +137,18 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <button id="three-joint-download" type="button" disabled>下載來源應變／掃掠風險／GPU SHA</button>
 <button id="three-joint-stress-run" type="button" disabled>實際來源 GPU 3 輪壓力／緩衝清理</button>
 <button id="three-joint-pool-run" type="button" disabled>極速 V80｜單一 GPU 資源池 3×72 幀</button>
+<label>虛擬計算通道
+<select id="three-joint-vpu-lanes"><option value="4">4</option>
+<option value="8" selected>8</option><option value="16">16</option></select></label>
+<label>真實 Worker 上限
+<select id="three-joint-vpu-workers"><option value="1">1</option>
+<option value="2">2</option><option value="4" selected>4</option></select></label>
+<button id="three-joint-vpu-run" type="button" disabled>極速 V81｜來源網格虛擬處理器</button>
 </div>
 <div id="three-joint-status" class="status" role="status" aria-live="polite">BLOCK：尚未匯入來源 OBJ。</div>
 <div id="three-joint-gallery" class="gallery" aria-label="來源網格三節 FK 三張真 GPU"></div>
+<div id="three-joint-vpu-status" class="status" role="status">
+虛擬工作通道尚未啟用；必須先完成真 OBJ/SHA 與三節關節 GPU 驗證。</div>
 <div id="three-joint-pool-status" class="status" role="status">GPU 共用資源池尚未檢查；需先載入真來源並完成三節 GPU 驗證。</div>
 <div id="three-joint-stress-status" class="status" role="status">需先驗證原始 OBJ 及真 GPU 三節關節姿勢，才可執行壓力檢查。</div>
 <pre id="three-joint-evidence">尚無 3D 三節關節檢查結果。</pre>

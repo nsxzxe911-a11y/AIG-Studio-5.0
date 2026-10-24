@@ -5,6 +5,8 @@ import {auditAIGReal3DFingerJointSurface} from './aig-real3d-native-finger-junct
 import {createAIGReal3DThreeJointTimeline} from './aig-real3d-three-joint-swept-motion.mjs';
 import {runAIGReal3DQuadStrain,benchmarkAIGReal3DWorkerModes}
  from './aig-real3d-quad-strain-pool.mjs';
+import {runAIGReal3DVirtualProcessor}
+ from './aig-real3d-virtual-processor.mjs';
 import {applyAIGReal3DSourceMeshDelta}
  from './aig-real3d-gpu-delta-source.mjs';
 import {benchmarkAIGReal3DNativePosePlayback}
@@ -19,15 +21,18 @@ import {createAIGReal3DSparseNormalCache,evaluateAIGReal3DSparseNormals}
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {validateAIGInspectionCapturePlan} from './aig-real3d-render-inspection.mjs';
 export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}={}){
- let source=null,report=null,stressScenes=null;
+ let source=null,report=null,stressScenes=null,vpuSource=null;
  const run=$('three-joint-run'),download=$('three-joint-download'),
   stressButton=$('three-joint-stress-run'),stressStatus=$('three-joint-stress-status'),
   poolButton=$('three-joint-pool-run'),poolStatus=$('three-joint-pool-status'),
+  vpuButton=$('three-joint-vpu-run'),vpuStatus=$('three-joint-vpu-status'),
   status=$('three-joint-status'),evidence=$('three-joint-evidence'),
   gallery=$('three-joint-gallery');
  const reset=()=>{
-  source=null;report=null;stressScenes=null;run.disabled=true;download.disabled=true;
-  stressButton.disabled=true;poolButton.disabled=true;
+  source=null;report=null;stressScenes=null;vpuSource=null;
+  run.disabled=true;download.disabled=true;
+  stressButton.disabled=true;poolButton.disabled=true;vpuButton.disabled=true;
+  vpuStatus.textContent='等待真 OBJ/SHA 與三節 GPU 驗證。';
   poolStatus.textContent='等待真來源 OBJ 與三節關節 GPU 驗證。';
   stressStatus.textContent='等待同來源三節關節真 GPU 驗證。';
   gallery.replaceChildren();
@@ -45,7 +50,8 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
    source.upAxis!==$('up-axis').value){
    status.textContent='BLOCK：原始 OBJ 或校準參數變動，需重新匯入。';return;
   }
-  setBusy(true);run.disabled=true;download.disabled=true;stressButton.disabled=true;poolButton.disabled=true;
+  setBusy(true);run.disabled=true;download.disabled=true;stressButton.disabled=true;
+  poolButton.disabled=true;vpuButton.disabled=true;vpuSource=null;
   stressScenes=null;report=null;
   gallery.replaceChildren();let renderer;
   try{
@@ -202,8 +208,12 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     naturalHumanSkinPASS:false,automaticRigPASS:false,releasePASS:false
    };
    stressScenes=playbackScenes;
+   vpuSource={original:originalSource.positions,posed:last.workingCopyPositions,
+    indices:originalSource.indices,triangleOffsets:Uint32Array.from(offsets),
+    sourceSha256:source.sha256,expectedStrain:check};
    evidence.textContent=JSON.stringify(report,null,2);download.disabled=false;
-   stressButton.disabled=false;poolButton.disabled=false;
+   stressButton.disabled=false;poolButton.disabled=false;vpuButton.disabled=false;
+   vpuStatus.textContent='來源已驗證；可在不增加實體核心下分派 4/8/16 個網格計算任務。';
    poolStatus.textContent='原始三節關節 GPU 姿勢已驗證，可測試共用一套 GPU buffer 的 3×72 排程。';
    stressStatus.textContent='來源三個真 GPU 姿勢已通過，可進行獨立三輪緩衝清理壓力驗證。';
    status.textContent='真三關節極速模式：每幀僅處理 '+timeline.sparseSourceTopology.activeWeightedGlobalVertexCount+
@@ -289,6 +299,39 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
    setBusy(false);poolButton.disabled=!stressScenes;
    stressButton.disabled=!stressScenes;
   }
+ });
+ vpuButton.addEventListener('click',async()=>{
+  if(isBusy()||!vpuSource||!report||!source||
+   source.sha256!==vpuSource.sourceSha256){
+   vpuStatus.textContent='BLOCK：來源驗證或處理狀態不符。';return;
+  }
+  setBusy(true);vpuButton.disabled=true;
+  try{
+   const virtualLanes=Number($('three-joint-vpu-lanes').value),
+    physicalWorkers=Number($('three-joint-vpu-workers').value);
+   const audit=await runAIGReal3DVirtualProcessor({
+    ...vpuSource,virtualLanes,physicalWorkers,
+    minTrianglesForParallel:256,maxPackedBytes:64*1024*1024
+   });
+   if(source.sha256!==vpuSource.sourceSha256||!report||
+    audit.result.changedSourceTriangles!==vpuSource.expectedStrain.changedSourceTriangles||
+    audit.result.invertedSourceTriangles!==vpuSource.expectedStrain.invertedSourceTriangles||
+    audit.result.nearlyCollapsedSourceTriangles!==vpuSource.expectedStrain.nearlyCollapsedSourceTriangles||
+    Math.abs(audit.result.maxSourceEdgeStretchPercent-
+     vpuSource.expectedStrain.maxSourceEdgeStretchPercent)>.003||
+    Math.abs(audit.result.maxSourceEdgeCompressionPercent-
+     vpuSource.expectedStrain.maxSourceEdgeCompressionPercent)>.003)
+    throw Error('VPU 輸出與原始三節網格驗證結果不一致');
+   report.virtualTaskProcessor={...audit,sourceSha256:vpuSource.sourceSha256};
+   evidence.textContent=JSON.stringify(report,null,2);
+   vpuStatus.textContent=audit.actualRealWebWorkers>0?
+    '虛擬通道 '+audit.actualVirtualTaskLanesExecuted+
+    '；真 Worker '+audit.actualRealWebWorkers+
+    '；逐來源面與單線程一致，並已記錄實際耗時。':
+    '來源面片較少或裝置不適合平行化：誠實退回單線程，並非新增實體 CPU。';
+  }catch(error){
+   vpuStatus.textContent='BLOCK：'+String(error?.message??error);
+  }finally{setBusy(false);vpuButton.disabled=!vpuSource;}
  });
  download.addEventListener('click',()=>{
   if(!report)return;
