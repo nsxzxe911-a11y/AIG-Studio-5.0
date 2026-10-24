@@ -24,8 +24,10 @@ function makeSphere(radius,{lat=32,lon=48}={}){
  }
  for(let i=0;i<lat;i++)for(let j=0;j<lon;j++){
   const a=i*(lon+1)+j,b=a+1,c=a+lon+1,d=c+1;
-  if(i!==0)indices.push(a,c,b);
-  if(i!==lat-1)indices.push(b,c,d);
+  // Exterior-facing winding: latitude down, longitude increasing.
+  // Opposite winding culls the visible forward hemisphere on WebGL.
+  if(i!==0)indices.push(a,b,c);
+  if(i!==lat-1)indices.push(b,d,c);
  }
  return createAIG3DMesh({positions,normals,indices,
   provenance:'V91_SPORT_BALL_SOURCE_DISCLOSED_SPHERE_QA'});
