@@ -1,0 +1,62 @@
+name: Real3D V102 AI Artwork Adaptive GPU Framing and Non-Blocking Remodel Gate
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v102-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v102-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v101-structure.real-browser.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v99-native-source-lab.*'
+      - '.github/workflows/aig-real3d-v102-adaptive-artwork-frame-gate.yml'
+      - 'docs/REAL3D-V102-*'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: real3d-v102-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  adaptive-frame-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: V102 real artwork frame constraints and one-latest-GPU-frame backpressure source Gate
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-v102-adaptive-frame.mjs
+          node --check formal-web/shared-3d/aig-real3d-v102-remodel-worker.mjs
+          node --check formal-web/shared-3d/aig-real3d-v99-native-source-lab.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-v102-adaptive-frame.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v102-adaptive-frame.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v101-structure-repair.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v99-native-model-ingest.test.mjs
+
+  native-chromium-worker:
+    needs: adaptive-frame-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install real Chromium WebGL2/WebWorker
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: V102 original AI portrait frame and real asynchronous repaired source screenshot
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v102-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v99-native-source-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v102-adaptive-frame.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V102-Actual-Artwork-Frame-Worker-GPU-Proof
+          path: artifacts/aig-real3d-v102-adaptive/
+          if-no-files-found: warn
