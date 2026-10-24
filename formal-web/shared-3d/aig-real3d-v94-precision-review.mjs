@@ -132,7 +132,7 @@ async function load(){
  }
  if(renderer)renderer.destroy();
  renderer=createAIG3DRenderer(preview,{quality:'balanced',
-  maxTriangles:100000,pixelRatio:1,preserveDrawingBuffer:true,
+  maxTriangles:2000000,pixelRatio:1,preserveDrawingBuffer:true,
   background:[.012,.030,.065,1]});
  if(renderer.status!=='READY')throw Error('真 WebGL GPU 不可用；禁止假渲染');
  componentControls();validate();view('oblique');
