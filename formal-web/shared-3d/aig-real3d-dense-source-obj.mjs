@@ -164,5 +164,17 @@ export function buildAIGReal3DDenseOBJSource({
   bboxMillimeters:boundsMm,
   releasePASS:false
  };
- return {scene,evidence,releasePASS:false};
+ // Original GLOBAL index space is retained separately from GPU chunking.
+ // Downstream QA MUST use this immutable-by-contract view rather than node
+ // indices (chunk seams are not physical seams). No new triangles are created.
+ const sourceGeometry={
+  positions:originalWorld,
+  indices:Uint32Array.from(index),
+  rotatedSourceBoundsMin:lo.slice(),
+  rotatedSourceBoundsMax:hi.slice(),
+  metersPerRawUnit:scale,
+  originalGlobalIndexSpace:true,
+  noChunkBoundarySeamInference:true
+ };
+ return {scene,evidence,sourceGeometry,releasePASS:false};
 }
