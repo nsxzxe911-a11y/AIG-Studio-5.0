@@ -467,7 +467,7 @@ try{
    const angle=col*2*Math.PI/segments,rx=Math.cos(angle),
     rz=Math.sin(angle),y=-1+2*row/(rings-1),x=.65*rx,z=.65*rz;
    original.push(x,y,z);
-   moved.push(x+(row>18&&row<27?.09:0),y,z);
+   moved.push(x+(row>18&&row<27 ? 0.09 : 0),y,z);
    normals.push(rx,0,rz);
   }
   for(let row=0;row<rings-1;row++)for(let col=0;col<segments;col++){
