@@ -1,3 +1,5 @@
+import {trainAIGReal3DV118LocalNeural}
+ from './aig-real3d-v118-local-neural.mjs';
 import {planAIGReal3DV117PhotoReconstruction,
  verifyAIGReal3DV117RealGPUInspection}
  from './aig-real3d-v117-evidence-orchestrator.mjs';
@@ -92,14 +94,32 @@ async function createV110AlphaWorkingCopy(photo,originalImageSha){
  const externalMaskSha256=external?
   await sha256AIGReal3DBytes(external.bytes):null;
  const seeded=$('v111-enable').checked;
+ const neural=$('v118-enable').checked;
+ if(neural&&(seeded||external))
+  throw Error('V118_NEURAL_TRAINING_CONFLICTS_WITH_V111_MODE_OR_EXTERNAL_MASK');
  if(seeded&&external)throw Error('V111_SEEDS_AND_EXTERNAL_MASK_ARE_MUTUALLY_EXCLUSIVE');
+ const neuralResult=neural?await trainAIGReal3DV118LocalNeural({
+  rgba:photo.rgba,width:photo.width,height:photo.height,
+  sourcePhotoSha256:originalImageSha,
+  foregroundSeeds:v111Seeds.foreground,
+  backgroundSeeds:v111Seeds.background
+ }):null;
  const segmentation=seeded?segmentAIGReal3DV111FromUserSeeds({
   rgba:photo.rgba,width:photo.width,height:photo.height,
   imageSha256:originalImageSha,
   foregroundSeeds:v111Seeds.foreground,
   backgroundSeeds:v111Seeds.background
  }):null;
- const result=seeded?{
+ const result=neural?{
+  schema:neuralResult.schema,
+  maskedRGBA:neuralResult.workingRGBA,
+  sourceMode:'V118_LOCALLY_TRAINED_NEURAL_PIXEL_INFERENCE',
+  foreground:neuralResult.foregroundPixels,
+  foregroundFraction:neuralResult.foregroundFraction,
+  maxBorderRGBDistance:null,
+  fractionAmbiguousSourceBoundary:neuralResult.boundaryUncertainFraction,
+  originalImageColorPixelsPreserved:neuralResult.allOriginalPhotoRGBBytesPreserved
+ }:seeded?{
   ...segmentation,
   maskedRGBA:segmentation.originalWorkingRGBA,
   sourceMode:segmentation.segmentationMode,
@@ -139,7 +159,14 @@ async function createV110AlphaWorkingCopy(photo,originalImageSha){
   originalImageColorPixelsPreserved:result.originalImageColorPixelsPreserved,
   maskedPNGImageEncodedFromSourcePixelColors:true,
   PNGTransparentRGBColorCanonicalizationPossible:true,
-  actualNeuralForegroundSegmentationRun:false,
+  actualNeuralForegroundSegmentationRun:neural,
+  v118ModelWeightsSha256:neural?neuralResult.modelWeightsSha256:null,
+  v118ActualLocalTrainingSamples:neural?neuralResult.trainingExamples:null,
+  v118TrainingIterations:neural?neuralResult.trainingIterations:null,
+  v118TrainingLossFinal:neural?neuralResult.trainingLossFinal:null,
+  v118PretrainedHumanSemanticModelLoaded:false,
+  v118NeuralInferencePerformedOnOriginalPixels:neural,
+  v118SourceLabelsProvidedByUser:neural,
   originalSourceCannotBeClaimedAsFull3D:true,
   v111UserSeededSegmentation:seeded,
   foregroundSeedCount:seeded?v111Seeds.foreground.length:null,
@@ -148,6 +175,21 @@ async function createV110AlphaWorkingCopy(photo,originalImageSha){
   outputRequiresV109ActualGLBAndGPU:true,
   releasePASS:false};
  $('v110-mask-report').textContent=JSON.stringify(evidence,null,2);
+ if(neural){
+  $('v118-report').textContent=JSON.stringify({
+   sourcePhotoSha256:originalImageSha,
+   alphaWorkingImageSha256:maskedImageSha256,
+   weightsSha256:neuralResult.modelWeightsSha256,
+   actualNeuralInferenceExecuted:true,
+   trainingSamples:neuralResult.trainingExamples,
+   trainLossStart:neuralResult.trainingLossFirst,
+   trainLossFinal:neuralResult.trainingLossFinal,
+   foregroundPixels:neuralResult.foregroundPixels,
+   sourceConfidence:'USER_PIXEL_LABELS_ONLY',
+   semanticHumanSegmentationCertified:false,
+   naturalHuman1to1Certified:false,releasePASS:false
+  },null,2);
+ }
  return {maskedPNGBytes,maskedImageSha256,rgba:result.maskedRGBA,evidence};
 }
 $('v110-preview').addEventListener('click',async()=>{
@@ -156,7 +198,7 @@ $('v110-preview').addEventListener('click',async()=>{
   const f=$('photo').files?.[0],photo=await pngFromFile(f),
    sha=await sha256AIGReal3DBytes(photo.bytes);
   const result=await createV110AlphaWorkingCopy(photo,sha);
-  status('V110 前景預覽完成：'+result.evidence.sourceMode+
+  status('前景模型／來源預覽完成：'+result.evidence.sourceMode+
    '。請核對遮罩輪廓；此處未生成深度或背面。');
  }catch(e){
   status('BLOCK：'+String(e?.message??e));
@@ -168,6 +210,13 @@ function omitV117RawPixels(plan){
  const {workingRGBA,...record}=plan;
  return record;
 }
+$('v118-train').addEventListener('click',()=>{
+ if(!$('v118-enable').checked){
+  status('BLOCK：請先勾選 V118 本機神經網路並於原圖標記主體／背景');
+  return;
+ }
+ if(!busy)$('v110-preview').click();
+});
 async function prepareV117SourcePlan(){
  const photo=await pngFromFile($('photo').files?.[0]),
   sourcePhotoSha256=await sha256AIGReal3DBytes(photo.bytes),
@@ -178,6 +227,46 @@ async function prepareV117SourcePlan(){
    await sha256AIGReal3DBytes(external.bytes):null,
   depthSourceSha256=depthFile?
    await sha256AIGReal3DBytes(new Uint8Array(await depthFile.arrayBuffer())):null;
+ if($('v118-enable').checked){
+  if(external||$('v111-enable').checked)
+   throw Error('V118_NEURAL_CONFLICT_WITH_V111_OR_EXTERNAL_MASK');
+  if($('v117-desired').value==='REQUIRE_COMPLETE_3D')
+   return {status:'BLOCK',schema:'REAL3D_V118_NEURAL_ROUTE',
+    code:'SINGLE_VIEW_CANNOT_PROVE_UNOBSERVED_BACKSIDE',
+    nextAction:'V118 真 AI 前景分割無法推導未拍攝背面',
+    actualNeuralModelExecuted:false,productionReleasePASS:false};
+  if(depthSourceSha256&&(!$('depth-confirm').checked||
+   depthSourceSha256===sourcePhotoSha256))
+   throw Error('V118_SEPARATE_DEPTH_EVIDENCE_NOT_CONFIRMED');
+  const inference=await trainAIGReal3DV118LocalNeural({
+   rgba:photo.rgba,width:photo.width,height:photo.height,
+   sourcePhotoSha256,
+   foregroundSeeds:v111Seeds.foreground,
+   backgroundSeeds:v111Seeds.background
+  });
+  return {
+   status:'READY_FOR_TRUE_GLB_GPU',
+   schema:'AIG_REAL3D_V118_ACTUAL_LEARNED_PIXEL_ROUTE_V1',
+   route:'V118_LOCAL_NEURAL_TO_V109_GLTF_V107_GPU',
+   selectedForegroundModule:'V118_LOCALLY_TRAINED_NEURAL_PIXEL_INFERENCE',
+   sourcePhotoSha256,dimensions:[photo.width,photo.height],
+   localNeuralWeightsSha256:inference.modelWeightsSha256,
+   sourceCoverage:{foregroundPixels:inference.foregroundPixels},
+   actualNeuralModelExecuted:true,
+   actualLearnedHumanSemanticRecognition:false,
+   declaredIndependentDepthSha256:depthSourceSha256,
+   geometryType:depthSourceSha256?'OBSERVED_VISIBLE_DEPTH_ONLY_NO_UNKNOWN_BACKSIDE':
+    'FLAT_FRONT_ONLY_2_5D',
+   proposedGPUPoseSweep:[
+    {a:0,b:0,progress:1},{a:90,b:0,progress:1},
+    {a:0,b:90,progress:1},{a:90,b:90,progress:1},
+    {a:45,b:180,progress:.5}
+   ],
+   completeHuman3DOrClothesRecovered:false,
+   unknownBacksideRemainsUnknown:true,
+   productionReleasePASS:false
+  };
+ }
  const plan=planAIGReal3DV117PhotoReconstruction({
   rgba:photo.rgba,width:photo.width,height:photo.height,
   sourcePhotoSha256,
@@ -241,6 +330,17 @@ $('v117-auto').addEventListener('click',async()=>{
   draw();
   const finalReceipt=JSON.parse($('receipt').textContent);
   finalReceipt.v117ActualFivePoseGPUGate=checked;
+  if(plan.localNeuralWeightsSha256){
+   finalReceipt.v118ActualNeuralInferenceAndGPUGate={
+    modelWeightsSha256:plan.localNeuralWeightsSha256,
+    neuralWeightsActuallyTrainedAndExecuted:true,
+    userAnnotatedPhotoPixelsRequired:true,
+    actual5PoseGPUPASS:checked.checkedRealGPUFrames===5,
+    pretrainedHumanSemanticWeightsPresent:false,
+    completePhotorealisticHuman3D:false,
+    productionReleasePASS:false
+   };
+  }
   report(finalReceipt);
   $('v117-inspection-report').textContent=JSON.stringify(checked,null,2);
   status('V117 五軸真 GPU 五姿態來源一致性 PASS；人體 1:1、深度缺口與未知背面仍 BLOCK。');
@@ -295,6 +395,8 @@ async function runReal3DPhotoBuild({v117Plan=null}={}){
     'INTERACTIVE_COLOR_CONNECTED_NOT_NEURAL_AI':v117Plan.selectedForegroundModule;
    if(v110.evidence.sourceMode!==expectedMode||
     v117Plan.sourceCoverage.foregroundPixels!==v110.evidence.foregroundPixels||
+    (v117Plan.localNeuralWeightsSha256??null)!==
+     (v110.evidence.v118ModelWeightsSha256??null)||
     (v117Plan.sourceCoverage.externalMaskSha256??null)!==
       (v110.evidence.independentExternalMaskSha256??null))
     throw Error('V117_SOURCE_MASK_CHANGED_AFTER_PLANNING');
