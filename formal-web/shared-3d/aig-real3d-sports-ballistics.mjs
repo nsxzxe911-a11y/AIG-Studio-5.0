@@ -242,7 +242,7 @@ export function simulateAIGReal3DSportBall({
   diagnostics:{
    actualIntegratedSubsteps:substeps,
    actuallyMoving3DPositions:movement,
-   3dPhysicsComputed:true,
+   threeDimensionalPhysicsComputed:true,
    airDragAndMagnusApproximation:true,
    impactsResolveContinuousPlaneCrossings:true,
    actorContactRequiresProvidedVerifiedGeometry:false,
