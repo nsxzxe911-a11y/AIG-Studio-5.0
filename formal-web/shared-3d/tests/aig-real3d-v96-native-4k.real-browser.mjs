@@ -77,6 +77,13 @@ try{
    distance:4,focus:[0,.84,0],orthoSpan:2.15});
   try{
    out.candidate.rig.updateGPU(renderer,.5);
+   renderer.setColorPipeline('LEGACY');
+   const originalColor=await renderer.captureNativePNG(
+    out.candidate.rig.workingScene,{width:640,height:640});
+   renderer.setColorPipeline('FILM_SDR');
+   const filmColor=await renderer.captureNativePNG(
+    out.candidate.rig.workingScene,{width:640,height:640});
+   const filmColorPipeline=renderer.getColorPipeline();
    const camera=renderer.getCamera();
    const detail=PIPE.auditAIGReal3D4KSourceProjection({
     scene:out.candidate.rig.workingScene,sourceSha256:sha,camera
@@ -93,6 +100,9 @@ try{
    return {schema:native.schema,width:native.width,height:native.height,
     pixels:native.nativeFramePixels,realGpu:native.trueGPUReadPixels,
     pngSha:native.sha256,sourceImageSha:sha,
+    legacyPreviewSHA:originalColor.sha256,filmSDRPreviewSHA:filmColor.sha256,
+    actualFilmSDRShaderApplied:filmColorPipeline.mode==='FILM_SDR',
+    noFalseHDR10:filmColorPipeline.measuredHDR10BitDepth===false,
     sourceTriangles:originalTriangles,
     trianglesPreserved:originalTriangles===out.candidate.mesh.triangleCount,
     originalSourcePositionsUnmodified:
@@ -106,6 +116,9 @@ try{
     finalCinemaAccepted:native.releasePASS};
   }finally{renderer.destroy();}
  });
+ assert.notEqual(proof.legacyPreviewSHA,proof.filmSDRPreviewSHA);
+ assert.equal(proof.actualFilmSDRShaderApplied,true);
+ assert.equal(proof.noFalseHDR10,true);
  assert.equal(proof.width,3840);assert.equal(proof.height,2160);
  assert.equal(proof.pixels,8294400);assert.equal(proof.realGpu,true);
  assert.equal(proof.noUpscaling,true);
