@@ -1057,7 +1057,7 @@ try{
   'v -0.25 0.4 0.45',
   'f 1 2 3',
   'f 1 3 4'
- ].join('\\n'),'utf8');
+ ].join('\n'),'utf8');
  const garmentSHA=createHash('sha256').update(qaClothing).digest('hex');
  await page.locator('#coat-garment-files').setInputFiles([{
   name:'V86-NONHUMAN-INDEPENDENT-QA-CLOTHING.obj',
