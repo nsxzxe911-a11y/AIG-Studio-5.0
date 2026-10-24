@@ -73,7 +73,10 @@ export function mountAIGReal3DSixSourceSolidControls({
     background:[.04,.06,.08,1]
    });
    if(renderer.status!=='READY')throw Error('真 WebGL 六視角不可用');
-   renderer.setInspectionMode('LIT');
+   // Flat original box sides may have only a few LIT colors. The existing
+   // NORMALS mode uses an actual original-triangle GPU readback with a
+   // nonblank foreground test; it never synthesizes hidden side geometry.
+   renderer.setInspectionMode('NORMALS');
    const box=g.positions;
    let minY=Infinity,maxY=-Infinity;
    for(let i=1;i<box.length;i+=3){
@@ -106,7 +109,7 @@ export function mountAIGReal3DSixSourceSolidControls({
     report.originalSixFaceGPUViews.push({
      side:view.id,width:image.width,height:image.height,
      sha256:image.sha256,sourceSha256:source.sha256,
-     genuineOriginalGPUReadback:true
+     inspectionMode:'NORMALS',genuineOriginalGPUReadback:true
     });
    }
    report.originalSixFaceGPUReadbackPASS=true;
