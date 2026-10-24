@@ -1184,6 +1184,132 @@ try{
  assert.equal(nextMaterial.selectedRecipeId,'other_metal');
  assert.equal(nextMaterial.fullGPUShadersRecompiledPerRecipe,0);
  assert.equal(nextMaterial.originalGPUBufferReallocationsBetweenMaterialChanges,0);
+ // V88 genuine user-authored per-vertex UV0 sidecar, tangent-space normal
+ // texture, mapped albedo and shared clearcoat. 48x48 source-authored
+ // NONHUMAN curved indexed QA surface, original geometry remains immutable.
+ assert.equal(await page.locator('#texture-node-run').isDisabled(),false);
+ await page.locator('#texture-node-run').click();
+ assert.match(await page.locator('#texture-node-status').textContent(),
+  /BLOCK：.*UV/);
+ const textureV88=await page.evaluate(async()=>{
+  const C=await import('./aig-real3d-core.mjs');
+  const T=await import('./aig-real3d-material-texture-nodes.mjs');
+  const R=await import('./aig-real3d-webgl.mjs');
+  const Recipes=await import('./aig-real3d-material-recipe-engine.mjs');
+  const side=48,positions=[],normals=[],uvs=[],indices=[],pi=Math.PI;
+  for(let y=0;y<side;y++)for(let x=0;x<side;x++){
+   const u=x/(side-1),v=y/(side-1),
+    z=.12*Math.sin(u*2*pi)*Math.cos(v*2*pi),
+    dx=.12*2*pi*Math.cos(u*2*pi)*Math.cos(v*2*pi),
+    dy=-.12*2*pi*Math.sin(u*2*pi)*Math.sin(v*2*pi),
+    m=Math.hypot(dx,dy,1);
+   positions.push(u-.5,v-.5,z);
+   normals.push(-dx/m,-dy/m,1/m);
+   uvs.push(u,v);
+  }
+  for(let y=0;y<side-1;y++)for(let x=0;x<side-1;x++){
+   const a=y*side+x,b=a+1,c=a+side,d=c+1;
+   indices.push(a,b,d,a,d,c);
+  }
+  const mesh=C.createAIG3DMesh({
+   positions,normals,indices,provenance:'NONHUMAN_ORIGINAL_UV_AUTHOR_QA'
+  }),originals=[...mesh.positions],originalIndices=[...mesh.indices];
+  const scene=C.createAIG3DScene({
+   id:'v88_uv_normal_qa',consumer:'FastModel',units:'METERS',
+   source:'ORIGINAL_NONHUMAN_TRIANGULATED_SOURCE_QA'
+  });
+  C.addAIG3DNode(scene,{
+   id:'original_surface',kind:'character',mesh,
+   material:{baseColor:[.73,.62,.48,1],metallic:0,roughness:.6}
+  });
+  const pattern=(normal)=>({
+   width:8,height:8,
+   pixels:Array.from({length:64},(_,i)=>
+    normal?[i%2?135:120,Math.floor(i/8)%2?155:115,245,255]:
+    [i%2?38:242,Math.floor(i/8)%2?80:182,100,255]).flat()
+  });
+  const mapped=T.compileAIGReal3DTextureNodes({
+   mesh,uvCoordinates:uvs,sourceSha256:'a'.repeat(64),
+   uvSourceSha256:'b'.repeat(64),
+   uvManifestSourceSha256:'a'.repeat(64),
+   albedoImage:pattern(false),normalImage:pattern(true),
+   normalStrength:.85,clearcoat:.5
+  });
+  const library=Recipes.AIG_REAL3D_V87_SAMPLE_LIBRARY;
+  const compiled=Recipes.compileAIGReal3DMaterialRecipe(library.recipes[1]);
+  const recipeScene=Recipes.applyAIGReal3DMaterialRecipe({
+   scene,compiled
+  }).scene;
+  const textured=T.applyAIGReal3DTextureNodes({
+   scene:recipeScene,nodeId:'original_surface',mapped
+  });
+  const canvas=document.createElement('canvas');canvas.width=640;canvas.height=640;
+  const renderer=R.createAIG3DRenderer(canvas,{
+   quality:'balanced',pixelRatio:1,maxTriangles:200000,
+   background:[.05,.08,.11,1]
+  });
+  if(renderer.status!=='READY')throw Error('V88_REAL_GL_REQUIRED');
+  renderer.setInspectionMode('LIT');
+  renderer.setCamera({projection:'orthographic',yaw:.12,pitch:.1,
+   orthoSpan:1.55,distance:2.7,focus:[0,0,0]});
+  let outcome;
+  try{
+   const before=await renderer.captureNativePNG(scene,{width:640,height:640});
+   const beforeResources=renderer.getGPUResourceAccounting();
+   const after=await renderer.captureNativePNG(textured,{width:640,height:640});
+   const afterResources=renderer.getGPUResourceAccounting();
+   const anchor=document.createElement('a');
+   anchor.id='v88-original-gpu-download';anchor.download='NONHUMAN-V88-UV-TANGENT-NORMAL-GPU.png';
+   anchor.href=URL.createObjectURL(after.blob);anchor.textContent='V88 original source GPU';
+   document.body.append(anchor);
+   outcome={schema:'AIG_REAL3D_V88_UV_NORMAL_REAL_GPU_QA_V1',
+    actualOriginalTriangles:mesh.triangleCount,
+    genuineGpuImagesBeforeAfter:[{sha256:before.sha256,width:before.width,height:before.height},
+     {sha256:after.sha256,width:after.width,height:after.height}],
+    v87RecipeAndV88UVCooperate:true,
+    sourceGeometryUntouched:JSON.stringify(mesh.positions)===JSON.stringify(originals)&&
+     JSON.stringify(mesh.indices)===JSON.stringify(originalIndices),
+    actualFirstOriginalGLBufferCount:beforeResources.activeTrackedOwnedGPUBufferCount,
+    additionalMappedUVTangentBuffers:
+     afterResources.totalOwnedGPUBuffersCreated-beforeResources.totalOwnedGPUBuffersCreated,
+    additionalOriginalXYZNormalIndexReuploads:
+     afterResources.fullBufferDataUploads-beforeResources.fullBufferDataUploads-2,
+    actualRGBAAlbedoNormalTexturesCreated:
+     afterResources.actualMaterialTexturesCreated-beforeResources.actualMaterialTexturesCreated,
+    originalReferenceIdentityRetained:
+     mapped.mappedMesh.positions===mesh.positions&&mapped.mappedMesh.indices===mesh.indices,
+    normalizedTangentCount:mapped.mappedMesh.tangents.length/4,
+    physicalGlassesRefractionOrSubsurfacePASS:false,
+    humanDogAnatomyPASS:false,
+    releasePASS:false};
+  }finally{renderer.destroy();}
+  return outcome;
+ });
+ assert.equal(textureV88.schema,'AIG_REAL3D_V88_UV_NORMAL_REAL_GPU_QA_V1');
+ assert.ok(textureV88.actualOriginalTriangles>2000);
+ assert.equal(textureV88.actualFirstOriginalGLBufferCount,3);
+ assert.equal(textureV88.additionalMappedUVTangentBuffers,2);
+ assert.equal(textureV88.additionalOriginalXYZNormalIndexReuploads,0);
+ assert.equal(textureV88.actualRGBAAlbedoNormalTexturesCreated,2);
+ assert.equal(textureV88.originalReferenceIdentityRetained,true);
+ assert.equal(textureV88.sourceGeometryUntouched,true);
+ assert.equal(textureV88.v87RecipeAndV88UVCooperate,true);
+ assert.equal(textureV88.genuineGpuImagesBeforeAfter.length,2);
+ assert.notEqual(textureV88.genuineGpuImagesBeforeAfter[0].sha256,
+  textureV88.genuineGpuImagesBeforeAfter[1].sha256);
+ assert.equal(textureV88.physicalGlassesRefractionOrSubsurfacePASS,false);
+ const v88Download=page.waitForEvent('download',{timeout:30000});
+ await page.locator('#v88-original-gpu-download').click();
+ const v88Png=await v88Download;
+ const v88bytes=await readFile(await v88Png.path());
+ assert.equal(v88bytes.readUInt32BE(16),640);
+ assert.equal(v88bytes.readUInt32BE(20),640);
+ assert.equal(createHash('sha256').update(v88bytes).digest('hex'),
+  textureV88.genuineGpuImagesBeforeAfter[1].sha256);
+ await copyFile(await v88Png.path(),
+  dir+'/NONHUMAN-V88-UV-TANGENT-NORMAL-GPU.png');
+ await writeFile(dir+'/NONHUMAN-V88-SHARED-SHADER-UV-MAPS-SHA.json',
+  JSON.stringify(textureV88,null,2));
  assert.deepEqual(errors,[]);
  await page.screenshot({path:dir+'/DENSE-SOURCE-ORIGINAL-GPU-INTAKE.png',fullPage:true});
  await writeFile(dir+'/proof.json',JSON.stringify({
@@ -1194,7 +1320,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_V87_USER_JSON_MATERIAL_RECIPES_SAME_GPU_SHADER_NO_REUPLOAD_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_V88_SOURCE_UV_TANGENT_NORMAL_MAP_CLEARCOAT_SHARED_SHADER_REAL_GPU_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;
