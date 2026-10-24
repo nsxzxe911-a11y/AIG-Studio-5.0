@@ -48,6 +48,10 @@ on:
       - 'formal-web/shared-3d/aig-real3d-material-texture-ui.mjs'
       - 'formal-web/shared-3d/aig-real3d-multiview-projection*.mjs'
       - 'formal-web/shared-3d/aig-real3d-sports-*.mjs'
+      - 'formal-web/shared-3d/aig-real3d-rig-wrap-contact.mjs'
+      - 'formal-web/shared-3d/aig-real3d-rig-sport-film*.mjs'
+      - 'formal-web/shared-3d/aig-real3d-rig-sport-film-lab.html'
+      - 'formal-web/shared-3d/aig-real3d-v92-qa-fixture.mjs'
       - 'formal-web/shared-3d/aig-real3d-sports-film-lab.html'
       - 'formal-web/shared-3d/aig-real3d-six-sided-source-ui.mjs'
       - 'formal-web/shared-3d/aig-sixdof-geoglobe-*.mjs'
@@ -75,6 +79,8 @@ on:
       - 'formal-web/shared-3d/tests/aig-real3d-material-texture-nodes.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-multiview-projection*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-sports*.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-rig*.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-v92*.mjs'
       - 'formal-web/shared-3d/tests/aig-sixdof-geoglobe-space.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-fast-sparse-fk.test.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-curved-junction-working-copy.test.mjs'
@@ -102,8 +108,14 @@ on:
       - 'formal-web/shared-3d/aig-real3d-render-inspection*'
       - 'formal-web/shared-3d/aig-real3d-human-brown-render-lab*'
       - 'formal-web/shared-3d/aig-real3d-sports-*.mjs'
+      - 'formal-web/shared-3d/aig-real3d-rig-wrap-contact.mjs'
+      - 'formal-web/shared-3d/aig-real3d-rig-sport-film*.mjs'
+      - 'formal-web/shared-3d/aig-real3d-rig-sport-film-lab.html'
+      - 'formal-web/shared-3d/aig-real3d-v92-qa-fixture.mjs'
       - 'formal-web/shared-3d/aig-real3d-sports-film-lab.html'
       - 'formal-web/shared-3d/tests/aig-real3d-sports*.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-rig*.mjs'
+      - 'formal-web/shared-3d/tests/aig-real3d-v92*.mjs'
       - 'formal-web/shared-3d/tests/aig-real3d-multiview-projection.real-browser.mjs'
       - 'formal-web/shared-3d/aig-real3d-reference-silhouette*.mjs'
       - 'formal-web/shared-3d/aig-real3d-native-anatomy-*.mjs'
@@ -258,6 +270,13 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-sports-film-lab.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-sports-film.real-browser.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-sports-ballistics.test.mjs
+          node --check formal-web/shared-3d/aig-real3d-rig-wrap-contact.mjs
+          node --check formal-web/shared-3d/aig-real3d-rig-sport-film.mjs
+          node --check formal-web/shared-3d/aig-real3d-v92-qa-fixture.mjs
+          node --check formal-web/shared-3d/aig-real3d-rig-sport-film-lab.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-rig-sport-film.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-rig-wrap-contact.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v92-rig-sport-film.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-v90-obj-vt-bvh-film.test.mjs
           node --test formal-web/shared-3d/tests/aig-sixdof-geoglobe-space.test.mjs
           node --check formal-web/shared-3d/tests/aig-real3d-dense-source.real-browser.mjs
@@ -308,6 +327,7 @@ jobs:
           node formal-web/shared-3d/tests/aig-real3d-dense-source.real-browser.mjs
           node formal-web/shared-3d/tests/aig-real3d-multiview-projection.real-browser.mjs
           node formal-web/shared-3d/tests/aig-real3d-sports-film.real-browser.mjs
+          node formal-web/shared-3d/tests/aig-real3d-rig-sport-film.real-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -319,4 +339,5 @@ jobs:
             artifacts/aig-real3d-dense-original-source/
             artifacts/aig-real3d-v89-calibrated-multiview/
             artifacts/aig-real3d-v91-sports-film-gpu/
+            artifacts/aig-real3d-v92-source-rig-sport-film/
           if-no-files-found: warn
