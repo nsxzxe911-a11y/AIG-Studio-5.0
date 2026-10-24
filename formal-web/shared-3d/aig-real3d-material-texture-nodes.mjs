@@ -79,6 +79,7 @@ export function compileAIGReal3DTextureNodes({
   four.push(...unit,handedness);
  }
  const mappedMesh={...mesh,
+  originalSourceGeometryMesh:mesh,
   // Original positions/normals/indices are reused by REFERENCE.
   uvs:[...uvCoordinates],tangents:four,
   materialSourceUVSha256:uvSourceSha256};
