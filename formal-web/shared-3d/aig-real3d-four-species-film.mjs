@@ -60,7 +60,7 @@ export function createAIGReal3DFourSpeciesFilm({secondary,sportFilm}={}){
    GPUStable60FPSMeasured:false,releasePASS:false})};
 }
 export async function recordAIGReal3DFourSpeciesWebM({
- film,renderer,canvas,requestFrame=typeof requestAnimationFrame==='function'?
+ film,renderer,canvas,renderOptions=null,requestFrame=typeof requestAnimationFrame==='function'?
   requestAnimationFrame:null,preRender=null
 }={}){
  if(film?.schema!==AIG_REAL3D_V93_FILM_SCHEMA||
@@ -69,7 +69,8 @@ export async function recordAIGReal3DFourSpeciesWebM({
   typeof requestFrame!=='function'||
   typeof MediaRecorder!=='function'||
   typeof MediaRecorder.isTypeSupported!=='function'||
-  (preRender!==null&&typeof preRender!=='function'))
+  (preRender!==null&&typeof preRender!=='function')||
+  (renderOptions!==null&&(typeof renderOptions!=='object'||Array.isArray(renderOptions))))
   fail('MOVIE_NATIVE_ENCODER_UNAVAILABLE');
  const type=['video/webm;codecs=vp8','video/webm'].find(m=>MediaRecorder.isTypeSupported(m));
  if(!type)fail('ACTUAL_WEBM_CODEC_NOT_SUPPORTED');
@@ -95,7 +96,7 @@ export async function recordAIGReal3DFourSpeciesWebM({
     idx=Math.min(film.frameCount-1,Math.floor(elapsed*film.fps+1e-8));
    if(idx<=last)continue;
    if(preRender)preRender(film.frameAt(idx));
-   film.renderFrame(renderer,idx);
+   film.renderFrame(renderer,idx,renderOptions??{});
    track.requestFrame();rendered++;last=idx;
    if(elapsed>film.durationSec+3)fail('ACTUAL_WEBM_REALTIME_OVERRUN');
   }
