@@ -9,6 +9,8 @@ import {createAIGNativeAnatomyAnnotation}
  from './aig-real3d-native-anatomy-annotation.mjs';
 import {auditAIGNativeOBJLocalSurface}
  from './aig-real3d-local-surface-topology.mjs';
+import {auditAIGReal3DSourceGeometryDetail}
+ from './aig-real3d-source-geometry-detail.mjs';
 import {projectAIGSourceDefectEdges}
  from './aig-real3d-source-defect-projection.mjs';
 import {createAIGSourceDefectOverlay}
@@ -158,6 +160,8 @@ $('inspect').addEventListener('click',async()=>{
  release();gallery.replaceChildren();$('reference-gallery').replaceChildren();
  $('anatomy-gallery').replaceChildren();$('anatomy-region-table').replaceChildren();
  $('surface-table').replaceChildren();
+ $('detail-geometry-table').replaceChildren();
+ $('detail-geometry-status').textContent='尚無可信來源 OBJ／21 點真網格標記；模型局部幾何精度 BLOCK。';
  $('defect-gallery').replaceChildren();
  $('defect-stats').textContent='來源異常邊尚未確認；診斷限定原始 OBJ。';
  $('surface-stats').textContent='未提供可驗證的原始 OBJ 網格標記，局部接合技術 Gate BLOCK。';
@@ -348,7 +352,7 @@ $('inspect').addEventListener('click',async()=>{
     silhouetteResults.push(data.diagnostic);
    }catch(e){silhouetteProblems.push({angle,error:e.message});}
   }
-  let anatomicalProjection=null,localSurface=null,sourceDefectOverlay=null;
+  let anatomicalProjection=null,localSurface=null,sourceDefectOverlay=null,sourceGeometryDetail=null;
   const markerGateOK=isOBJ&&evidence.landmarkAudit?.complete===true&&
    landmarks!==null;
   if(markerGateOK){
@@ -357,6 +361,37 @@ $('inspect').addEventListener('click',async()=>{
    localSurface=auditAIGNativeOBJLocalSurface({
     objText,landmarks,heightMm,upAxis:axis,sourceSha256:hash
    });
+   sourceGeometryDetail=auditAIGReal3DSourceGeometryDetail({
+    scene,localSurface,sourceSha256:hash,
+    claimedCaptureMethod:$('capture-method').value
+   });
+   const detailTable=document.createElement('table');
+   const header=document.createElement('thead'),headTr=document.createElement('tr');
+   for(const title of ['原始 3D 區域','原始三角面數',
+    '最長邊 P95 mm','面積 P95 mm²','面片折角 P95°',
+    '可疑未焊接邊界點對','缺陷／曲面警示']){
+    const th=document.createElement('th');th.textContent=title;headTr.append(th);
+   }
+   header.append(headTr);detailTable.append(header);
+   const data=document.createElement('tbody');
+   for(const region of sourceGeometryDetail.regions){
+    const tr=document.createElement('tr');tr.dataset.region=region.regionId;
+    const values=[region.label,region.actualSourceTrianglesTouchingRadius,
+     region.localTriangleMaxEdgeP95Mm??'無',
+     region.localSourceTriangleAreaP95Mm2??'無',
+     region.adjacentFaceBendP95Degrees??'無',
+     region.nearCoincidentDifferentIndexBoundaryPairs,
+     region.warningCodes.join('、')||'未發現本類技術異常'];
+    for(const value of values){
+     const td=document.createElement('td');td.textContent=String(value);tr.append(td);
+    }
+    data.append(tr);
+   }
+   detailTable.append(data);$('detail-geometry-table').append(detailTable);
+   $('detail-geometry-status').textContent='原始 Indexed XYZ 真曲面已分析五個區域；'+
+    sourceGeometryDetail.regionsRequiringReview+
+    '/5 區需要技術複核。掃描來源尚未獨立驗真，'+
+    '三角面密度不等於真人臉部／手腳完成，4K 不會增加來源幾何。';
    $('surface-stats').textContent='五個來源標記區域的網格拓樸已分析。技術異常：'+
     localSurface.regions.filter(r=>r.anomalyCodes.length).length+'/5；'+
     '這不驗證五指、足趾或臉部自然性。';
@@ -551,6 +586,7 @@ $('inspect').addEventListener('click',async()=>{
    '…；請選擇第二份 OBJ 並開始差異比較。':
    '缺少經原始 OBJ 網格審核的標記，修復前／後比較 BLOCK。';
   report={...result,sourceReview,anatomicalProjection,localSurfaceTopology:localSurface,
+   sourceGeometryDetail,
    sourceDefectOverlay,silhouetteComparison:{
    ...summary,images:silhouetteResults,errors:silhouetteProblems,
    transparentReferencesUploaded:selected.length,
