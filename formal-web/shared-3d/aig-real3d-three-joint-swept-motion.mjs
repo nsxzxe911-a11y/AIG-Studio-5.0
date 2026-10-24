@@ -120,7 +120,7 @@ function validate(dense,junction,m){
  return {e,g,m,pivots,axes,weights,snap,activeSourceIds,
   affectedTriangleOffsets,originalTriangleCount:g.indices.length/3};
 }
-function deform(prep,angleDegrees){
+function deform(prep,angleDegrees,output=null){
  const {g,pivots,axes,weights}=prep,angles=angleDegrees.map(x=>x*Math.PI/180);
  const middlePivot=rotate(pivots[1],pivots[0],axes[0],angles[0]),
   middleAxis=rotateAxis(axes[1],axes[0],angles[0]);
@@ -128,7 +128,12 @@ function deform(prep,angleDegrees){
   distalPivot=rotate(distalParent,middlePivot,middleAxis,angles[1]);
  const distalAxis=rotateAxis(rotateAxis(axes[2],axes[0],angles[0]),
   middleAxis,angles[1]);
- const source=g.positions,positions=new Float32Array(source);
+ const source=g.positions;
+ if(output!==null&&(!(output instanceof Float32Array)||
+  output.length!==source.length||output===source))
+  fail('REUSED_POSITION_BUFFER_INVALID');
+ const positions=output??new Float32Array(source);
+ if(output)positions.set(source);
  let moved=0,maxMovement=0;
  for(const i of prep.activeSourceIds){
   const a=weights[0][i],b=weights[1][i],c=weights[2][i];
@@ -254,10 +259,25 @@ export function createAIGReal3DThreeJointTimeline({
   runtimeImageGPUChunksStillRebuiltPerCapture:true,
   noBenchmarkedFPSAssertion:true
  };
+ // Two bounded alternating temporary buffers hold only non-display poses.
+ // Display frames remain immutable for GPU screenshots; no source mutation.
+ const reusableBuffers=retainAllSourcePoses?[]:[
+  new Float32Array(prep.g.positions.length),
+  new Float32Array(prep.g.positions.length)
+ ];
+ let scratchWrites=0,reusedScratchWrites=0;
  const frames=[];let previousPositions=null,observedContact=false,unfinished=false,sweptRisk=false,
   unsafeStrain=false,inverted=false,maxStretch=0;
  for(let i=0;i<=steps;i++){
-  const t=i/steps,angles=targetAnglesDeg.map(a=>a*t),pose=deform(prep,angles),
+  const t=i/steps,angles=targetAnglesDeg.map(a=>a*t);
+  const displayed=displays.includes(i);
+  const scratch=retainAllSourcePoses||displayed?null:
+   reusableBuffers[0]===previousPositions?reusableBuffers[1]:reusableBuffers[0];
+  if(scratch){
+   if(scratchWrites>=2)reusedScratchWrites++;
+   scratchWrites++;
+  }
+  const pose=deform(prep,angles,scratch),
    deformation=strain(prep.g.positions,pose.positions,prep.g.indices,
     prep.affectedTriangleOffsets);
   const contact=inspectAIGReal3DLocalSourceTriangleContact({
@@ -279,7 +299,7 @@ export function createAIGReal3DThreeJointTimeline({
    sampleIndex:i,timeFraction:round(t),anglesDeg:angles.map(round),
    worldJointPivots:pose.worldJointPivots,
    worldJointAxes:pose.worldJointAxes,
-   workingCopyPositions:retainAllSourcePoses||displays.includes(i)?
+   workingCopyPositions:retainAllSourcePoses||displayed?
     pose.positions:null,
    movedOriginalVertices:pose.moved,maxMovementMm:pose.maxMovementMm,
    deformation,contact,sweptRiskFromPriorSample:swept
@@ -297,7 +317,10 @@ export function createAIGReal3DThreeJointTimeline({
    numberOfFullXYZFramesRetained:retainAllSourcePoses?steps+1:displays.length,
    discardedIntermediateFullXYZFrames:retainAllSourcePoses?0:steps+1-displays.length,
    neighboringPoseKeptTemporarilyForSweptRisk:true,
-   gpuVisibleFrameOriginalXYZAlwaysRetained:true
+   gpuVisibleFrameOriginalXYZAlwaysRetained:true,
+   scratchPoseFloat32BuffersAllocated:retainAllSourcePoses?0:2,
+   offscreenScratchBuffersActuallyReused:reusedScratchWrites,
+   noSourcePositionsModifiedByBufferPool:true
   },
   frameCount:frames.length,displayFrameIndexes:displays,
   maxActualAngularSampleStepDeg:round(
