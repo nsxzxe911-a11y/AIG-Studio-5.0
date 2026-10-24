@@ -98,9 +98,22 @@ try{
   return a&&!a.disabled&&(s?.dataset.ready==='true'||s?.textContent?.startsWith('BLOCK'));
  },null,{timeout:210000});
  const status=await page.locator('#status').textContent();
- assert.equal(await page.locator('#status').getAttribute('data-ready'),'true',status);
+ assert.equal(await page.locator('#status').getAttribute('data-ready'),'false',status);
+ assert.match(status,/BLOCK：合成非人體 QA 模型/);
+ assert.match(await page.locator('#shape-envelope-stats').textContent(),
+  /非人體合成橢球/);
+ assert.match(await page.locator('#shape-envelope-metrics').textContent(),/最大寬度 83[89] mm/);
+ assert.match(await page.locator('#shape-envelope-metrics').textContent(),/側面最大厚度 50[34] mm/);
  const proof=JSON.parse(await page.locator('#evidence').textContent());
  assert.equal(proof.sourceReview.model.format,'OBJ');
+ assert.ok(Math.abs(proof.sourceShapeEnvelope.boundingMillimeters.frontMaxWidthX-840)<2);
+ assert.ok(Math.abs(proof.sourceShapeEnvelope.boundingMillimeters.sideMaxDepthZ-504)<2);
+ assert.equal(proof.sourceShapeEnvelope.boundingMillimeters.heightY,1680);
+ assert.equal(proof.sourceShapeEnvelope.ratios.frontMaxWidthToSideDepth,1.6667);
+ assert.equal(proof.sourceShapeEnvelope.wideFrontEnvelopeNeedsPoseAndReferenceReview,true);
+ assert.equal(proof.sourceShapeEnvelope.fixtureExplicitlySyntheticNonhuman,true);
+ assert.equal(proof.sourceShapeEnvelope.noAutonomousBodyResizing,true);
+ assert.equal(proof.sourceShapeEnvelope.releasePASS,false);
  assert.equal(proof.sourceReview.model.sha256,hash);
  assert.equal(proof.sourceReview.computedEvidence.nativeMeshGeometryGatePASS,true);
  assert.equal(proof.sourceReview.computedEvidence.fourRealGpuOrthographicAnglesCaptured,true);
@@ -266,6 +279,14 @@ try{
  const compared=JSON.parse(await page.locator('#evidence').textContent());
  const diff=compared.beforeAfterComparison;
  assert.equal(diff.beforeSha256,brokenSha);
+ assert.ok(Math.abs(diff.sourceShapeBeforeAfter.before.frontMaxWidthX-840)<2);
+ assert.equal(diff.sourceShapeBeforeAfter.after.frontMaxWidthX,diff.sourceShapeBeforeAfter.before.frontMaxWidthX);
+ assert.ok(Math.abs(diff.sourceShapeBeforeAfter.before.sideMaxDepthZ-504)<2);
+ assert.equal(diff.sourceShapeBeforeAfter.after.sideMaxDepthZ,diff.sourceShapeBeforeAfter.before.sideMaxDepthZ);
+ assert.equal(diff.sourceShapeBeforeAfter.sameVisibleBoundingEnvelopeAcrossSources,true);
+ assert.equal(diff.sourceShapeBeforeAfter.humanNaturalAppearancePASS,false);
+ assert.match(await page.locator('#repair-compare-stats').textContent(),
+  /寬度 83[89](?:\.\d+)?→83[89](?:\.\d+)? mm/);
  assert.equal(diff.afterSha256,hash);
  assert.ok(diff.globalBefore.openEdges>0);
  assert.equal(diff.globalAfter.openEdges,0);
@@ -325,6 +346,8 @@ try{
   clickSourceTrueDefectEdgeDisplaysXYZ:true,
   twoIndependentOBJFilesImmutableRepairDiffAndFourTrueGPUPairs:true,
   identicalSourceHashRejected:true,
+  syntheticEllipsoid84cmFrontWidthExplicitlyFlaggedAsNonhuman:true,
+  topologyRepairDidNotChangeFatFrontWidth:true,
   referencePictureWasSyntheticNotHuman:true,
   automaticHumanAppearanceApproval:false,
   noSyntheticHumanReconstruction:true,

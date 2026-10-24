@@ -60,10 +60,15 @@ try{
   return !btn?.disabled&&(status?.dataset.ready==='true'||status?.textContent?.startsWith('BLOCK'));
  },null,{timeout:210000});
  const stat=await page.locator('#status').textContent();
- assert.equal(await page.locator('#status').getAttribute('data-ready'),'true',stat);
+ assert.equal(await page.locator('#status').getAttribute('data-ready'),'false',stat);
+ assert.match(stat,/BLOCK：合成非人體 QA 模型/);
+ assert.match(await page.locator('#shape-envelope-stats').textContent(),/非人體合成橢球/);
  const evidence=JSON.parse(await page.locator('#evidence').textContent());
  assert.equal(evidence.schema,'AIG_REAL3D_FRAME_GEOMETRY_FIRST_V1');
  assert.equal(evidence.originalGLB.renderGeometryPASS,true);
+ assert.equal(evidence.sourceShapeEnvelope.fixtureExplicitlySyntheticNonhuman,true);
+ assert.equal(evidence.sourceShapeEnvelope.releasePASS,false);
+ assert.equal(evidence.sourceShapeEnvelope.geometryWasModified,false);
  assert.equal(evidence.sharedWebGLBloomPresent,false);
  assert.equal(evidence.baseSourceUnchanged,true);
  assert.equal(evidence.geometry.anatomicalVisualApproval,false);
