@@ -75,6 +75,11 @@ test('V110 accepts already transparent alpha without claiming neural inference',
  const result=extractAIGReal3DV110Foreground(input);
  assert.equal(result.sourceMode,'ORIGINAL_ALPHA_ALREADY_SEGMENTED');
  assert.equal(result.foreground,45*87);
+ // V109 original transparent PNG may contain semitransparent antialiasing.
+ input.rgba[(21*128+44)*4+3]=127;
+ const soft=extractAIGReal3DV110Foreground(input);
+ assert.equal(soft.maskedRGBA[(21*128+44)*4+3],127);
+ assert.equal(soft.sourceMode,'ORIGINAL_ALPHA_ALREADY_SEGMENTED');
 });
 test('V110 blocks separate subject islands even if border is uniform',()=>{
  const input=source();
