@@ -1,0 +1,58 @@
+name: Real3D V99 Native AI Geometry Source and 4K GPU Gate
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v99-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v99-*'
+      - 'docs/REAL3D-V99-*'
+      - '.github/workflows/aig-real3d-v99-native-ai-geometry-source-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: real3d-v99-native-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Actual binary generated GLB original triangle source / SHA / adapter source Gate
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-v99-native-model-ingest.mjs
+          node --check formal-web/shared-3d/aig-real3d-v99-ai-inference-adapter.mjs
+          node --check formal-web/shared-3d/aig-real3d-v99-native-source-lab.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-v99-source.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v99-native-model-ingest.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v98-unified-source-projection.test.mjs
+  true-native-4k-gpu:
+    needs: source
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install true WebGL Chromium
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Verify actual uploaded GLB source and original 3840x2160 GPU frame
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v99-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v99-native-source-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v99-source.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V99-Real-GLB-Original-Geometry-4K-GPU
+          path: artifacts/aig-real3d-v99-native/
+          if-no-files-found: warn
