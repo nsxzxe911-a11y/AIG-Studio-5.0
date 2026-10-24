@@ -189,7 +189,7 @@ export function createAIGReal3DBiomechanicalAttachments({
   }))],revision:rig.workingScene.revision+1};
  let initialized=false,draws=0,subUploads=0;
  function renderFrame(renderer,timeSec,{
-  visibleAttachmentIds=null,visibleRigNodeIds=null
+  visibleAttachmentIds=null,visibleRigNodeIds=null,deferDraw=false
  }={}){
   if(typeof renderer?.render!=='function'||
    typeof renderer?.updateMeshVertices!=='function')
@@ -230,11 +230,11 @@ export function createAIGReal3DBiomechanicalAttachments({
    workScene.nodes.find(n=>n.id==='V93'+a.id).visible=
     show===null||show.has(a.id);
   }
-  const rendered=renderer.render(workScene);
-  if(rendered?.status!=='WEBGL_XYZ_TRIANGLES_RENDERED')
+  const rendered=deferDraw?null:renderer.render(workScene);
+  if(rendered&&rendered.status!=='WEBGL_XYZ_TRIANGLES_RENDERED')
    fail('SOURCE_ATTACHMENTS_GPU_DRAW_BLOCKED');
   draws++;
-  return {timeSec,renderedTriangles:rendered.triangles,
+  return {timeSec,renderedTriangles:rendered?.triangles??null,
    originalAttachedTriangles:[...sourceMeshes.values()].reduce((s,m)=>s+m.triangleCount,0),
    originalSkeletonJointsStillAllAnimated:rig.boneCount,
    trueOriginalXYZMeshRender:true,actualGPUFrames:draws,
