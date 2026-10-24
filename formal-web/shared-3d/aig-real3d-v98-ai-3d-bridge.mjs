@@ -12,6 +12,8 @@ import {createAIGReal3DUnifiedSource,evaluateAIGReal3DUnifiedReprojection,
  from './aig-real3d-v98-unified-source-projection.mjs';
 import {fitAIGReal3DObservedMultiViewAnchors}
  from './aig-real3d-v98-projection-fit.mjs';
+import {createAIGReal3DRigWrap}
+ from './aig-real3d-rig-wrap-contact.mjs';
 import {auditAIGReal3D4KSourceProjection}
  from './aig-real3d-v96-native-4k-pipeline.mjs';
 export const AIG_REAL3D_V98_BRIDGE_SCHEMA='AIG_REAL3D_V98_SHARED_VISUAL_2D_3D_4K_BRIDGE_V1';
@@ -84,4 +86,31 @@ export function evaluateAIGReal3DUnified4KSource({
   scene:pipeline.scene,sourceSha256,camera,
   width:3840,height:2160
  });
+}
+
+/** Rebind V92 true six-joint skin deformation on corrected original triangle
+ * working copy, no new anatomy/identity inference and NO reset of source.
+ */
+export function rebindAIGReal3DUnifiedObservedActor({
+ candidate,fit
+}={}){
+ if(!candidate?.sourceRigManifest||!Array.isArray(candidate?.originalRigKeyframes)||
+  fit?.schema!=='AIG_REAL3D_V98_PIXEL_ERROR_TO_ORIGINAL_XYZ_WORKING_COPY_V1'||
+  fit.originalImageSha256!==candidate.originalSourceImageSha256||
+  fit.workingScene?.schema!=='AIG_REAL3D_SCENE_V1')
+  fail('SOURCE_RIG_AND_MEASURED_WORKING_COPY_MISMATCH');
+ const rig=createAIGReal3DRigWrap({
+  sourceScene:fit.workingScene,
+  manifest:candidate.sourceRigManifest,
+  sourceSha256:fit.originalImageSha256,
+  keyframes:candidate.originalRigKeyframes,
+  wrapMode:candidate.rig.wrapMode
+ });
+ return {...candidate,rig,scene:fit.workingScene,
+  mesh:fit.workingScene.nodes.find(n=>n.id==='bodyCandidate')?.mesh,
+  exactOriginalSourceGeometryStillAvailableInFit:fit.sourceScene,
+  originalMeshTopologicalSourceFacesPreserved:true,
+  observed2DMeasuredWorkingCopyApplied:true,
+  identityVisualSimilarityConfirmed:false,
+  filmQualityCertified:false,releasePASS:false};
 }
