@@ -146,6 +146,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  const camera={projection:'perspective',yaw:.7,pitch:.36,distance:14,
   focus:[0,0,0],fovDeg:48,orthoSpan:9,near:.01,far:20000};
  let dead=false,lost=false,cache=new WeakMap(),buffers=[],last=null;
+ let createdOwnedBuffers=0,deletedOwnedBuffers=0,fullBufferUploads=0,
+  subBufferUploads=0,uploadedFullBytes=0,uploadedSubBytes=0;
  const INSPECTION_MODES=['LIT','SILHOUETTE','NORMALS','ALBEDO',
   'BLACK_CONTOUR','BROWN_FLAT','BROWN_VOLUME','BROWN_FINISH'];
  let inspectionMode='LIT';
@@ -214,7 +216,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  };
  function createBuffer(target,arr){
   const b=gl.createBuffer();gl.bindBuffer(target,b);gl.bufferData(target,arr,gl.STATIC_DRAW);
-  buffers.push(b);return b;
+  buffers.push(b);createdOwnedBuffers++;fullBufferUploads++;
+  uploadedFullBytes+=arr.byteLength;return b;
  }
  function bufferMesh(mesh){
   let m=cache.get(mesh);if(m)return m;
@@ -502,8 +505,10 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    const from=a*3,to=(b+1)*3;
    gl.bindBuffer(gl.ARRAY_BUFFER,cached.pos);
    gl.bufferSubData(gl.ARRAY_BUFFER,from*4,new Float32Array(positions.slice(from,to)));
+   subBufferUploads++;uploadedSubBytes+=(to-from)*4;
    gl.bindBuffer(gl.ARRAY_BUFFER,cached.norm);
    gl.bufferSubData(gl.ARRAY_BUFFER,from*4,new Float32Array(normals.slice(from,to)));
+   subBufferUploads++;uploadedSubBytes+=(to-from)*4;
   }
   return {changedVertexCount:changedVertexIndices.length,
    positionSubDataCalls:groups.length,normalSubDataCalls:groups.length,
@@ -540,17 +545,32 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   if(!old)return false;
   const toDelete=[old.pos,old.norm,old.indices];
   for(const buffer of toDelete){
-   gl.deleteBuffer(buffer);
+   gl.deleteBuffer(buffer);deletedOwnedBuffers++;
    const at=buffers.indexOf(buffer);
    if(at>=0)buffers.splice(at,1);
   }
   cache.delete(mesh);
   return true;
  }
+ function getGPUResourceAccounting(){
+  return {schema:'AIG_REAL3D_GPU_OWNED_BUFFER_LIFECYCLE_V1',
+   activeTrackedOwnedGPUBufferCount:buffers.length,
+   totalOwnedGPUBuffersCreated:createdOwnedBuffers,
+   totalOwnedGPUBuffersDeleted:deletedOwnedBuffers,
+   ownedGPUBufferAllocationBalance:createdOwnedBuffers-deletedOwnedBuffers,
+   fullBufferDataUploads:fullBufferUploads,
+   bufferSubDataUpdates:subBufferUploads,
+   fullBufferBytesUploaded:uploadedFullBytes,
+   incrementalBytesUploaded:uploadedSubBytes,
+   originalIndexTopologyNotRebuiltByDelta:true,
+   GPUDriverMemoryBytesUnknown:true,
+   gpuMemoryPressureMeasurementClaimed:false,
+   rendererDestroyed:dead};
+ }
  function destroy(){
   if(dead)return;dead=true;
   canvas.removeEventListener('webglcontextlost',contextLost);
-  for(const b of buffers)gl.deleteBuffer(b);
+  for(const b of buffers){gl.deleteBuffer(b);deletedOwnedBuffers++;}
   gl.deleteProgram(meshProg);gl.deleteProgram(lineProg);
   if(edgeProg)gl.deleteProgram(edgeProg);
   if(maskFbo){gl.deleteFramebuffer(maskFbo);gl.deleteTexture(maskTexture);
@@ -559,7 +579,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  }
  return {status:'READY',contextVersion:webgl2?2:1,render,destroy,
   setCamera,getCamera,setInspectionMode,getInspectionMode,
-  setQuality,getQuality,releaseMesh,updateMeshVertices,measureCompletedFrame,captureNativePNG,
+  setQuality,getQuality,releaseMesh,updateMeshVertices,measureCompletedFrame,captureNativePNG,getGPUResourceAccounting,
   getGpuLimit:()=>lost||dead?0:Math.min(
    gl.getParameter(gl.MAX_TEXTURE_SIZE),gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)),
   getLastStats:()=>last?{...last}:null};
