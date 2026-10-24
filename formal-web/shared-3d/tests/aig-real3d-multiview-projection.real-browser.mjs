@@ -21,13 +21,22 @@ try{
   const V=await import('./aig-real3d-multiview-projection.mjs');
   const R=await import('./aig-real3d-webgl.mjs');
   const source='a'.repeat(64),uvSHA='b'.repeat(64);
-  const mesh=C.createAIG3DMesh({
-   positions:[-.7,-.7,0,.7,-.7,0,.7,.7,0,-.7,.7,0],
-   normals:Array(4).fill([0,0,1]).flat(),
-   indices:[0,1,2,0,2,3],
-   provenance:'ORIGINAL_NONHUMAN_FLAT_SOURCE_V89_REAL_GPU'
+  // V89 inherited Chromium regression: captureNativePNG requires >=2000
+  // TRUE indexed triangles. Never weaken that renderer source Gate.
+  const side=48,positions=[],normals=[],indices=[],uv=[];
+  for(let y=0;y<side;y++)for(let x=0;x<side;x++){
+   const u=x/(side-1),v=y/(side-1);
+   positions.push((u-.5)*1.4,(v-.5)*1.4,0);
+   normals.push(0,0,1);uv.push(u,v);
+  }
+  for(let y=0;y<side-1;y++)for(let x=0;x<side-1;x++){
+   const a=y*side+x,b=a+1,c=a+side,d=c+1;
+   indices.push(a,b,d,a,d,c);
+  }
+  const mesh=C.createAIG3DMesh({positions,normals,indices,
+   provenance:'ORIGINAL_NONHUMAN_4418_FACE_SOURCE_V89_REAL_GPU'
   });
-  const uv=[0,0,1,0,1,1,0,1],scene=C.createAIG3DScene({
+  const scene=C.createAIG3DScene({
    id:'v89_nonhuman_gpu',consumer:'FastModel',units:'METERS',
    source:'ORIGINAL_NONHUMAN_SOURCE_PROJECTION_GATE'
   });
@@ -85,7 +94,7 @@ try{
   }finally{renderer.destroy();}
  });
  assert.equal(proof.schema,'V89_REAL_GPU_SOURCE_QA_V1');
- assert.equal(proof.sourceTriangles,2);
+ assert.equal(proof.sourceTriangles,4418);
  assert.ok(proof.observedTexels>100);
  assert.equal(proof.sourcePositionReferenceImmutable,true);
  assert.equal(proof.sourceIndexReferenceImmutable,true);

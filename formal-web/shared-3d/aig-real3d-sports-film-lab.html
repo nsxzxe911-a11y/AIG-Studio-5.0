@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AIG Real3D V91｜五球類 3D 動力電影研究室</title>
+<style>
+:root{color-scheme:dark;font:15px/1.6 system-ui,'Microsoft JhengHei',sans-serif;background:#020407;color:#d7edff}
+*{box-sizing:border-box}body{margin:0;background:#020407;padding:14px}
+main{max-width:1100px;margin:auto}h1{font-size:22px;margin:4px 0 8px}
+p{color:#a5c3d9}section{background:#07111b;border:1px solid #23618c;border-radius:14px;padding:15px;margin:12px 0}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+select,button,input{background:#0a2436;color:#eef9ff;border:1px solid #4292c3;border-radius:9px;min-height:44px;padding:8px;font:inherit}
+button{background:linear-gradient(100deg,#073b63,#392a72,#51325c);cursor:pointer}
+button:disabled{opacity:.48;cursor:default}label{color:#bde6f5}
+canvas{width:100%;height:auto;background:#020407;border-radius:8px;display:block;border:1px solid #296384;touch-action:pan-y}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:280px;overflow:auto;font-size:12px}
+#status{padding:9px;border:1px solid #426987;border-radius:8px;color:#ffdb98}
+input[type=range]{flex:1;min-width:145px}a{color:#8de2ff}
+</style></head><body><main>
+<h1>AIG Real3D V91｜球體真 3D 動力與連續影片</h1>
+<p>非正式 CNC 或電影成品：五球類共用一套拋體、空阻、旋轉、反彈引擎，畫面為真正 Indexed XYZ 球體與旋轉標記，每格由物理影格更新。示範模型非真實掃描，撞擊和空氣動力係數未經賽事實測校準。</p>
+<section>
+<div class="row">
+<label for="sport">運動項目</label>
+<select id="sport">
+<option value="BASEBALL">棒球</option>
+<option value="TENNIS">網球</option>
+<option value="BASKETBALL">籃球</option>
+<option value="SOCCER">足球</option>
+<option value="TABLE_TENNIS">乒乓球</option>
+</select>
+<button id="reset" type="button">重新建立 3D 物理影格</button>
+<button id="play" type="button">播放真 3D</button>
+<button id="pause" type="button" disabled>暫停</button>
+<button id="capture" type="button">匯出真 GPU PNG</button>
+<button id="record" type="button">錄製真正 WebM</button>
+</div>
+<div class="row">
+<label for="frame">影格位置</label><input id="frame" type="range" min="0" max="1" value="0" step="1">
+<output id="frame-number">0</output>
+</div>
+<div id="status" role="status">載入 Real3D WebGL...</div>
+</section>
+<section><canvas id="scene" width="960" height="540" aria-label="真實三維球體 GPU 逐影格渲染"></canvas>
+<p>白色是真 3D 球，紅色 3D 標記證明自轉。相機跟隨真 3D 位置；本實驗室不以貼圖平移代替球的物理運動。</p>
+</section>
+<section><h2>來源、運動、碰撞 Gate</h2><pre id="evidence">尚未有真 GPU 影格。</pre>
+<p id="video-link"></p>
+</section>
+</main><script type="module" src="./aig-real3d-sports-film-lab.mjs"></script></body></html>
