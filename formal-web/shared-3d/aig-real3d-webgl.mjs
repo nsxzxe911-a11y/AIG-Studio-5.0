@@ -62,13 +62,32 @@ const fs=[
  'uniform float uMetallic,uRoughness,uInspectMode;',
  'uniform float uFurStrength,uFurFrequency;',
  'uniform vec3 uFurUndercoat,uFurGuard;',
+ 'uniform float uRecipeEnabled;',
+ 'uniform vec4 uRecipeColor[4],uRecipeSpec[4];',
+ 'float recipeMask(vec3 pos,vec3 normal,float scale,float mode){',
+ 'if(mode<0.5)return 1.0;',
+ 'if(mode<1.5)return hashFur(floor(pos*scale));',
+ 'if(mode<2.5)return 0.5+0.5*sin(pos.x*scale*6.2831853);',
+ 'return clamp(abs(normal.y),0.0,1.0);',
+ '}',
  'float hashFur(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}',
  'void main(){vec3 n=normalize(vNormal),l=normalize(vec3(0.42,0.79,0.55));',
  'vec3 view=normalize(uEye-vWorld);float diffuse=max(dot(n,l),0.0);',
  'vec3 halfV=normalize(l+view);',
- 'float shine=mix(105.0,7.0,uRoughness);',
- 'float spec=pow(max(dot(n,halfV),0.0),shine)*(0.06+uMetallic*0.44);',
- 'vec3 shaded=uColor.rgb*(0.24+0.76*diffuse)+vec3(spec)+uEmission;',
+ 'vec3 recipeAlbedo=uColor.rgb;',
+ 'float recipeRough=uRoughness,recipeMetal=uMetallic;',
+ 'if(uRecipeEnabled>0.5&&uInspectMode<0.5){',
+ 'for(int k=0;k<4;k++){',
+ 'vec4 c=uRecipeColor[k],t=uRecipeSpec[k];',
+ 'float weight=clamp(c.a*recipeMask(vWorld,n,t.z,t.w),0.0,1.0);',
+ 'recipeAlbedo=mix(recipeAlbedo,c.rgb,weight);',
+ 'recipeRough=mix(recipeRough,t.x,weight);',
+ 'recipeMetal=mix(recipeMetal,t.y,weight);',
+ '}',
+ '}',
+ 'float shine=mix(105.0,7.0,recipeRough);',
+ 'float spec=pow(max(dot(n,halfV),0.0),shine)*(0.06+recipeMetal*0.44);',
+ 'vec3 shaded=recipeAlbedo*(0.24+0.76*diffuse)+vec3(spec)+uEmission;',
  'if(uFurStrength>0.001&&uInspectMode<0.5){',
  'vec3 p=floor(vWorld*uFurFrequency+normalize(vNormal)*3.0);',
  'float strand=hashFur(p)*0.6+hashFur(p*1.61)*0.4;',
@@ -151,7 +170,10 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   furStrength:gl.getUniformLocation(meshProg,'uFurStrength'),
   furFrequency:gl.getUniformLocation(meshProg,'uFurFrequency'),
   furUndercoat:gl.getUniformLocation(meshProg,'uFurUndercoat'),
-  furGuard:gl.getUniformLocation(meshProg,'uFurGuard')};
+  furGuard:gl.getUniformLocation(meshProg,'uFurGuard'),
+  recipeEnabled:gl.getUniformLocation(meshProg,'uRecipeEnabled'),
+  recipeColor:gl.getUniformLocation(meshProg,'uRecipeColor[0]'),
+  recipeSpec:gl.getUniformLocation(meshProg,'uRecipeSpec[0]')};
  const lu={pos:gl.getAttribLocation(lineProg,'aPosition'),
   model:gl.getUniformLocation(lineProg,'uModel'),
   vp:gl.getUniformLocation(lineProg,'uVP'),
@@ -328,6 +350,23 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   gl.uniform1f(u.furFrequency,fur?.frequency??1);
   gl.uniform3fv(u.furUndercoat,new Float32Array(fur?.undercoatRGB??[0,0,0]));
   gl.uniform3fv(u.furGuard,new Float32Array(fur?.guardRGB??[0,0,0]));
+  const recipe=mat.aigMaterialRecipe;
+  if(recipe&&(
+   recipe.schema!=='AIG_REAL3D_V87_COMPILED_FOUR_LAYER_MATERIAL_V1'||
+   !Number.isInteger(recipe.layerCount)||recipe.layerCount<1||
+   recipe.layerCount>4||
+   recipe.packedLayerRGBA?.length!==16||
+   recipe.packedLayerSpec?.length!==16||
+   !recipe.packedLayerRGBA.every(x=>Number.isFinite(x)&&x>=0&&x<=1)||
+   !recipe.packedLayerSpec.every(Number.isFinite)
+  ))throw Error('REAL3D_GPU_MATERIAL_RECIPE_INVALID');
+  gl.uniform1f(u.recipeEnabled,recipe?1:0);
+  gl.uniform4fv(u.recipeColor,new Float32Array(recipe?.packedLayerRGBA??[
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+  ]));
+  gl.uniform4fv(u.recipeSpec,new Float32Array(recipe?.packedLayerSpec??[
+   .65,0,1,0,.65,0,1,0,.65,0,1,0,.65,0,1,0
+  ]));
   gl.uniform1f(u.inspect,forcedInspection===null?INSPECTION_MODES.indexOf(inspectionMode):forcedInspection);
   if(mat.doubleSided)gl.disable(gl.CULL_FACE);else gl.enable(gl.CULL_FACE);
   gl.drawElements(gl.TRIANGLES,mesh.count,mesh.type,0);
