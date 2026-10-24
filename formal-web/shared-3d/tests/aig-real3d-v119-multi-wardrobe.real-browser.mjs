@@ -94,9 +94,12 @@ try{
  const previewB=await page.locator('#gl').screenshot();
  assert.notDeepEqual(previewA,previewB);
  await writeFile(out+'/V119-ACTOR-CASUAL-DIFFERENT-GARMENT-GLB-GPU.png',previewB);
- await page.locator('#a').fill('90');
- await page.locator('#b').fill('120');
- await page.locator('#progress').fill('75');
+ await page.evaluate(()=>{
+  for(const [id,value] of [['a','90'],['b','120'],['progress','75']]){
+   const el=document.getElementById(id);
+   el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+ });
  const pose=JSON.parse(await page.locator('#receipt').textContent());
  assert.equal(pose.actualGPUFrame.aTiltDeg,90);
  assert.equal(pose.actualGPUFrame.bTurnDeg,120);
