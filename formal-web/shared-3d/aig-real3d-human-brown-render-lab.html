@@ -20,6 +20,7 @@ figure img{width:100%;height:400px;max-height:52vh;object-fit:contain;display:bl
 .diagnostic-inner{margin:12px 0;border-color:#705338}#defect-edge-list button{min-height:38px;background:#2d201b;max-width:100%;word-break:break-word}
 #defect-selected{white-space:pre-wrap;overflow-wrap:anywhere}#repair-compare-gallery .compare-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 #repair-compare-gallery figure img{height:280px}#defect-gallery figure img[data-pickable=true]{cursor:crosshair;touch-action:manipulation}
+#dense-source-image{width:100%;height:auto;max-height:65vh;object-fit:contain}#dense-source-figure{max-width:650px}
 #native-output-image{width:100%;height:auto;max-height:65vh;object-fit:contain}#native-output-figure{max-width:650px}
 #native-resolution-export select{max-width:100%}
 #shape-envelope-metrics{margin-top:8px;color:#ecd2b6}#shape-envelope-metrics strong{font-size:16px}#shape-envelope-review .status{border-color:#b37d43}
@@ -48,6 +49,18 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 </div>
 <p>第一階驗證原始 OBJ／GLB 的 SHA、真實三角面及來源聲明；第二階才以同一模型輸出黑線、咖啡平塗、陰影、低高光。四視角無炫光，外觀自然度永遠需獨立比對真人來源。</p>
 <div id="status" class="status" role="status" aria-live="polite">未匯入模型。外觀驗收 BLOCK。</div>
+</section>
+<section class="panel" id="dense-source-intake">
+<h2>高密度原始 OBJ 匯入｜真三角面保留、GPU 分塊</h2>
+<p>獨立高密度匯入通道：可讀取舊版匯入器容量以外的本機 OBJ，保留每一張原始三角面；僅為 GPU 顯示分塊，不會新增人體曲線、貼圖或以 4K 代替模型幾何。此通道尚未進行 21 點／五指自然度驗證。</p>
+<div class="row">
+ <button type="button" id="dense-source-run">匯入原始高密度 OBJ 並產生真 GPU 正面圖</button>
+ <a id="dense-source-download" hidden download="Real3D-DENSE-NATIVE.png">下載真 GPU 正面圖</a>
+ <button id="dense-evidence-download" disabled type="button">下載來源＋四視角照片 SHA 證據</button>
+</div>
+<div id="dense-source-status" class="status" role="status" aria-live="polite">從上方選擇原始 OBJ 並輸入實際身高後，才可執行真來源分塊匯入；自然人體驗收仍 BLOCK。</div>
+<figure id="dense-source-figure" hidden><img id="dense-source-image" alt="不加細分、不減面之原始高密度來源正面 GPU 畫面"><figcaption id="dense-source-caption">尚無高密度來源 GPU 證據。</figcaption></figure>
+<pre id="dense-source-evidence">尚無原始來源 SHA。</pre>
 </section>
 <section class="panel" id="native-resolution-export">
 <h2>真 GPU 原生解析度｜1080p / 2K / 手機原生 / 4K</h2>
