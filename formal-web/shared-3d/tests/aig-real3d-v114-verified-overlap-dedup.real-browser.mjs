@@ -69,6 +69,16 @@ try{
  const baseline=await submit();
  assert.ok(!baseline.error,JSON.stringify(baseline));
  assert.equal(baseline.v114IntegrationRequested,true);
+ const boundary=baseline.v115MeasuredOpenBoundaryAtlas;
+ assert.ok(boundary,JSON.stringify(baseline));
+ assert.equal(boundary.researchGate,'PASS_SOURCE_OPEN_EDGE_ATLAS',JSON.stringify(boundary));
+ assert.ok(boundary.newOpenEdgesCreatedByOverlapRemoval>0);
+ assert.equal(boundary.unsupportedNewOpenEdges,0);
+ assert.equal(boundary.originalMaterialAndUVUnmodified,true);
+ assert.equal(boundary.untouchedOriginalBINBytesVerified,true);
+ assert.equal(boundary.verifiedHuman1to1,false);
+ await writeFile(dir+'/V115-SOURCE-VERIFIED-NEW-OPEN-EDGES.png',
+  await page.locator('#v115-edge-map').screenshot());
  const seam=baseline.v114VerifiedOverlapIntegration;
  assert.equal(seam.v113GeometryGate,'PASS_OBSERVED_DEPTH_SEAM_ONLY');
  assert.equal(seam.firstViewSourceMeshUnchanged,true);
@@ -127,5 +137,7 @@ try{
    integratedSourceTriangles:seam.totalTrianglesAfter,
    excludedOnlySecondViewTriangles:seam.observedRedundantSecondViewTrianglesExcluded,
    sourceGLBImmutable:true,worldDepthAndColorConformant:true,
-   wrongColorAndLocalDepthBothBlocked:true,originalHuman1to1StillBlocked:true}));
+   wrongColorAndLocalDepthBothBlocked:true,
+   V115NewOpenEdgesSourceBacked:boundary.newOpenEdgesSupportedByFirstMeasuredCamera,
+   originalHuman1to1StillBlocked:true}));
 }finally{await browser.close();}
