@@ -713,8 +713,8 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   if(dead||!mesh)return false;
   const old=cache.get(mesh);
   if(!old)return false;
-  const toDelete=[old.pos,old.norm,old.indices,old.uv,old.tangent]
-   .filter(Boolean);
+  const toDelete=[...(old.sharesOriginalGeometry?[]:[old.pos,old.norm,old.indices]),
+   old.uv,old.tangent].filter(Boolean);
   for(const buffer of toDelete){
    gl.deleteBuffer(buffer);deletedOwnedBuffers++;
    const at=buffers.indexOf(buffer);
