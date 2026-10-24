@@ -32,6 +32,9 @@ pre{font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anyw
 <option value="ENVIRONMENT">星際場景</option>
 <option value="CNC_PART">CNC 零件</option>
 </select></label>
+<label>模型來源座標單位
+<select id="v104-units"><option value="METERS" selected>公尺（GLB 標準）</option>
+<option value="MM">毫米（CAD／CNC 原始座標）</option></select></label>
 <button id="import">驗證來源並載入真 3D</button>
 </div>
 <div class="row">
@@ -74,6 +77,35 @@ pre{font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anyw
 <pre id="v102-report">待取得 AI 圖片與真 3D 來源。</pre>
 <h2>品質缺口</h2><p>光影、材質、精緻頭髮、AI 推論模型與真人 1:1 臉型相似度，必須另外驗證，不會由「成功讀取 GLB」自動放行。</p>
 </section>
-</div></main>
+</div>
+<section id="v104-cad-panel" aria-label="V104 CAD 俯視與六面按需檢驗">
+<h2>V104｜AI CAD 俯視優先＋六面按需檢查</h2>
+<p>只使用剛才匯入的同一份真 XYZ 網格。CAD 俯視採 CNC XY、Z 向上；Real3D 為 Y 向上。切換方向時才會計算該面的原始三角面深度，不會生成六個假模型。</p>
+<div class="row">
+<button id="v104-top" disabled>CAD 俯視（先算）</button>
+<button id="v104-front" disabled>正面</button>
+<button id="v104-back" disabled>後面</button>
+<button id="v104-left" disabled>左面</button>
+<button id="v104-right" disabled>右面</button>
+<button id="v104-bottom" disabled>底面</button>
+<button id="v104-summary" disabled>檢查六面來源</button>
+</div>
+<div class="grid">
+<div>
+<canvas id="v104-depth-canvas" width="384" height="384" aria-label="真 Indexed XYZ 六面正交深度投影"></canvas>
+<p id="v104-current-face">等待真 GLB 來源。</p>
+</div>
+<div>
+<label for="v104-cad-outline">可選：已標定尺寸的 CNC XY 俯視 CAD 點列，單位 mm（JSON）</label>
+<textarea id="v104-cad-outline" rows="3" style="width:100%;min-height:85px;background:#081929;color:#d3ecf9" placeholder='[[-10,-15],[10,-15],[10,15],[-10,15]]'></textarea>
+<div class="row">
+<label><input type="checkbox" id="v104-cad-observed"> 這些座標確實來自觀察／CAD 量測（未勾選＝AI 推估）</label>
+<button id="v104-cad-compare" disabled>檢查 CAD 俯視尺寸</button>
+</div>
+<pre id="v104-report">來源尚未載入。六個視角不等於六份獨立實測照片；不能從俯視一張圖認證未知底面。</pre>
+</div>
+</div>
+</section></main>
 <script type="module" src="./aig-real3d-v99-native-source-lab.mjs"></script>
+<script type="module" src="./aig-real3d-v104-cad-top-ui.mjs"></script>
 </body></html>

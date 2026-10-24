@@ -171,7 +171,9 @@ try{
  await page.locator('#v102-quality').selectOption('duringAI');
  assert.ok((await page.locator('#status').textContent()).includes('低負載預覽'));
  await page.locator('#adapt102').click();
- assert.ok((await page.locator('#status').textContent()).includes('框架'));
+ const adaptiveMessage=await page.locator('#status').textContent();
+ assert.ok(adaptiveMessage.includes('重設真 3D 鏡頭'),
+  'V102_REAL_ADAPTIVE_GPU_MESSAGE_BLOCK: '+adaptiveMessage);
  const finalFrame=JSON.parse(await page.locator('#v102-report').textContent());
  assert.equal(finalFrame.frame.modelFitsInsideOriginalArtworkROI,true);
  assert.equal(finalFrame.full4KOnlyOnExplicitExport,true);
