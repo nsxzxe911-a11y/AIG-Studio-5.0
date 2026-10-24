@@ -70,7 +70,7 @@ test('V92 actual hand/racket position and finite-difference velocity generate V9
  assert.ok(result.sourceDerivedSurfaceVelocity[0]>.05);
  assert.equal(result.physicsImpulseApplied,true);
  assert.ok(result.trajectory.frames.at(-1).position[0]>0);
- assert.equal(result.releasePASS,undefined);
+ assert.equal(result.releasePASS,false);
  assert.equal(result.trajectory.diagnostics.releasePASS,false);
 });
 test('V92 working GPU delta uses original index buffers, never mutates original input mesh',()=>{
