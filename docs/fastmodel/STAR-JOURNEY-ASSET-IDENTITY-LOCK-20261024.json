@@ -1,0 +1,57 @@
+{
+  "schema": "AIG_FASTMODEL_STARJOURNEY_HEROINE_IDENTITY_LOCK_V1",
+  "date": "2026-10-24",
+  "status": "DRAFT_ARCHIVE_MANIFEST__NOT_DEPLOYED__NO_AUTHORITY_PROMOTION",
+  "canon": {
+    "heroine": "保留已核准的櫻花校園制服女主角原圖、臉型、五官與身份。可換星際服裝，不可換人。",
+    "historicalApprovedVisualSHA256": "fbf47f32a844a80e1bb39cb23084527baaf1350427c20d2b49d21fdc453444d6",
+    "historicalHashNote": "來自前期入庫紀錄；本次未取得原始角色圖重新比對，請依正式 Authority ID/SHA 鎖定。",
+    "approvedRoleNameChange": false,
+    "rejectedGeneratedCharacterName": "艾琳・岑 / Elyn Zen",
+    "newSuitStatus": "COSTUME_ONLY_CANDIDATE"
+  },
+  "rules": [
+    "不得覆寫核准女主角原圖或任何 Face Authority SHA",
+    "若同一人物換裝，臉與五官須依原圖來源比對，未證實即 BLOCK",
+    "新生成臉/新姓名/新人物不可自動升格 Authority",
+    "飛船與場景 PNG 是 2D 概念設定圖，不是原始 OBJ、GLB 或已完成動畫",
+    "所有候選圖保留完整來源檔 SHA 與尺寸，獨立於正式來源"
+  ],
+  "assets": [
+    {
+      "id": "SJ_HEROINE_SUIT_ONLY_20261024",
+      "file": "星際之旅_艾琳女主角設定圖.png",
+      "status": "FACE_AND_NAME_REJECTED__COSTUME_REFERENCE_ONLY",
+      "sha256": "4ad10f1bd72f5ce09d5a071ac41502c1a6c60c3b22c3f454e1721290cf12a8a1",
+      "dimensions": "1448x1086",
+      "canUseForCharacterIdentity": false
+    },
+    {
+      "id": "SJ_DAWNSEEKER_SHIP_20261024",
+      "file": "曙光號未來星艦設定圖.png",
+      "status": "CANDIDATE_VISUAL_ONLY",
+      "sha256": "32e308a471fb5d3a050b2fb893aaec9f8925d36871494018280cd6a45feea7ae",
+      "dimensions": "1448x1086",
+      "isTrue3DModel": false
+    },
+    {
+      "id": "SJ_STARGATE_ENVIRONMENT_20261024",
+      "file": "星際之旅_軌道星門場景設定集.png",
+      "status": "CANDIDATE_VISUAL_ONLY",
+      "sha256": "30550e565dddae65091b90cfa5e45de2b6d2de5a2971b9b12c5f9fd0f86bab1d",
+      "dimensions": "1448x1086",
+      "isTrue3DModel": false
+    },
+    {
+      "id": "SJ_COMBINED_20261024",
+      "file": "星際之旅_曙光探索艦設定集.png",
+      "status": "CANDIDATE_COMPOSITE__HEROINE_FACE_NOT_APPROVED",
+      "sha256": "f39abca4ecc5852856646a91a38e4df914a76fff04689ac9b86c5fba335e599d",
+      "dimensions": "1672x941",
+      "canUseForCharacterIdentity": false
+    }
+  ],
+  "assetBinaryRepositoryCommitStatus": "BINARY_PNG_NOT_UPLOADED_IN_THIS_GITHUB_COMMIT; original images packaged separately in conversation ZIP",
+  "officialRenderDeployment": false,
+  "existingAIGAuthorityOverwritten": false
+}
