@@ -9,18 +9,22 @@ import {applyAIGReal3DSourceMeshDelta}
  from './aig-real3d-gpu-delta-source.mjs';
 import {benchmarkAIGReal3DNativePosePlayback}
  from './aig-real3d-adaptive-pose-playback.mjs';
+import {stressAIGReal3DGPUResourceCycles}
+ from './aig-real3d-gpu-stress-cycles.mjs';
 import {buildAIGReal3DWeightedFingerGPUPreview} from './aig-real3d-weighted-motion-working-copy.mjs';
 import {createAIGReal3DSparseNormalCache,evaluateAIGReal3DSparseNormals}
  from './aig-real3d-sparse-source-normals.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {validateAIGInspectionCapturePlan} from './aig-real3d-render-inspection.mjs';
 export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}={}){
- let source=null,report=null;
+ let source=null,report=null,stressScenes=null;
  const run=$('three-joint-run'),download=$('three-joint-download'),
+  stressButton=$('three-joint-stress-run'),stressStatus=$('three-joint-stress-status'),
   status=$('three-joint-status'),evidence=$('three-joint-evidence'),
   gallery=$('three-joint-gallery');
  const reset=()=>{
-  source=null;report=null;run.disabled=true;download.disabled=true;
+  source=null;report=null;stressScenes=null;run.disabled=true;download.disabled=true;
+  stressButton.disabled=true;stressStatus.textContent='等待同來源三節關節真 GPU 驗證。';
   gallery.replaceChildren();
   status.textContent='BLOCK：尚無原始 OBJ 與真三關節來源索引權重。';
   evidence.textContent='等待來源 SHA／本機權重。';
@@ -36,7 +40,8 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
    source.upAxis!==$('up-axis').value){
    status.textContent='BLOCK：原始 OBJ 或校準參數變動，需重新匯入。';return;
   }
-  setBusy(true);run.disabled=true;download.disabled=true;report=null;
+  setBusy(true);run.disabled=true;download.disabled=true;stressButton.disabled=true;
+  stressScenes=null;report=null;
   gallery.replaceChildren();let renderer;
   try{
    const marker=$('landmark-file').files?.[0],
@@ -191,7 +196,10 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     unchangedRawSourceOBJ:true,
     naturalHumanSkinPASS:false,automaticRigPASS:false,releasePASS:false
    };
+   stressScenes=playbackScenes;
    evidence.textContent=JSON.stringify(report,null,2);download.disabled=false;
+   stressButton.disabled=false;
+   stressStatus.textContent='來源三個真 GPU 姿勢已通過，可進行獨立三輪緩衝清理壓力驗證。';
    status.textContent='真三關節極速模式：每幀僅處理 '+timeline.sparseSourceTopology.activeWeightedGlobalVertexCount+
     '/'+timeline.sparseSourceTopology.inputSourceVertexCount+
     ' 頂點、'+timeline.sparseSourceTopology.indexedAffectedOriginalTriangles+
@@ -212,6 +220,35 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
    evidence.textContent='BLOCK：'+String(error?.message||error);
    status.textContent='BLOCK：'+String(error?.message||error)+'；不補造來源人體。';
   }finally{renderer?.destroy?.();setBusy(false);run.disabled=false;}
+ });
+ stressButton.addEventListener('click',async()=>{
+  if(isBusy()||!source||!stressScenes||!report){
+   stressStatus.textContent='BLOCK：原始來源 GPU 報告不可用或工作區忙碌。';return;
+  }
+  setBusy(true);stressButton.disabled=true;
+  try{
+   const captureScenes=stressScenes;
+   const result=await stressAIGReal3DGPUResourceCycles({
+    cycles:3,rafCallbacksPerCycle:36,mode:$('three-joint-playback-hz').value,
+    createCycle:()=>{
+     const canvas=document.createElement('canvas');
+     canvas.width=640;canvas.height=480;
+     const renderer=createAIG3DRenderer(canvas,{
+      quality:'balanced',pixelRatio:1,maxTriangles:700000,
+      background:[.769,.745,.702,1]
+     });
+     if(renderer.status!=='READY')throw Error('真 GPU 狀態不可用');
+     renderer.setInspectionMode('LIT');
+     return {renderer,poseScenes:structuredClone(captureScenes)};
+    }
+   });
+   report.extendedRealGPUResourceStress=result;
+   evidence.textContent=JSON.stringify(report,null,2);
+   stressStatus.textContent='三輪來源 GPU 壓力完成；'+result.actualSourceIndexedDraws+
+    ' 個真 GPU 畫面，緩衝歸零驗證通過。無 Android／Windows 熱安全或穩定 FPS 認證。';
+  }catch(error){
+   stressStatus.textContent='BLOCK：'+String(error?.message||error);
+  }finally{setBusy(false);stressButton.disabled=!stressScenes;}
  });
  download.addEventListener('click',()=>{
   if(!report)return;
