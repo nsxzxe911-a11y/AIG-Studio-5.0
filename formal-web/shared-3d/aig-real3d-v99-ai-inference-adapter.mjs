@@ -80,6 +80,6 @@ export function connectAIGReal3DImportedGeometryToUnified4K({
   trueSourceIndexedXYZPreserved:true,
   sourceModelNotConvertedToV95Proxy:true,
   sourceModelIsNotIdentityCertified:true,
-  4KSourceEdgeQualityCandidatePASS:detail?.sourceDetailCandidatePASS??null,
+  fourKSourceEdgeQualityCandidatePASS:detail?.sourceDetailCandidatePASS??null,
   sourceIdentityApproved:false,releasePASS:false};
 }
