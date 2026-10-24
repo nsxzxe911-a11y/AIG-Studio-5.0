@@ -122,12 +122,17 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 </section>
 <section class="panel" id="three-joint-workstation">
 <h2>來源原始三節關節 FK｜跨影格掃掠碰撞與皮膚應變</h2>
-<p>Base → Middle → Distal 以本機同 SHA 的真頂點權重建立三節連動；實際來源 XYZ 依順序移動旋轉中心。逐影格記錄拉伸／壓縮／翻面，跨影格用原始面片掃掠包圍盒標出可能的碰撞（非連續防撞證明）。不補造網格或修改原始 OBJ。</p>
+<p>Base → Middle → Distal 以本機同 SHA 的真頂點權重建立三節連動；實際來源 XYZ 依順序移動旋轉中心。逐影格記錄拉伸／壓縮／翻面，跨影格用原始面片掃掠包圍盒標出可能的碰撞（非連續防撞證明）。不補造網格或修改原始 OBJ。本工作區另以真 WebGL 影格做 36 次 rAF 排程檢測，並非已完成自然人體動畫或 60／120 FPS 實機認證。</p>
 <div class="row">
 <label>三關節原始權重 JSON <input type="file" id="three-joint-weights" accept=".json,application/json"></label>
 <label>Base 角度 <input type="number" id="three-joint-base-angle" min="-45" max="45" value="25"></label>
 <label>Middle 角度 <input type="number" id="three-joint-middle-angle" min="-45" max="45" value="25"></label>
 <label>Distal 角度 <input type="number" id="three-joint-distal-angle" min="-45" max="45" value="20"></label>
+<label>極速 GPU 動作排程 <select id="three-joint-playback-hz">
+<option value="AUTO" selected>Auto（動態選擇）</option>
+<option value="30">30 Hz</option><option value="60">60 Hz</option>
+<option value="90">90 Hz</option><option value="120">120 Hz</option>
+</select></label>
 <button id="three-joint-run" type="button" disabled>三節來源真 3D 變形＋三張 GPU</button>
 <button id="three-joint-download" type="button" disabled>下載來源應變／掃掠風險／GPU SHA</button>
 </div>

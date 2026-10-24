@@ -7,6 +7,8 @@ import {runAIGReal3DQuadStrain,benchmarkAIGReal3DWorkerModes}
  from './aig-real3d-quad-strain-pool.mjs';
 import {applyAIGReal3DSourceMeshDelta}
  from './aig-real3d-gpu-delta-source.mjs';
+import {benchmarkAIGReal3DNativePosePlayback}
+ from './aig-real3d-adaptive-pose-playback.mjs';
 import {buildAIGReal3DWeightedFingerGPUPreview} from './aig-real3d-weighted-motion-working-copy.mjs';
 import {createAIGReal3DSparseNormalCache,evaluateAIGReal3DSparseNormals}
  from './aig-real3d-sparse-source-normals.mjs';
@@ -106,7 +108,7 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
    });
    const normalScratch=new Float64Array(originalSource.positions.length);
    const affectedSourceVertexIds=[...weighted].sort((a,b)=>a-b);
-   const frames=[];let livePose=null;
+   const frames=[];const playbackScenes=[];let livePose=null;
    for(const index of timeline.displayFrameIndexes){
     const sample=timeline.frames[index];
     const frameCPUStart=performance.now();
@@ -124,6 +126,7 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     });
     const sourceNormalsAndSceneBuildMs=performance.now()-frameCPUStart;
     const nativeCaptureBegin=performance.now();
+    playbackScenes.push(gpuPose.scene);
     const gpuDelta=livePose?
      applyAIGReal3DSourceMeshDelta({
       renderer,liveScene:livePose.scene,nextScene:gpuPose.scene
@@ -155,6 +158,13 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
      realCPUOriginalNormalsAndSceneBuildMs:Math.round(sourceNormalsAndSceneBuildMs*1000)/1000,
      gpuReadbackAndPNGEncodingWallMs:Math.round(nativeGPUCaptureAndEncodeMs*1000)/1000});
    }
+   const gpuPlayback=await benchmarkAIGReal3DNativePosePlayback({
+    renderer,poseScenes:[livePose.scene,...playbackScenes.slice(0,2)],
+    mode:$('three-joint-playback-hz').value,rafCallbacks:36
+   });
+   if(!gpuPlayback.gpuOriginalIndexReusedForEveryDelta||
+    gpuPlayback.actualSourceIndexedDraws<2)
+    throw Error('真 GPU 動作排程與索引重用驗收失敗');
    report={
     schema:'AIG_REAL3D_THREE_JOINT_GPU_SWEEP_EVIDENCE_V1',
     sourceSha256:source.sha256,
@@ -165,6 +175,7 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     quadCPUOriginalSourceStrain:quad,
     gpuNativeSourceBufferDeltaReusedOnLaterFrames:true,
     incrementalNativeSourceNormalsVerified:true,
+    adaptiveRealSourceGPUFrameBudget:gpuPlayback,
     nonDisplayFullXYZScratchBuffersAllocated:
      timeline.sparseSourceTopology.scratchPoseFloat32BuffersAllocated,
     noContinuousAnimationFPSClaim:true,
@@ -189,7 +200,8 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     '四路 Worker 工作通道 '+quad.actualWorkerLanes+'（少量面片自動單線程）；'+
     '中間影格僅保留 '+timeline.sparseSourceTopology.numberOfFullXYZFramesRetained+
     ' 組完整 XYZ。真三關節 '+timeline.frameCount+
-    ' 個來源子幀、3 張真 GPU 完成。'+
+    ' 個來源子幀、3 張真 GPU 完成；'+gpuPlayback.actualSourceIndexedDraws+
+    ' 次實際 GPU 提交，排程 '+gpuPlayback.targetHz+' Hz（不能作為穩定 FPS 認證）。'+
     (timeline.diagnostics.possibleUnsampledSweptIntervalCollision?
      '跨幀存在潛在穿插，需人工複核；':'掃掠包圍盒未提出額外警訊；')+
     (timeline.diagnostics.exceedingSourceEdgeStrainThreshold?
