@@ -103,9 +103,18 @@ pre{font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anyw
 <button id="v104-cad-compare" disabled>檢查 CAD 俯視尺寸</button>
 </div>
 <pre id="v104-report">來源尚未載入。六個視角不等於六份獨立實測照片；不能從俯視一張圖認證未知底面。</pre>
+<h2>V105｜俯視輪廓與真 3D 逐像素誤差圖</h2>
+<p>與 V104 僅對照外框尺寸不同：本區將 CAD XY 封閉輪廓與實際 3D 頂視投影，置於相同毫米座標的固定格網做 IoU 比對。黃色＝3D 多出、紫色＝CAD 有而 3D 缺失；模型外觀與來源真值仍須人工核查。</p>
+<div class="row">
+<label><input id="v105-authorize" type="checkbox"> 我確認 CAD 輪廓經實際量測，授權僅對獨立工作副本平移 XY（原始 GLB 不動）</label>
+<button id="v105-compare" disabled>V105 計算真輪廓差異</button>
+</div>
+<canvas id="v105-compare-canvas" width="384" height="384" aria-label="CAD 頂視真模型逐像素輪廓差異"></canvas>
+<pre id="v105-report">尚未比較 CAD 俯視真幾何。未經量測與授權時不允許變更立體模型。</pre>
 </div>
 </div>
 </section></main>
 <script type="module" src="./aig-real3d-v99-native-source-lab.mjs"></script>
 <script type="module" src="./aig-real3d-v104-cad-top-ui.mjs"></script>
+<script type="module" src="./aig-real3d-v105-cad-registration-ui.mjs"></script>
 </body></html>
