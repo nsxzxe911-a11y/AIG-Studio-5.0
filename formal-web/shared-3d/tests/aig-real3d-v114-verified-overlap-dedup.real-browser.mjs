@@ -66,9 +66,20 @@ try{
  await page.locator('#v112-calibration').fill(JSON.stringify(calibration));
  await page.locator('#v112-calibration-confirm').check();
  await page.locator('#v114-dedup').check();
+ await page.locator('#v116-enable').check();
  const baseline=await submit();
  assert.ok(!baseline.error,JSON.stringify(baseline));
  assert.equal(baseline.v114IntegrationRequested,true);
+ const v116=baseline.v116CaptureNormalAndOcclusion;
+ assert.equal(baseline.v116OptInEnabled,true);
+ assert.equal(v116.researchGate,'PASS_COMPUTED_NORMAL_CONTINUITY',
+  JSON.stringify(v116));
+ assert.equal(v116.normalAndSurfaceGate,'PASS_SOURCE_MEASURED_NORMAL_CONTINUITY_ONLY');
+ assert.ok(v116.bidirectionalNormalPairsTotal>100);
+ assert.equal(v116.syntheticFixtureUsed,true);
+ assert.equal(v116.independentCameraCaptureAuthenticated,false);
+ assert.equal(v116.realScannerGroundTruthGate,'BLOCK_NO_EXTERNAL_CAPTURE_ATTESTATION');
+ assert.equal(v116.productionReleasePASS,false);
  const boundary=baseline.v115MeasuredOpenBoundaryAtlas;
  assert.ok(boundary,JSON.stringify(baseline));
  assert.equal(boundary.researchGate,'PASS_SOURCE_OPEN_EDGE_ATLAS',JSON.stringify(boundary));
@@ -139,5 +150,7 @@ try{
    sourceGLBImmutable:true,worldDepthAndColorConformant:true,
    wrongColorAndLocalDepthBothBlocked:true,
    V115NewOpenEdgesSourceBacked:boundary.newOpenEdgesSupportedByFirstMeasuredCamera,
+   V116BidirectionalMeasuredNormalPairs:v116.bidirectionalNormalPairsTotal,
+   V116CaptureAuthenticationGate:'BLOCK_NO_EXTERNAL_CAPTURE_ATTESTATION',
    originalHuman1to1StillBlocked:true}));
 }finally{await browser.close();}
