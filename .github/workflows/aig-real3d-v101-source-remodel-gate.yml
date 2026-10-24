@@ -6,6 +6,7 @@ on:
       - 'formal-web/shared-3d/aig-real3d-v101-*'
       - 'formal-web/shared-3d/tests/aig-real3d-v101-*'
       - 'formal-web/shared-3d/aig-real3d-v99-native-source-lab.*'
+      - 'formal-web/shared-3d/aig-real3d-v99-native-model-ingest.mjs'
       - '.github/workflows/aig-real3d-v101-source-remodel-gate.yml'
       - 'docs/REAL3D-V101-*'
   workflow_dispatch:
@@ -31,6 +32,7 @@ jobs:
           node --check formal-web/shared-3d/aig-real3d-v101-structure-repair.mjs
           node --check formal-web/shared-3d/aig-real3d-v101-backend-orchestrator.mjs
           node --check formal-web/shared-3d/aig-real3d-v99-native-source-lab.mjs
+          node --check formal-web/shared-3d/aig-real3d-v99-native-model-ingest.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-v101-structure-repair.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-v99-native-model-ingest.test.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-v98-unified-source-projection.test.mjs
