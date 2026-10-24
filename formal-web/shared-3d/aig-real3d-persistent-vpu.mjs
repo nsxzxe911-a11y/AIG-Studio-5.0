@@ -48,7 +48,7 @@ export function createAIGReal3DPersistentVPU({
  maxBatches=12,timeoutMs=45000,
  workerFactory=null
 }={}){
- if(![2,4].includes(physicalWorkers)||
+ if(![1,2,4].includes(physicalWorkers)||
   ![4,8,16].includes(virtualLanes)||virtualLanes<physicalWorkers||
   !Number.isInteger(maxPacketBytes)||maxPacketBytes<1024||
   maxPacketBytes>64*1024*1024||
