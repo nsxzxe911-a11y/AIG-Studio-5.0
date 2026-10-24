@@ -16,6 +16,7 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 from pathlib import Path
 import struct
 import subprocess
@@ -207,14 +208,38 @@ def main() -> int:
         if not glb_path.is_file():
             raise InferenceBlocked("OFFICIAL_MODEL_DID_NOT_PRODUCE_ACTUAL_GLB")
         mesh = parse_glb_mesh(glb_path)
+        # A source GLB is only useful to AIG if the REAL V99 binary importer
+        # accepts its exact original triangles and V98 SHA contract.
+        node = shutil.which("node")
+        handoff_js = Path(__file__).resolve().with_name(
+            "real3d_v100_native_handoff.mjs")
+        if not node or not handoff_js.is_file():
+            raise InferenceBlocked("V99_ACTUAL_HANDOFF_NODE_RUNTIME_MISSING")
+        handoff = subprocess.run(
+            [node, str(handoff_js), "--image", str(args.image.resolve()),
+             "--glb", str(glb_path.resolve())],
+            text=True, capture_output=True, timeout=120, check=False)
+        if handoff.returncode != 0:
+            raise InferenceBlocked("REAL_GLTF_FAILED_ACTUAL_AIG_V99_IMPORT: " +
+                                   handoff.stderr[-500:])
+        try:
+            handoff_info = json.loads(handoff.stdout)
+        except json.JSONDecodeError as exc:
+            raise InferenceBlocked("V99_3D_GEOMETRY_RECEIPT_INVALID") from exc
+        if handoff_info.get("status") != (
+            "V99_NATIVE_INDEXED_GEOMETRY_AND_V98_SHARED_SOURCE_PASS"):
+            raise InferenceBlocked("V99_NATIVE_GEOMETRY_HANDOFF_NOT_VERIFIED")
         proof = {
-            **report, "status": "REAL_LOCAL_MODEL_EXECUTED_GLB_PRESENT",
+            **report, "status": "REAL_LOCAL_MODEL_EXECUTED_AND_V99_IMPORTED",
             "inferenceActuallyExecuted": True,
             "neuralInferenceResultsVerified": True,
             "durationWallSeconds": round(time.monotonic() - start, 3),
             "modelInferenceDeviceRequested": args.device,
             "sourceModelGLBSHA256": sha256(glb_path),
             "outputGLB": str(glb_path),
+            "actualNativeV99GLBImportPASS": True,
+            "originalV99IndexedTriangles": handoff_info["originalIndexedTriangles"],
+            "V98SharedSourceSHAProven": handoff_info["sourceAssetSharedWithV98"],
             **mesh,
             "movieReady": False, "releasePASS": False
         }
