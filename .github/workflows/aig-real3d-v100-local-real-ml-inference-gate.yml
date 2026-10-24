@@ -5,6 +5,7 @@ on:
       - 'tools/real3d_v100_*'
       - 'tools/tests/test_real3d_v100_*'
       - 'docs/REAL3D-V100-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v100-*'
       - '.github/workflows/aig-real3d-v100-local-real-ml-inference-gate.yml'
   workflow_dispatch:
 
@@ -30,7 +31,9 @@ jobs:
         with: {node-version: '22'}
       - name: V99 actual source GLB import regression (NOT trained-ML output)
         run: |
+          node --check tools/real3d_v100_native_handoff.mjs
           node --test formal-web/shared-3d/tests/aig-real3d-v99-native-model-ingest.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v100-handoff.test.mjs
 
   actual-trained-model:
     if: ${{ vars.AIG_V100_LOCAL_MODEL_READY == 'true' }}
