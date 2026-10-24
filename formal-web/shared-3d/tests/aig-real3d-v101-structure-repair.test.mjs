@@ -115,3 +115,22 @@ test('V101 unsafe input and unsupported fake mesh cannot be promoted to 3D struc
   imported:{schema:'FAKE_IMAGE_2D',scene:{nodes:[{mesh:tetra()}]}}
  }),/REAL_V99_SOURCE_IMPORT_REQUIRED/);
 });
+
+test('V103 V101 backend retains AI-authored UV/tangent maps in safe Working Copy, BLOCKS orientation-unsafe mapped repairs',()=>{
+ const mesh=tetra({flipFace:-1});
+ mesh.uvs=[0,0,1,0,0,1,1,1];
+ mesh.tangents=Array.from({length:4},()=>[1,0,0,1]).flat();
+ const source=JSON.stringify(mesh);
+ const res=repairAIGReal3DSourceMesh({mesh});
+ assert.equal(res.status,'STRUCTURE_REPAIR_WORKING_COPY_READY');
+ assert.deepEqual(res.workingMesh.uvs,mesh.uvs);
+ assert.deepEqual(res.workingMesh.tangents,mesh.tangents);
+ assert.equal(res.originalUVAndTangentsPreservedIfSourceValidated,true);
+ assert.equal(JSON.stringify(mesh),source);
+ const flipped=tetra({flipFace:0});
+ flipped.uvs=[...mesh.uvs];flipped.tangents=[...mesh.tangents];
+ const blocked=repairAIGReal3DSourceMesh({mesh:flipped});
+ assert.equal(blocked.status,'BLOCK_SOURCE_TEXTURE_TANGENT_REORIENTATION_NEEDS_EVIDENCE');
+ assert.equal(blocked.workingMesh,null);
+ assert.equal(blocked.releasePASS,false);
+});
