@@ -15,7 +15,7 @@ const fail=x=>{throw Error('REAL3D_V96_4K_'+x);};
 const finite=Number.isFinite,round=x=>Math.round(x*1000)/1000;
 const sub=(a,b)=>a.map((x,i)=>x-b[i]);
 const dot=(a,b)=>a.reduce((n,x,i)=>n+x*b[i],0);
-const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2]];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
 const norm=a=>{const l=Math.hypot(...a);return l<1e-9?null:a.map(v=>v/l);};
 const meshSHA=s=>typeof s==='string'&&/^[a-f0-9]{64}$/i.test(s);
 
