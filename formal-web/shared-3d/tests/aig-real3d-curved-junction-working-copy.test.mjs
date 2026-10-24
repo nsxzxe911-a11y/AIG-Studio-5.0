@@ -13,7 +13,7 @@ function fixture({hole=false,reverseFace=false}={}){
   for(let k=0;k<segments;k++){
    const a=2*Math.PI*k/segments;
    v.push('v '+(.25*r*Math.cos(a)).toFixed(8)+' '+
-    t.toFixed(8)+' '+(.15*r*Math.sin(a)).toFixed(8));
+    t.toFixed(8)+' '+(.15*r*Math.sin(a)+(j===34&&k===5?.0012:0)).toFixed(8));
   }
  }
  for(let j=0;j<rings-1;j++)for(let k=0;k<segments;k++){
