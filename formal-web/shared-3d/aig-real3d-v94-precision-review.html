@@ -28,7 +28,7 @@ a{color:#90deff}
 <label>原始模型 OBJ <input id="obj" type="file" accept=".obj,text/plain"></label>
 <label>原始尺度<select id="units"><option value="METERS">米（m）</option><option value="MM">毫米（mm）</option></select></label>
 <label>量測證據 JSON <input id="measure" type="file" accept=".json,application/json"></label>
-<button id="run">讀取原始模型／執行 V94 Gate</button>
+<button id="run">讀取原始模型／執行 V94 Gate</button>\n<button id="refine">依實測點修正工作副本</button>
 <button id="download">下載原始幾何審核 JSON</button>
 </div><p>不會將 OBJ 上傳伺服器；本機讀取檔案並計算 SHA-256。量測 JSON 必須以來源頂點 ID、真實單位及證據 SHA 描述；沒有獨立量測就維持 1:1 BLOCK。OBJ 沒提供背面的部分不會自動補造。</p>
 <div id="status" role="status">尚未載入來源模型；所有正式來源精度維持 BLOCK。</div></section>
