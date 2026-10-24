@@ -3,6 +3,7 @@ import {chromium} from 'playwright';
 import {createHash} from 'node:crypto';
 import {mkdir,readFile,copyFile,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
+import {readAIGReal3DBrowserBlobBytes} from './aig-real3d-browser-blob-bytes.mjs';
 const dir='artifacts/aig-real3d-v91-sports-film-gpu';
 await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({headless:true,args:[
@@ -79,15 +80,13 @@ try{
  assert.notDeepEqual(evidence.beforePosition,evidence.afterPosition);
  assert.notDeepEqual(evidence.beforeRotation,evidence.afterRotation);
  assert.equal(evidence.fullRebufferCount,0);
- const pendingPNG=page.waitForEvent('download',{timeout:30000});
- await page.locator('#v91-native-gpu-download').click();
- const png=await pendingPNG,bytes=await readFile(await png.path());
+ const bytes=await readAIGReal3DBrowserBlobBytes(page,'#v91-native-gpu-download');
  assert.equal(bytes.readUInt32BE(0),0x89504e47);
  assert.equal(bytes.readUInt32BE(16),640);
  assert.equal(bytes.readUInt32BE(20),640);
  assert.equal(createHash('sha256').update(bytes).digest('hex'),
   evidence.afterGPU.sha);
- await copyFile(await png.path(),dir+'/V91-SOCCER-REAL-3D-POSE.png');
+ await writeFile(dir+'/V91-SOCCER-REAL-3D-POSE.png',bytes);
  const support=await page.evaluate(()=>({
   mediaRecorder:typeof MediaRecorder!=='undefined',
   capture:typeof HTMLCanvasElement.prototype.captureStream==='function',
@@ -98,15 +97,13 @@ try{
   independentDecodeVerified:false};
  if(support.mediaRecorder&&support.capture&&support.vp8){
   // Real wall-clock GPU frames, never a video made from one static PNG.
-  const pendingWebm=page.waitForEvent('download',{timeout:30000});
   await page.locator('#record').click();
-  const movie=await pendingWebm;
-  const video=await readFile(await movie.path());
+  await page.locator('#video-link a[href^="blob:"]').waitFor({timeout:90000});
+  const video=await readAIGReal3DBrowserBlobBytes(page,'#video-link a');
   assert.ok(video.length>256);
-  assert.equal(video[0],0x1a);assert.equal(video[1],0x45);
-  assert.equal(video[2],0xdf);assert.equal(video[3],0xa3);
+  assert.equal(video.readUInt32BE(0),0x1a45dfa3);
   const movieSHA=createHash('sha256').update(video).digest('hex');
-  await copyFile(await movie.path(),dir+'/V91-SOCCER-REAL-3D.webm');
+  await writeFile(dir+'/V91-SOCCER-REAL-3D.webm',video);
   webm={actualEncoderResult:'WEBM_BYTES_ENCODED',bytes:video.length,
    sha256:movieSHA,renderingSource:'ACTUAL_INDEXED_XYZ',
    independentDecodeVerified:false};

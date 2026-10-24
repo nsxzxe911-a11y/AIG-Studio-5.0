@@ -3,6 +3,7 @@ import {chromium} from 'playwright';
 import {mkdir,readFile,copyFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
+import {readAIGReal3DBrowserBlobBytes} from './aig-real3d-browser-blob-bytes.mjs';
 const dir='artifacts/aig-real3d-v92-source-rig-sport-film';
 await mkdir(dir,{recursive:true});
 const browser=await chromium.launch({headless:true,args:[
@@ -65,14 +66,12 @@ try{
  assert.equal(result.originalSourceVerticesAndIndicesUnmodified,true);
  assert.equal(result.actorAndBallSimultaneouslyDrawn,true);
  assert.equal(result.fullActorSkeletonCount,2);
- const pending=page.waitForEvent('download',{timeout:30000});
- await page.locator('#v92-qa-download').click();
- const file=await pending,bytes=await readFile(await file.path());
+ const bytes=await readAIGReal3DBrowserBlobBytes(page,'#v92-qa-download');
  assert.equal(bytes.readUInt32BE(0),0x89504e47);
  assert.equal(bytes.readUInt32BE(16),640);
  assert.equal(bytes.readUInt32BE(20),640);
  assert.equal(createHash('sha256').update(bytes).digest('hex'),result.after);
- await copyFile(await file.path(),dir+'/V92-NONHUMAN-SKINNED-SPORT-GPU.png');
+ await writeFile(dir+'/V92-NONHUMAN-SKINNED-SPORT-GPU.png',bytes);
  const support=await page.evaluate(()=>({
   realRecorder:typeof MediaRecorder==='function',
   vp8:typeof MediaRecorder==='function'&&
@@ -81,13 +80,12 @@ try{
  }));
  let movie={status:'ENCODER_UNAVAILABLE_BLOCK',support};
  if(support.realRecorder&&support.vp8&&support.captureStream){
-  const pendingFilm=page.waitForEvent('download',{timeout:30000});
   await page.locator('#v92-webm').click();
-  const exported=await pendingFilm;
-  const data=await readFile(await exported.path());
+  await page.locator('#v92-download a[href^="blob:"]').waitFor({timeout:90000});
+  const data=await readAIGReal3DBrowserBlobBytes(page,'#v92-download a');
   assert.ok(data.length>256);
   assert.equal(data.readUInt32BE(0),0x1a45dfa3);
-  await copyFile(await exported.path(),dir+'/V92-NONHUMAN-RIG-SPORT-FILM.webm');
+  await writeFile(dir+'/V92-NONHUMAN-RIG-SPORT-FILM.webm',data);
   movie={status:'REAL_WEBM_BYTES',bytes:data.length,
    sha256:createHash('sha256').update(data).digest('hex'),
    independentlyDecodedAndFPSVerified:false};

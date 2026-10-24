@@ -113,14 +113,24 @@ try{
  assert.equal(proof.additionalRGBAAtlasTextures,1);
  assert.equal(proof.cameraIndependentValidation,false);
  assert.equal(proof.productionReleasePASS,false);
- const pending=page.waitForEvent('download',{timeout:30000});
- await page.locator('#v89-gpu-download').click();
- const downloaded=await pending,bytes=await readFile(await downloaded.path());
+ // Verify native GPU PNG Blob directly in Chromium. Browser download UI
+ // policies can suppress download events; image bytes and SHA remain strict.
+ const b64=await page.evaluate(async()=>{
+  const link=document.querySelector('#v89-gpu-download');
+  if(!link?.href?.startsWith('blob:'))throw Error('GPU_NATIVE_BLOB_MISSING');
+  const data=new Uint8Array(await (await fetch(link.href)).arrayBuffer());
+  if(data.length<100)throw Error('GPU_NATIVE_PNG_EMPTY');
+  let bin='';
+  for(let i=0;i<data.length;i+=8192)
+   bin+=String.fromCharCode(...data.subarray(i,i+8192));
+  return btoa(bin);
+ });
+ const bytes=Buffer.from(b64,'base64');
  assert.equal(bytes.readUInt32BE(0),0x89504e47);
  assert.equal(bytes.readUInt32BE(16),640);
  assert.equal(bytes.readUInt32BE(20),640);
  assert.equal(createHash('sha256').update(bytes).digest('hex'),proof.mappedImageSHA);
- await copyFile(await downloaded.path(),outdir+'/V89-NONHUMAN-OBSERVED-GPU.png');
+ await writeFile(outdir+'/V89-NONHUMAN-OBSERVED-GPU.png',bytes);
  await writeFile(outdir+'/V89-REAL-GPU-GATE-SHA.json',JSON.stringify(proof,null,2));
  assert.deepEqual(errors,[]);
  console.log('AIG_REAL3D_V89_REAL_GPU_SOURCE_PROJECTION_PASS',proof);

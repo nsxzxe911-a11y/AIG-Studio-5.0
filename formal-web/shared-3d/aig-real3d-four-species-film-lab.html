@@ -1,0 +1,56 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AIG Real3D V93｜四種動態來源表面研究工作區</title>
+<style>
+:root{color-scheme:dark;font:15px/1.55 system-ui,'Microsoft JhengHei',sans-serif;background:#020407;color:#ecf8ff}
+*{box-sizing:border-box}body{margin:0;background:#020407;padding:14px}
+main{max-width:1250px;margin:auto}
+h1{font-size:23px;margin:2px 0 8px}
+p{color:#a8c3d8;margin:8px 0 12px}
+section{background:#07111b;border:1px solid #2b567f;border-radius:14px;padding:13px;margin:12px 0}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+select,button,input{border:1px solid #4989b9;color:#e8f6ff;background:#0b283c;border-radius:9px;font:inherit;padding:9px;min-height:44px}
+button{background:linear-gradient(105deg,#145b77,#353878,#77385c);cursor:pointer}button:disabled{opacity:.46;cursor:default}
+label{font-size:14px;color:#aadfff}input[type=range]{flex:1;min-width:160px}
+canvas{width:100%;height:auto;max-height:72vh;background:#020407;border:1px solid #264867;border-radius:10px;display:block}
+pre{font:12px/1.6 ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:360px;overflow:auto}
+#status{color:#ffe0a0;border:1px solid #827044;padding:9px;border-radius:10px}
+a{color:#8cdefd}
+</style></head><body><main>
+<h1>AIG Real3D V93｜四類生物 3D 骨架附著物理</h1>
+<p><strong>獨立非人體工程 QA。</strong> 橘色來源主表面由原始 3D 骨架關節帶動；彩色來源表面是衣物、毛束、羽片或魚鰭的 3D 測試附件，根部固定、尖端以慣性／阻尼運動。白球是 V91 的實際 3D 動力球。這些幾何不是授權真人或動物掃描。</p>
+<section><div class="row">
+<label>來源結構
+<select id="species">
+<option value="HUMAN">人類｜衣物來源片</option>
+<option value="QUADRUPED">四足動物｜毛束來源片</option>
+<option value="BIRD">鳥類｜羽片來源片</option>
+<option value="FISH">魚類｜魚鰭來源片</option>
+</select></label>
+<label>表面與骨架運算模式
+<select id="wrap">
+<option value="FULL_WRAP">全包覆：全部來源面</option>
+<option value="HALF_WRAP">半包覆：完整骨架＋可見面</option>
+</select></label>
+<label>顯示來源附件
+<select id="visibility"><option value="ALL">顯示</option>
+<option value="HIDE">隱藏（半包覆）</option></select></label>
+<button id="build">重新建立來源</button>
+<button id="play">播放真 3D</button>
+<button id="pause" disabled>暫停</button>
+<button id="png">真 GPU PNG</button>
+<button id="webm">錄製 WebM</button>
+</div>
+<div class="row"><label for="frame">連續 3D 影格</label>
+<input id="frame" type="range" min="0" max="1" step="1" value="0">
+<output id="number">0</output></div>
+<div id="status" role="status">檢查真 WebGL 3D 渲染能力...</div>
+</section>
+<section><canvas id="scene" width="960" height="540" aria-label="來源骨架、動態羽毛毛束衣物魚鰭及球體同一真三維場景"></canvas>
+<p>全／半包覆均不刪除隱藏關節。半包覆是來源 chunk 的顯示選擇，不是把未拍到的背面偽造完成。</p>
+</section>
+<section><h2>來源與 GPU Gate 證據</h2>
+<pre id="evidence">等待真 3D Source Gate。</pre>
+<p id="download"></p></section>
+</main><script type="module" src="./aig-real3d-four-species-film-lab.mjs"></script>
+</body></html>
