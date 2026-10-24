@@ -271,11 +271,34 @@ try{
  assert.equal(downloaded.localSurfaceTopology.sourceGeometryGatePASS,false);
  await copyFile(await badFile.path(),dir+'/BROKEN_OBJ_SOURCE_DEFECT_REPORT.json');
  await page.screenshot({path:dir+'/BROKEN_OBJ_4_GPU_DEFECT_VIEWS-LAB.png',fullPage:true});
- // Independent intact source submitted as an AFTER candidate. Source mesh
- // is never edited; native SHA and all 4 camera captures must be independent.
- await page.locator('#after-source-file').setInputFiles({
-  name:'AFTER_INTACT_SYNTHETIC_NONHUMAN_OBJ.obj',mimeType:'text/plain',buffer:buf
- });
+ // The user's true callback creates one independent patch candidate from
+ // original indexed edge topology. Original source remains untouched.
+ assert.equal(await page.locator('#make-local-working-copy').isDisabled(),false);
+ await page.locator('#make-local-working-copy').click();
+ await page.waitForFunction(()=>!document.getElementById('make-local-working-copy')?.disabled,
+  null,{timeout:30000});
+ assert.match(await page.locator('#local-working-copy-stats').textContent(),/已建立獨立 OBJ 工作副本/);
+ const early=JSON.parse(await page.locator('#evidence').textContent());
+ const patch=early.localPatchWorkingCopy;
+ assert.equal(patch.addedFaceCount,1);
+ assert.equal(patch.sourceOriginalVertices,patch.candidateVertices);
+ assert.equal(patch.existingVerticesChanged,false);
+ assert.equal(patch.existingFacesChanged,false);
+ assert.equal(patch.verifiedCandidateTopologyClosed,true);
+ assert.equal(patch.originalSourceSha256,brokenSha);
+ assert.notEqual(patch.workingCopySha256,brokenSha);
+ assert.equal(patch.humanNaturalAppearancePASS,false);
+ assert.equal(patch.releasePASS,false);
+ const promisedPatch=page.waitForEvent('download',{timeout:15000});
+ await page.locator('#local-working-copy-download').click();
+ const filePatch=await promisedPatch,patchBytes=await readFile(await filePatch.path());
+ assert.ok(patchBytes.toString().startsWith(brokenOBJ.toString()));
+ assert.equal(createHash('sha256').update(patchBytes).digest('hex'),patch.workingCopySha256);
+ await copyFile(await filePatch.path(),dir+'/PR62-TRUE-TRIANGLE-LOCAL-PATCH-WORKING-COPY.obj');
+ const staged=await page.locator('#after-source-file').evaluate(el=>
+  ({name:el.files?.[0]?.name,size:el.files?.[0]?.size}));
+ assert.match(staged.name,/WORKING-COPY.obj$/);
+ assert.equal(staged.size,patchBytes.length);
  await page.locator('#compare-source').click();
  await page.waitForFunction(()=>{
   const b=document.getElementById('compare-source'),
@@ -295,7 +318,7 @@ try{
  assert.equal(diff.sourceShapeBeforeAfter.humanNaturalAppearancePASS,false);
  assert.match(await page.locator('#repair-compare-stats').textContent(),
   /寬度 83[89](?:\.\d+)?→83[89](?:\.\d+)? mm/);
- assert.equal(diff.afterSha256,hash);
+ assert.equal(diff.afterSha256,patch.workingCopySha256);
  assert.ok(diff.globalBefore.openEdges>0);
  assert.equal(diff.globalAfter.openEdges,0);
  assert.equal(diff.beforeSourceGeometryPASS,false);
@@ -357,6 +380,9 @@ try{
   syntheticEllipsoid84cmFrontWidthExplicitlyFlaggedAsNonhuman:true,
   oneContinuousSolidLower3DSectionDetectedFromActualSourceTriangles:true,
   topologyRepairDidNotChangeFatFrontWidth:true,
+  optInActualOriginalIndexedTrianglePatchWorkingCopyGenerated:true,
+  sourceOriginalVerticesAndFaceIndicesUnchanged:true,
+  realCandidateOBJDownloadedAndHashVerified:true,
   referencePictureWasSyntheticNotHuman:true,
   automaticHumanAppearanceApproval:false,
   noSyntheticHumanReconstruction:true,
