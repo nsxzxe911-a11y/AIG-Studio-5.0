@@ -62,11 +62,15 @@ const vs=[
  'vUV=aTexUV;gl_Position=uVP*world;}'
 ].join('\n');
 const fs=[
+ '#ifdef GL_FRAGMENT_PRECISION_HIGH',
+ 'precision highp float;',
+ '#else',
  'precision mediump float;',
+ '#endif',
  'varying vec3 vNormal,vWorld;',
  'uniform vec4 uColor;',
  'uniform vec3 uEye,uEmission;',
- 'uniform float uMetallic,uRoughness,uInspectMode;',
+ 'uniform float uMetallic,uRoughness,uInspectMode,uColorPipeline;',
  'uniform float uFurStrength,uFurFrequency;',
  'uniform sampler2D uAlbedoMap,uNormalMap;',
  'uniform float uHasAlbedoMap,uHasNormalMap,uNormalMapStrength,uClearcoat;',
@@ -130,6 +134,12 @@ const fs=[
   'else if(uInspectMode>2.5){shaded=uColor.rgb;}',
  'else if(uInspectMode>1.5){shaded=normalize(vNormal)*0.5+0.5;}',
  'else if(uInspectMode>0.5){shaded=vec3(0.94,0.96,0.98);}',
+ 'if(uColorPipeline>0.5&&uInspectMode<0.5){',
+ // Standard-display-referred (SDR) tone compression, NOT HDR / BRDF.
+ 'vec3 p=max(shaded,vec3(0.0));',
+ 'vec3 tonemapped=(p*(2.51*p+0.03))/(p*(2.43*p+0.59)+0.14);',
+ 'shaded=pow(clamp(tonemapped,0.0,1.0),vec3(1.0/2.2));',
+ '}',
  'gl_FragColor=vec4(shaded,uInspectMode>0.5?1.0:uColor.a);}'
 ].join('\n');
 // Mask-based screen-space edge pass: outline is outside original geometry, never triangle wireframe.
@@ -191,6 +201,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   metal:gl.getUniformLocation(meshProg,'uMetallic'),
   rough:gl.getUniformLocation(meshProg,'uRoughness'),
   inspect:gl.getUniformLocation(meshProg,'uInspectMode'),
+  colorPipeline:gl.getUniformLocation(meshProg,'uColorPipeline'),
   furStrength:gl.getUniformLocation(meshProg,'uFurStrength'),
   furFrequency:gl.getUniformLocation(meshProg,'uFurFrequency'),
   furUndercoat:gl.getUniformLocation(meshProg,'uFurUndercoat'),
@@ -217,7 +228,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   subBufferUploads=0,uploadedFullBytes=0,uploadedSubBytes=0;
  const INSPECTION_MODES=['LIT','SILHOUETTE','NORMALS','ALBEDO',
   'BLACK_CONTOUR','BROWN_FLAT','BROWN_VOLUME','BROWN_FINISH'];
- let inspectionMode='LIT';
+ let inspectionMode='LIT',colorPipelineMode='LEGACY';
  let currentQuality=quality,lastFrameBudget=null;
  let edgeProg=null,edgeUniforms=null,edgeQuad=null;
  let maskFbo=null,maskTexture=null,maskDepth=null,maskSize=[0,0];
@@ -356,6 +367,19 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   inspectionMode=mode;return getInspectionMode();
  }
  function getInspectionMode(){return inspectionMode;}
+ function setColorPipeline(mode){
+  if(dead||lost)throw Error('AIG3D_COLOR_PIPELINE_CONTEXT_UNAVAILABLE');
+  if(!['LEGACY','FILM_SDR'].includes(mode))
+   throw Error('AIG3D_COLOR_PIPELINE_UNSUPPORTED');
+  colorPipelineMode=mode;return getColorPipeline();
+ }
+ function getColorPipeline(){return {
+  mode:colorPipelineMode,
+  measuredHDR10BitDepth:false,physicallyBasedBRDFImplemented:false,
+  fragmentHighpRequestedIfSupported:true,
+  normalAndOriginalSourceGeometryNotModified:true
+ };}
+
  function setQuality(next){
   if(dead)throw Error('AIG3D_RENDERER_DESTROYED');
   getAIG3DQuality(next);
@@ -470,6 +494,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
    .65,0,1,0,.65,0,1,0,.65,0,1,0,.65,0,1,0
   ]));
   gl.uniform1f(u.inspect,forcedInspection===null?INSPECTION_MODES.indexOf(inspectionMode):forcedInspection);
+  gl.uniform1f(u.colorPipeline,colorPipelineMode==='FILM_SDR'?1:0);
   if(mat.doubleSided)gl.disable(gl.CULL_FACE);else gl.enable(gl.CULL_FACE);
   gl.drawElements(gl.TRIANGLES,mesh.count,mesh.type,0);
   return mesh.count/3;
@@ -539,7 +564,10 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   }
   last={status:'WEBGL_XYZ_TRIANGLES_RENDERED',webglVersion:webgl2?2:1,
    triangles,nodes,rapid,feed,cameraProjection:camera.projection,
-   inspectionMode,postProcessBloomApplied:false,
+   inspectionMode,colorPipelineMode,
+   postProcessFilmSDRActuallyEnabled:colorPipelineMode==='FILM_SDR',
+   sourceBRDFPhysicalAccuracyCertified:false,
+   postProcessBloomApplied:false,
    exactCoffeeBrownOverride:brown&&inspectionMode!=='BLACK_CONTOUR',
    blackContourFromRealGPUObjectMask:brown,
    blackOutlineNotTriangleWireframe:brown,
@@ -755,6 +783,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  }
  return {status:'READY',contextVersion:webgl2?2:1,render,destroy,
   setCamera,getCamera,setInspectionMode,getInspectionMode,
+  setColorPipeline,getColorPipeline,
   setQuality,getQuality,releaseMesh,updateMeshVertices,measureCompletedFrame,captureNativePNG,getGPUResourceAccounting,
   getGpuLimit:()=>lost||dead?0:Math.min(
    gl.getParameter(gl.MAX_TEXTURE_SIZE),gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)),
