@@ -26,6 +26,7 @@ test('Invisible tabs and critical browser heap pressure never render, thermal wi
  assert.equal(g.choose(200,{heapUsedBytes:94,heapLimitBytes:100}).reason,'CRITICAL_HEAP_PAUSE');
  assert.equal(g.choose(300,{heapUsedBytes:85,heapLimitBytes:100}).reason,'CRITICAL_HEAP_PAUSE');
  const recovered=g.choose(400,{heapUsedBytes:74,heapLimitBytes:100});
+ g.choose(430,{heapUsedBytes:88,heapLimitBytes:100});
  assert.equal(recovered.draw,true);
  assert.ok(g.snapshot().downshifts>=1);
  assert.equal(g.snapshot().actualDeviceTemperatureCelsius,null);
