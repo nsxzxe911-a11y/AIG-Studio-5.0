@@ -16,7 +16,7 @@ code{color:#a4d8ff;overflow-wrap:anywhere}
 #gallery,#reference-gallery,#anatomy-gallery,#defect-gallery,#repair-compare-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 figure{border:1px solid #2a6c85;border-radius:11px;padding:9px;margin:0;background:#06111f;min-width:0}
 figure img{width:100%;height:400px;max-height:52vh;object-fit:contain;display:block;background:#020407}
-#profile-table,#anatomy-region-table,#surface-table,#repair-compare-table{overflow-x:auto;margin-top:12px}#profile-table table,#anatomy-region-table table,#surface-table table,#repair-compare-table table{width:100%;border-collapse:collapse;min-width:520px;font-size:12px}#profile-table td,#profile-table th,#anatomy-region-table td,#anatomy-region-table th,#surface-table td,#surface-table th,#repair-compare-table td,#repair-compare-table th{padding:8px 6px;text-align:left;border-bottom:1px solid #2d4059}#profile-table th{color:#a3deed}#profile-table tr[data-worst=true]{background:#4f331d88}#local-width-review{padding-top:12px}
+#profile-table,#anatomy-region-table,#surface-table,#repair-compare-table,#source-3d-slice-table{overflow-x:auto;margin-top:12px}#profile-table table,#anatomy-region-table table,#surface-table table,#repair-compare-table table,#source-3d-slice-table table{width:100%;border-collapse:collapse;min-width:520px;font-size:12px}#profile-table td,#profile-table th,#anatomy-region-table td,#anatomy-region-table th,#surface-table td,#surface-table th,#repair-compare-table td,#repair-compare-table th,#source-3d-slice-table td,#source-3d-slice-table th{padding:8px 6px;text-align:left;border-bottom:1px solid #2d4059}#profile-table th{color:#a3deed}#profile-table tr[data-worst=true]{background:#4f331d88}#local-width-review{padding-top:12px}
 .diagnostic-inner{margin:12px 0;border-color:#705338}#defect-edge-list button{min-height:38px;background:#2d201b;max-width:100%;word-break:break-word}
 #defect-selected{white-space:pre-wrap;overflow-wrap:anywhere}#repair-compare-gallery .compare-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
 #repair-compare-gallery figure img{height:280px}#defect-gallery figure img[data-pickable=true]{cursor:crosshair;touch-action:manipulation}
@@ -46,6 +46,12 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 </div>
 <p>第一階驗證原始 OBJ／GLB 的 SHA、真實三角面及來源聲明；第二階才以同一模型輸出黑線、咖啡平塗、陰影、低高光。四視角無炫光，外觀自然度永遠需獨立比對真人來源。</p>
 <div id="status" class="status" role="status" aria-live="polite">未匯入模型。外觀驗收 BLOCK。</div>
+</section>
+<section class="panel" id="source-3d-slice-review">
+<h2>原始 3D 實體截面驗證｜下半身是否真的分成兩條腿</h2>
+<p>直接以 OBJ／GLB 的實際三角面，在高度 22%、37%、67%、94% 做水平切面。此檢查不是影像推測，也不自動補腿／修身；長裙、伸展姿態、多層衣物可能需要人工核對。</p>
+<div id="source-3d-slice-stats" class="status" role="status" aria-live="polite">尚未從原始三角面取得立體截面。</div>
+<div id="source-3d-slice-table" role="region" aria-label="四個高度的真正 3D 截面連通環與寬度"></div>
 </section>
 <section class="panel" id="shape-envelope-review">
 <h2>原始三維來源外型實際尺寸｜不靠陰影修飾</h2>
