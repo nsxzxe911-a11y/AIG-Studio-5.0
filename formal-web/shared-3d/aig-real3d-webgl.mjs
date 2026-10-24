@@ -122,7 +122,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  const gl=canvas.getContext('webgl2',{alpha:false,antialias:true,depth:true,preserveDrawingBuffer})||
   canvas.getContext('webgl',{alpha:false,antialias:true,depth:true,preserveDrawingBuffer});
  if(!gl)return {status:'WEBGL_UNAVAILABLE',
-  render(){return{status:'WEBGL_UNAVAILABLE'};},destroy(){},releaseMesh(){return false;},getCamera(){return null;},
+  render(){return{status:'WEBGL_UNAVAILABLE'};},destroy(){},releaseMesh(){return false;},updateMeshVertices(){throw Error('WEBGL_UNAVAILABLE');},getCamera(){return null;},
   setCamera(){throw Error('WEBGL_UNAVAILABLE');},
   setInspectionMode(){throw Error('WEBGL_UNAVAILABLE');},
   getInspectionMode(){return 'UNAVAILABLE';}};
@@ -457,6 +457,59 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  }
  const contextLost=e=>{e.preventDefault();lost=true;};
  canvas.addEventListener('webglcontextlost',contextLost);
+ /**
+  * In-place GPU sub-buffer pose update. Index/topology buffer is NEVER touched.
+  * Caller must supply the complete next CPU arrays plus sorted LOCAL changed ids.
+  * Coalesce adjacent indices to avoid one GPU command per vertex.
+  */
+ function updateMeshVertices(mesh,{
+  positions,normals,changedVertexIndices
+ }={}){
+  if(dead||lost)throw Error('AIG3D_GPU_DELTA_RENDERER_NOT_READY');
+  if(!mesh||!Array.isArray(mesh.positions)||!Array.isArray(mesh.normals)||
+   !Array.isArray(mesh.indices)||!Array.isArray(positions)||
+   !Array.isArray(normals)||positions.length!==mesh.positions.length||
+   normals.length!==mesh.normals.length||positions.length!==normals.length||
+   !Array.isArray(changedVertexIndices))
+   throw Error('AIG3D_GPU_DELTA_SOURCE_INVALID');
+  let prior=-1;
+  for(const id of changedVertexIndices){
+   if(!Number.isInteger(id)||id<=prior||id<0||id>=mesh.vertexCount)
+    throw Error('AIG3D_GPU_DELTA_ORIGINAL_VERTEX_INDICES_INVALID');
+   prior=id;
+   for(let axis=0;axis<3;axis++)if(!finite(positions[id*3+axis])||
+    !finite(normals[id*3+axis])||Math.abs(normals[id*3+axis])>1.0001)
+    throw Error('AIG3D_GPU_DELTA_VERTEX_DATA_INVALID');
+  }
+  if(!changedVertexIndices.length)return {
+   changedVertexCount:0,positionSubDataCalls:0,normalSubDataCalls:0,
+   originalIndexBufferReused:true,fullGPUBufferReallocation:false
+  };
+  const cached=bufferMesh(mesh);
+  // Validate first, then commit mutations to both live CPU mesh and GPU buffers.
+  for(const id of changedVertexIndices)for(let j=0;j<3;j++){
+   mesh.positions[id*3+j]=positions[id*3+j];
+   mesh.normals[id*3+j]=normals[id*3+j];
+  }
+  const groups=[];let start=changedVertexIndices[0],end=start;
+  for(let i=1;i<changedVertexIndices.length;i++){
+   const id=changedVertexIndices[i];
+   if(id===end+1){end=id;continue;}
+   groups.push([start,end]);start=end=id;
+  }
+  groups.push([start,end]);
+  for(const [a,b] of groups){
+   const from=a*3,to=(b+1)*3;
+   gl.bindBuffer(gl.ARRAY_BUFFER,cached.pos);
+   gl.bufferSubData(gl.ARRAY_BUFFER,from*4,new Float32Array(positions.slice(from,to)));
+   gl.bindBuffer(gl.ARRAY_BUFFER,cached.norm);
+   gl.bufferSubData(gl.ARRAY_BUFFER,from*4,new Float32Array(normals.slice(from,to)));
+  }
+  return {changedVertexCount:changedVertexIndices.length,
+   positionSubDataCalls:groups.length,normalSubDataCalls:groups.length,
+   originalIndexBufferReused:true,fullGPUBufferReallocation:false,
+   entireOriginalGeometryWasNotReuploaded:true};
+ }
  function releaseMesh(mesh){
   if(dead||!mesh)return false;
   const old=cache.get(mesh);
@@ -482,7 +535,7 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
  }
  return {status:'READY',contextVersion:webgl2?2:1,render,destroy,
   setCamera,getCamera,setInspectionMode,getInspectionMode,
-  setQuality,getQuality,releaseMesh,captureNativePNG,
+  setQuality,getQuality,releaseMesh,updateMeshVertices,captureNativePNG,
   getGpuLimit:()=>lost||dead?0:Math.min(
    gl.getParameter(gl.MAX_TEXTURE_SIZE),gl.getParameter(gl.MAX_RENDERBUFFER_SIZE)),
   getLastStats:()=>last?{...last}:null};
