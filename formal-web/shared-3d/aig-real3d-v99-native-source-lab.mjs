@@ -125,6 +125,8 @@ function inspect(){
   actualNeuralModelWeightsInstalled:false,
   trueHumanIdentityPhotoSimilarityTested:false,
   sourceTexturePBRMaterialCertified:false,
+  selectedActualSDRShader:renderer.getColorPipeline(),
+  originalGLTFMaterialFactorSourcesPreserved:imported.perMesh.every(x=>!!x.materialSourceFactors),
   animationSkinRigAutomaticallyTransferred:false,
   finalCinemaQualityPASS:false,releasePASS:false
  };
@@ -166,7 +168,7 @@ $('import').addEventListener('click',async()=>{
    background:[.015,.028,.05,1]});
   if(renderer.status!=='READY')throw Error('真正 GPU WebGL 不可用');
   renderer.setInspectionMode('LIT');
-  renderer.setColorPipeline('FILM_SDR');
+  renderer.setColorPipeline($('v102-colors').value);
   enable(true);focusCamera();
   const result=renderer.render(activeScene());
   if(result.status!=='WEBGL_XYZ_TRIANGLES_RENDERED')
@@ -322,6 +324,21 @@ $('repair101').addEventListener('click',()=>{
   if(renderer)renderer.setQuality('balanced');
   status('BLOCK：'+e.message);enable(ready);
  }
+});
+$('v102-colors').addEventListener('change',()=>{
+ if(!ready||!renderer||busy)return;
+ try{
+  const mode=$('v102-colors').value;
+  renderer.setColorPipeline(mode);
+  renderer.render(activeScene());
+  const receipt=JSON.parse($('proof').textContent);
+  receipt.sourceColorShaderMode=mode;
+  receipt.originalSourceMaterialFactorsNotRewritten=true;
+  receipt.materialTexturesAndTruePBRNotYetCertified=true;
+  $('proof').textContent=JSON.stringify(receipt,null,2);
+  status('已切換實際 GPU SDR 著色：'+mode+
+   '；不需要重新運算 AI 幾何模型，正式 HDR10／PBR 尚未驗證。');
+ }catch(e){status('BLOCK：'+String(e?.message??e));}
 });
 $('v102-quality').addEventListener('change',()=>{
  if(!renderer||!ready)return;
