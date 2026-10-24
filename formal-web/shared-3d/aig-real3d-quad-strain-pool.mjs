@@ -78,8 +78,11 @@ export async function runAIGReal3DQuadStrain({
  if(requestedWorkers!==4||!Number.isInteger(minimumTrianglesForWorkers)||
   minimumTrianglesForWorkers<1||!Number.isFinite(timeoutMs)||
   timeoutMs<1000||timeoutMs>120000)fail('SCHEDULER_CONFIG_INVALID');
+ const packedMs=performance.now()-t0;
+ const serialStart=performance.now();
  const serial=mergeAIGQuadStrainResults([inspectAIGQuadStrainPacket(packet)]);
- const serialMs=performance.now()-t0;
+ const serialComputeMs=performance.now()-serialStart;
+ const serialMs=packedMs+serialComputeMs;
  const capable=typeof Worker==='function';
  const hardware=typeof navigator!=='undefined'?navigator.hardwareConcurrency??0:0;
  const runParallel=capable&&(forceFour||packet.length/18>=minimumTrianglesForWorkers)&&
@@ -87,6 +90,8 @@ export async function runAIGReal3DQuadStrain({
  if(!runParallel){
   return {schema:QUAD_STRAIN_SCHEMA,result:serial,serialBaseline:serial,
    measuredSerialTotalMs:serialMs,measuredFourWorkerMs:null,
+   measuredPackingMs:Math.round(packedMs*1000)/1000,
+   benchmarkTimesIncludeIdenticalPackingCosts:true,
    actualWorkerLanes:0,requestedWorkerLanes:4,
    selectedMode:'SERIAL_SMALL_JOB_OR_UNSUPPORTED',
    parallelEquivalentToSerial:true,sourceTrianglesPreserved:true,
@@ -107,12 +112,16 @@ export async function runAIGReal3DQuadStrain({
    jobs.push(runWorker(worker,slice.buffer,i,timeoutMs));
   }
   const partial=await Promise.all(jobs);
-  const parallel=mergeAIGQuadStrainResults(partial),parallelMs=performance.now()-t1;
+  const parallel=mergeAIGQuadStrainResults(partial),
+   parallelComputeMs=performance.now()-t1,
+   parallelMs=packedMs+parallelComputeMs;
   if(JSON.stringify(parallel)!==JSON.stringify(serial))
    fail('PARALLEL_SERIAL_SOURCE_STRAIN_MISMATCH');
   return {schema:QUAD_STRAIN_SCHEMA,result:parallel,serialBaseline:serial,
    measuredSerialTotalMs:Math.round(serialMs*1000)/1000,
    measuredFourWorkerMs:Math.round(parallelMs*1000)/1000,
+   measuredPackingMs:Math.round(packedMs*1000)/1000,
+   benchmarkTimesIncludeIdenticalPackingCosts:true,
    actualWorkerLanes:4,requestedWorkerLanes:4,
    selectedMode:'FOUR_REAL_WEB_WORKERS',
    parallelEquivalentToSerial:true,sourceTrianglesPreserved:true,
