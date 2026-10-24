@@ -2,6 +2,8 @@ import {buildAIGReal3DGLBStatic} from './aig-real3d-glb-native-mesh.mjs';
 import {buildAIGReal3DScanNative} from './aig-real3d-scan-native-mesh.mjs';
 import {buildAIGReal3DDenseOBJSource}
  from './aig-real3d-dense-source-obj.mjs';
+import {mountAIGSixDoFGlobeSpaceUI}
+ from './aig-sixdof-geoglobe-ui.mjs';
 import {mountAIGReal3DThreeJointControls}
  from './aig-real3d-three-joint-ui.mjs';
 import {mountAIGReal3DHierarchicalFKControls}
@@ -1172,3 +1174,5 @@ const threeJointUI=mountAIGReal3DThreeJointControls({
  setBusy:v=>{running=v;},
  registerURL:url=>urlPool.add(url)
 });
+
+mountAIGSixDoFGlobeSpaceUI({$});

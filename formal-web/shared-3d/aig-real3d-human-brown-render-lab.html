@@ -135,6 +135,25 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <div id="three-joint-gallery" class="gallery" aria-label="來源網格三節 FK 三張真 GPU"></div>
 <pre id="three-joint-evidence">尚無 3D 三節關節檢查結果。</pre>
 </section>
+<section class="panel" id="geo-6dof-space">
+<h2>AIG 六自由度＋地球式球面定位｜WGS84 × 精密原始 3D</h2>
+<p>六自由度是三個位置 X/Y/Z 加上 yaw/pitch/roll 三種旋轉；不是六個物理空間維度。全球座標使用 double 精度 WGS84／ECEF，工程工作區使用毫米 ENU 局部座標。這只是座標與環繞相機引擎的實際操作驗證，沒有自動接上地球地形或 CNC 伺服器。</p>
+<div class="row">
+<label>緯度 ° <input id="geo-lat" type="number" min="-90" max="90" step=".001" value="0"></label>
+<label>經度 ° <input id="geo-lon" type="number" min="-180" max="180" step=".001" value="0"></label>
+<label>海拔 m <input id="geo-height" type="number" step=".01" value="0"></label>
+<label>局部 X／東向 mm <input id="geo-x-mm" type="number" step=".001" value=".001"></label>
+<label>局部 Y／北向 mm <input id="geo-y-mm" type="number" step=".001" value="0"></label>
+<label>局部 Z／向上 mm <input id="geo-z-mm" type="number" step=".001" value="0"></label>
+<label>Yaw／轉向 ° <input id="geo-yaw" type="number" step="1" value="90"></label>
+<label>Pitch／仰俯 ° <input id="geo-pitch" type="number" step="1" value="20"></label>
+<label>Roll／側滾 ° <input id="geo-roll" type="number" step="1" value="0"></label>
+<button id="geo-6dof-run" type="button">計算 6DoF／球面位置與毫米往返精度</button>
+</div>
+<div id="geo-6dof-status" class="status" role="status">尚未計算 WGS84/ECEF/ENU。</div>
+<canvas id="geo-6dof-canvas" width="440" height="310" aria-label="球面經緯線及座標定位示意"></canvas>
+<pre id="geo-6dof-evidence">不要求定位權限；僅使用上方手動輸入的座標數值。</pre>
+</section>
 <section class="panel" id="native-resolution-export">
 <h2>真 GPU 原生解析度｜1080p / 2K / 手機原生 / 4K</h2>
 <p>原本七視角的 1080×1920 仍是同尺度幾何驗收圖。下方可另外輸出一張真正的高解析度 PNG，不是放大小圖；高解析度只讓可見邊緣更清楚，不會增加原 OBJ／GLB 的三角形，也不會補出臉部或手指。</p>

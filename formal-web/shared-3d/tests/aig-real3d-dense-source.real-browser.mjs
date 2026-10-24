@@ -388,6 +388,57 @@ try{
  assert.equal(createHash('sha256').update(threeBytes).digest('hex'),
   triple.gpuFrames[2].sha256);
  await copyFile(await triplePNG.path(),dir+'/NONHUMAN-DENSE-THREE-JOINT-FINAL-GPU.png');
+ // True Web Workers: four distinct tasks, compact transferred source triangles,
+ // serial parity. Number of OS CPU cores and 2x speed are NOT assumed.
+ const quad=await page.evaluate(async()=>{
+  const pool=await import('./aig-real3d-quad-strain-pool.mjs');
+  const count=8192;
+  const original=new Float32Array(count*9),posed=new Float32Array(count*9),
+   idx=new Uint32Array(count*3),offsets=new Uint32Array(count);
+  for(let i=0;i<count;i++){
+   const base=i*9;
+   original.set([0,0,i*.003,1,0,i*.003,0,1,i*.003],base);
+   posed.set([0,0,i*.003,1.05,0,i*.003,0,1,i*.003],base);
+   idx[i*3]=i*3;idx[i*3+1]=i*3+1;idx[i*3+2]=i*3+2;
+   offsets[i]=i*3;
+  }
+  return await pool.runAIGReal3DQuadStrain({
+   original,posed,indices:idx,triangleOffsets:offsets,
+   requestedWorkers:4,forceFour:true
+  });
+ });
+ assert.equal(quad.actualWorkerLanes,4);
+ assert.equal(quad.selectedMode,'FOUR_REAL_WEB_WORKERS');
+ assert.equal(quad.parallelEquivalentToSerial,true);
+ assert.equal(quad.result.inspectedOriginalTriangles,8192);
+ assert.equal(quad.result.changedSourceTriangles,8192);
+ assert.ok(quad.result.maxSourceEdgeStretchPercent>0);
+ assert.equal(quad.gpuWasNotDuplicated,true);
+ assert.equal(quad.twoTimesFasterClaimSupported,false);
+ assert.ok(quad.measuredSerialTotalMs>=0);
+ assert.ok(quad.measuredFourWorkerMs>=0);
+ await writeFile(dir+'/NONHUMAN-FOUR-REAL-WEB-WORKER-TIMING.json',
+  JSON.stringify(quad,null,2));
+ // Real working UI: WGS84 -> double ECEF -> floating local mm -> 6DoF.
+ await page.locator('#geo-lat').fill('23.7');
+ await page.locator('#geo-lon').fill('120.5');
+ await page.locator('#geo-height').fill('17');
+ await page.locator('#geo-x-mm').fill('.001');
+ await page.locator('#geo-y-mm').fill('0');
+ await page.locator('#geo-z-mm').fill('0');
+ await page.locator('#geo-yaw').fill('90');
+ await page.locator('#geo-pitch').fill('20');
+ await page.locator('#geo-roll').fill('0');
+ await page.locator('#geo-6dof-run').click();
+ assert.match(await page.locator('#geo-6dof-status').textContent(),/6DoF \+ WGS84/);
+ const globe=JSON.parse(await page.locator('#geo-6dof-evidence').textContent());
+ assert.equal(globe.globalAnchor.schema,'AIG_6DOF_WGS84_ECEF_LOCAL_ENU_MM_V1');
+ assert.ok(globe.localRoundtripErrorMm<.002);
+ assert.equal(globe.isSixSpatialDimensions,false);
+ assert.equal(globe.CNCProductionIntegrationPASS,false);
+ assert.equal(globe.actualGlobeTerrainStreaming,false);
+ await writeFile(dir+'/NONHUMAN-SIXDOF-WGS84-GLOBE-LOCAL-MM.json',
+  JSON.stringify(globe,null,2));
  assert.deepEqual(errors,[]);
  await page.screenshot({path:dir+'/DENSE-SOURCE-ORIGINAL-GPU-INTAKE.png',fullPage:true});
  await writeFile(dir+'/proof.json',JSON.stringify({
@@ -398,7 +449,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_FAST_SPARSE_FK_TRUE_GPU_AND_STRAIN_PARITY_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_FOUR_WORKER_SIXDOF_GLOBE_COORDS_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;
