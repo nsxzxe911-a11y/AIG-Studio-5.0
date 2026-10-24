@@ -15,8 +15,15 @@ const browser=await chromium.launch({headless:true,args:[
 const page=await browser.newPage({acceptDownloads:true});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 try{
- await page.goto('http://127.0.0.1:8772/shared-3d/aig-real3d-rig-sport-film-lab.html',
+ await page.goto('http://127.0.0.1:8772/shared-3d/aig-real3d-four-species-film-lab.html',
   {waitUntil:'domcontentloaded',timeout:30000});
+ await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('真 3D HUMAN'),
+  null,{timeout:30000});
+ assert.equal(await page.locator('#play').isDisabled(),false);
+ await page.locator('#species').selectOption('FISH');
+ await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('真 3D FISH'),
+  null,{timeout:30000});
+ await page.locator('#species').selectOption('BIRD');
  const proof=await page.evaluate(async()=>{
   const QA=await import('./aig-real3d-v93-qa-fixture.mjs');
   const Film=await import('./aig-real3d-four-species-film.mjs');
