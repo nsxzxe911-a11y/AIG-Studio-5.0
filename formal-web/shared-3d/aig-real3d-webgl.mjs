@@ -60,12 +60,21 @@ const fs=[
  'uniform vec4 uColor;',
  'uniform vec3 uEye,uEmission;',
  'uniform float uMetallic,uRoughness,uInspectMode;',
+ 'uniform float uFurStrength,uFurFrequency;',
+ 'uniform vec3 uFurUndercoat,uFurGuard;',
+ 'float hashFur(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}',
  'void main(){vec3 n=normalize(vNormal),l=normalize(vec3(0.42,0.79,0.55));',
  'vec3 view=normalize(uEye-vWorld);float diffuse=max(dot(n,l),0.0);',
  'vec3 halfV=normalize(l+view);',
  'float shine=mix(105.0,7.0,uRoughness);',
  'float spec=pow(max(dot(n,halfV),0.0),shine)*(0.06+uMetallic*0.44);',
  'vec3 shaded=uColor.rgb*(0.24+0.76*diffuse)+vec3(spec)+uEmission;',
+ 'if(uFurStrength>0.001&&uInspectMode<0.5){',
+ 'vec3 p=floor(vWorld*uFurFrequency+normalize(vNormal)*3.0);',
+ 'float strand=hashFur(p)*0.6+hashFur(p*1.61)*0.4;',
+ 'vec3 coat=mix(uFurUndercoat,uFurGuard,smoothstep(0.20,0.82,strand));',
+ 'shaded=mix(shaded,coat*(0.25+0.75*diffuse)+vec3(spec*0.35),uFurStrength);',
+ '}',
  'if(uInspectMode>6.5){',
   'float soft=max(dot(n,l),0.0);',
   'shaded=vec3(0.58039,0.41961,0.29804)*(0.47+0.50*soft)', 
@@ -138,7 +147,11 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   emissive:gl.getUniformLocation(meshProg,'uEmission'),
   metal:gl.getUniformLocation(meshProg,'uMetallic'),
   rough:gl.getUniformLocation(meshProg,'uRoughness'),
-  inspect:gl.getUniformLocation(meshProg,'uInspectMode')};
+  inspect:gl.getUniformLocation(meshProg,'uInspectMode'),
+  furStrength:gl.getUniformLocation(meshProg,'uFurStrength'),
+  furFrequency:gl.getUniformLocation(meshProg,'uFurFrequency'),
+  furUndercoat:gl.getUniformLocation(meshProg,'uFurUndercoat'),
+  furGuard:gl.getUniformLocation(meshProg,'uFurGuard')};
  const lu={pos:gl.getAttribLocation(lineProg,'aPosition'),
   model:gl.getUniformLocation(lineProg,'uModel'),
   vp:gl.getUniformLocation(lineProg,'uVP'),
@@ -299,6 +312,22 @@ export function createAIG3DRenderer(canvas,{quality='balanced',pixelRatio=1.25,m
   gl.uniform3fv(u.eye,new Float32Array(eye));
   gl.uniform3fv(u.emissive,new Float32Array(mat.emissive));
   gl.uniform1f(u.metal,mat.metallic);gl.uniform1f(u.rough,mat.roughness);
+  // Original XYZ/normals/indices stay byte-for-byte unchanged.
+  // Fur here is a multi-pigment material shader, NOT 3D fur strands.
+  const fur=mat.aigFurMaterial;
+  if(fur&&(
+   fur.schema!=='AIG_REAL3D_V86_FUR_SURFACE_MATERIAL_V1'||
+   !Array.isArray(fur.undercoatRGB)||!Array.isArray(fur.guardRGB)||
+   fur.undercoatRGB.length!==3||fur.guardRGB.length!==3||
+   ![...fur.undercoatRGB,...fur.guardRGB].every(x=>
+    Number.isFinite(x)&&x>=0&&x<=1)||
+   !Number.isFinite(fur.strength)||fur.strength<0||fur.strength>1||
+   !Number.isFinite(fur.frequency)||fur.frequency<1||fur.frequency>512
+  ))throw Error('REAL3D_FUR_MATERIAL_UNVERIFIED_PARAMETERS');
+  gl.uniform1f(u.furStrength,fur?.strength??0);
+  gl.uniform1f(u.furFrequency,fur?.frequency??1);
+  gl.uniform3fv(u.furUndercoat,new Float32Array(fur?.undercoatRGB??[0,0,0]));
+  gl.uniform3fv(u.furGuard,new Float32Array(fur?.guardRGB??[0,0,0]));
   gl.uniform1f(u.inspect,forcedInspection===null?INSPECTION_MODES.indexOf(inspectionMode):forcedInspection);
   if(mat.doubleSided)gl.disable(gl.CULL_FACE);else gl.enable(gl.CULL_FACE);
   gl.drawElements(gl.TRIANGLES,mesh.count,mesh.type,0);
