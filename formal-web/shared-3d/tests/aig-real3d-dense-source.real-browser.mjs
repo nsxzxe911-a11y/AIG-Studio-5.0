@@ -459,9 +459,22 @@ try{
   const delta=await import('./aig-real3d-gpu-delta-source.mjs');
   const canvas=document.createElement('canvas'),freshCanvas=document.createElement('canvas');
   canvas.width=freshCanvas.width=640;canvas.height=freshCanvas.height=480;
-  const original=[-1,-1,0,1,-1,0,1,1,0,-1,1,0],
-   moved=[-1,-1,0,1,-1,.45,1,1,0,-1,1,0],
-   normals=[0,0,1,0,0,1,0,0,1,0,0,1],indices=[0,1,2,0,2,3];
+  // Real renderer requires >=2000 genuine original indexed triangles.
+  // A nonhuman tubular source mesh keeps the unchanged QA acceptance threshold.
+  const original=[],moved=[],normals=[],indices=[];
+  const rings=50,segments=32;
+  for(let row=0;row<rings;row++)for(let col=0;col<segments;col++){
+   const angle=col*2*Math.PI/segments,rx=Math.cos(angle),
+    rz=Math.sin(angle),y=-1+2*row/(rings-1),x=.65*rx,z=.65*rz;
+   original.push(x,y,z);
+   moved.push(x+(row>18&&row<27?.09:0),y,z);
+   normals.push(rx,0,rz);
+  }
+  for(let row=0;row<rings-1;row++)for(let col=0;col<segments;col++){
+   const a=row*segments+col,b=row*segments+(col+1)%segments,
+    c=(row+1)*segments+col,d=(row+1)*segments+(col+1)%segments;
+   indices.push(a,b,d,a,d,c);
+  }
   const build=(positions)=>{
    const scene=core.createAIG3DScene({
     id:'originalQAPose',consumer:'FastModel',units:'METERS',
