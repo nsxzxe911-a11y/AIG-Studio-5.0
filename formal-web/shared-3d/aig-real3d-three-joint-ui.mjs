@@ -9,6 +9,8 @@ import {runAIGReal3DVirtualProcessor}
  from './aig-real3d-virtual-processor.mjs';
 import {createAIGReal3DPersistentVPU,verifyAIGReal3DStageEvidence}
  from './aig-real3d-persistent-vpu.mjs';
+import {coordinateAIGReal3DStages}
+ from './aig-real3d-staged-orchestrator.mjs';
 import {applyAIGReal3DSourceMeshDelta}
  from './aig-real3d-gpu-delta-source.mjs';
 import {benchmarkAIGReal3DNativePosePlayback}
@@ -29,13 +31,16 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
   poolButton=$('three-joint-pool-run'),poolStatus=$('three-joint-pool-status'),
   vpuButton=$('three-joint-vpu-run'),vpuStatus=$('three-joint-vpu-status'),
   v82Button=$('three-joint-v82-run'),v82Status=$('three-joint-v82-status'),
+  v83Button=$('three-joint-v83-run'),v83Status=$('three-joint-v83-status'),
   status=$('three-joint-status'),evidence=$('three-joint-evidence'),
   gallery=$('three-joint-gallery');
  const reset=()=>{
   source=null;report=null;stressScenes=null;vpuSource=null;v82Poses=null;
   run.disabled=true;download.disabled=true;
   stressButton.disabled=true;poolButton.disabled=true;vpuButton.disabled=true;
-  v82Button.disabled=true;v82Status.textContent='等待真來源 GPU 驗證。';
+  v82Button.disabled=true;v83Button.disabled=true;
+  v83Status.textContent='等待同來源真 GPU 檢查完成。';
+  v82Status.textContent='等待真來源 GPU 驗證。';
   vpuStatus.textContent='等待真 OBJ/SHA 與三節 GPU 驗證。';
   poolStatus.textContent='等待真來源 OBJ 與三節關節 GPU 驗證。';
   stressStatus.textContent='等待同來源三節關節真 GPU 驗證。';
@@ -56,6 +61,7 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
   }
   setBusy(true);run.disabled=true;download.disabled=true;stressButton.disabled=true;
   poolButton.disabled=true;vpuButton.disabled=true;v82Button.disabled=true;
+  v83Button.disabled=true;
   vpuSource=null;v82Poses=null;
   stressScenes=null;report=null;
   gallery.replaceChildren();let renderer;
@@ -219,7 +225,8 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     sourceSha256:source.sha256,expectedStrain:check};
    evidence.textContent=JSON.stringify(report,null,2);download.disabled=false;
    stressButton.disabled=false;poolButton.disabled=false;vpuButton.disabled=false;
-   v82Button.disabled=false;
+   v82Button.disabled=false;v83Button.disabled=false;
+   v83Status.textContent='同 SHA 原始幾何、三節 FK 與三張真 GPU 已完成，可驗證多模組鏈接。';
    v82Status.textContent='來源 GPU 三姿勢已驗證，可重用真 Worker 處理三批原始面片。';
    vpuStatus.textContent='來源已驗證；可在不增加實體核心下分派 4/8/16 個網格計算任務。';
    poolStatus.textContent='原始三節關節 GPU 姿勢已驗證，可測試共用一套 GPU buffer 的 3×72 排程。';
@@ -398,6 +405,51 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
   }finally{
    vpu?.close('WORKSTATION_FINALLY');
    setBusy(false);v82Button.disabled=!v82Poses;
+  }
+ });
+ v83Button.addEventListener('click',async()=>{
+  if(isBusy()||!source||!report||!vpuSource||!v82Poses||
+   !stressScenes||source.sha256!==vpuSource.sourceSha256||
+   source.file!==$('model-file').files?.[0]){
+   v83Status.textContent='BLOCK：原始來源、同 SHA 姿勢或 GPU 證據不可用。';
+   return;
+  }
+  setBusy(true);v83Button.disabled=true;let renderer;
+  try{
+   const canvas=document.createElement('canvas');
+   canvas.width=640;canvas.height=480;
+   renderer=createAIG3DRenderer(canvas,{
+    quality:'balanced',pixelRatio:1,maxTriangles:700000,
+    background:[.769,.745,.702,1]
+   });
+   if(renderer.status!=='READY')throw Error('真 WebGL 渲染資源不可用');
+   renderer.setInspectionMode('LIT');
+   const result=await coordinateAIGReal3DStages({
+    sourceSha256:source.sha256,original:vpuSource.original,
+    indices:vpuSource.indices,triangleOffsets:vpuSource.triangleOffsets,
+    posedSources:v82Poses,poseScenes:stressScenes,
+    frameEvidence:report.frames,gpuFrameEvidence:report.gpuFrames,
+    renderer,requestedWorkers:'AUTO',virtualLanes:16,
+    maxPacketBytes:64*1024*1024
+   });
+   if(source.sha256!==vpuSource.sourceSha256||
+    !result.originalSourceXYZAndFaceIndicesUnmodified||
+    result.stageOrder.length!==4)
+    throw Error('同 SHA 幾何、關節、碰撞或 GPU 證據無法連接');
+   report.multimoduleV83Orchestration=result;
+   evidence.textContent=JSON.stringify(report,null,2);
+   const c=result.stages[2];
+   v83Status.textContent='四階段真來源驗證完成：'+result.selectedWorkers+
+    ' 路 Worker，'+result.gpuDraws.length+' 張實際索引 3D GPU 幀。'+
+    (c.possibleSweptCollisionIntervals||c.contactBudgetIncomplete||
+     c.observedSampledSourceIntersections?
+      ' 碰撞風險待複核；':' 取樣未確認碰撞，但不等於全時間防撞。')+
+    ' 真人自然動畫／機台安全仍 BLOCK。';
+  }catch(error){
+   v83Status.textContent='BLOCK：'+String(error?.message??error);
+  }finally{
+   renderer?.destroy?.();
+   setBusy(false);v83Button.disabled=!stressScenes;
   }
  });
  download.addEventListener('click',()=>{
