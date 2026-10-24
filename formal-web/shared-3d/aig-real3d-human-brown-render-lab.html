@@ -87,6 +87,21 @@ kbd{border:1px solid #415871;border-radius:4px;padding:2px 5px}
 <div id="curved-six-gallery" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px" aria-label="六方向原始曲面真 GPU 畫面"></div>
 <pre id="curved-six-evidence">無原始曲面／掃描側面證據。</pre>
 </section>
+<section class="panel" id="universal-recipe-material-engine">
+<h2>極速 V87｜一次寫通用材質引擎，配方批次載入</h2>
+<p>所有類別共用同一套 GPU 著色器，不再逐一替狗毛、織布、金屬、皮革和木紋製作新程式。自訂 JSON 可一次放入 1–64 組材質，每組最多四層顏色、金屬度、粗糙度及 SOLID／NOISE／STRIPES／FACING 遮罩。<strong>這是可擴充的材料視覺近似，不是直接達成電影級 PBR／光線追蹤／透光、真毛絲或布料物理。</strong></p>
+<div class="row">
+<label>匯入自訂材質庫 JSON
+<input id="recipe-catalog-file" type="file" accept=".json,application/json"></label>
+<button id="recipe-catalog-import" type="button">匯入整批配方／重設示範庫</button>
+<label>選取材質配方 <select id="recipe-material-select"></select></label>
+<button id="recipe-run" type="button" disabled>原始 3D→材質配方｜真 GPU 雙圖驗證</button>
+<button id="recipe-download" type="button" disabled>下載配方與 GPU SHA 證據</button>
+</div>
+<div id="recipe-status" class="status" role="status">BLOCK：請先匯入可驗證的原始 OBJ。</div>
+<div id="recipe-gallery" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px"></div>
+<pre id="recipe-evidence">尚未載入原始來源。</pre>
+</section>
 <section class="panel" id="real-fur-clothing-material-layers">
 <h2>極速 V86｜狗的皮膚、底絨、外層毛與一件件衣物：獨立材質層</h2>
 <p>真正的 3D 主體是原始 Indexed XYZ 網格。皮膚、底絨、護毛（guard hair）有不同的材質顏色與粗糙度；改毛色不需重新捏身體。<strong>本版毛色微紋理是 GPU 材質著色，不會生成真毛絲體積、皮膚延展或毛髮動畫。</strong></p>
