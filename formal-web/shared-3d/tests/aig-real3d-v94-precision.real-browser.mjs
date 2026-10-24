@@ -81,7 +81,7 @@ try{
   });
   const canvas=document.createElement('canvas');canvas.width=640;canvas.height=640;
   const renderer=GPU.createAIG3DRenderer(canvas,{quality:'balanced',
-   maxTriangles:10000,pixelRatio:1,background:[.01,.024,.052,1]});
+   maxTriangles:200000,pixelRatio:1,background:[.01,.024,.052,1]});
   if(renderer.status!=='READY')throw Error('V94_TRUE_WEBGL_GPU_BLOCK');
   renderer.setInspectionMode('LIT');
   try{
