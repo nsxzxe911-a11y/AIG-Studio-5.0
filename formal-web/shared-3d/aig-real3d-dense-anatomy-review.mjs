@@ -14,6 +14,10 @@ const SHA=/^[a-f0-9]{64}$/i;
 const VIEWS=['front','side','back','threeQuarter'];
 const EXTRA_DIGITS=['MiddleTip','RingTip','PinkyTip'];
 const tips=side=>['ThumbTip','IndexTip',...EXTRA_DIGITS].map(n=>side+n);
+const ORIGINAL21=['headTop','chin','noseTip','neckBase','leftShoulder',
+ 'rightShoulder','leftElbow','rightElbow','leftWrist','rightWrist',
+ 'leftThumbTip','rightThumbTip','leftIndexTip','rightIndexTip','pelvis',
+ 'leftKnee','rightKnee','leftHeel','rightHeel','leftToe','rightToe'];
 const ZONES=[
  {id:'HEAD_NECK_JOIN',label:'頭頸',names:['chin','neckBase','leftShoulder','rightShoulder']},
  {id:'LEFT_HAND_FIVE_DIGITS',label:'左手五指',names:['leftWrist',...tips('left')]},
@@ -67,7 +71,7 @@ export function auditAIGReal3DDenseAnatomy({
  if(landmarks!==null&&(typeof landmarks!=='object'||Array.isArray(landmarks)||
   Object.keys(landmarks).length>80))fail('LANDMARK_FORMAT');
  const base=validateAIGReal3DLandmarkSidecar(landmarks);
- const names=[...new Set(ZONES.flatMap(z=>z.names))];
+ const names=[...new Set([...ORIGINAL21,...ZONES.flatMap(z=>z.names)])];
  const missing=names.filter(name=>{
   const p=landmarks?.[name];
   return !Array.isArray(p)||p.length!==3||
