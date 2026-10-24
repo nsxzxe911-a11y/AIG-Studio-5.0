@@ -19,11 +19,38 @@ import {auditAIGReal3D4KSourceProjection}
 const $=id=>document.getElementById(id);
 let imported=null,renderer=null,bridge=null,ready=false,busy=false,
  fileURL=null,mode='oblique',cameraSpan=2,
- v101=null,showRepaired=false,v102Artwork=null,
+ v101=null,showRepaired=false,v105AlignedScene=null,v102Artwork=null,
  v102Frame=null,v102Worker=null,v102SourceEpoch=0,v102ReferenceURL=null,
  v102PreviewGate=createAIGReal3DAdaptivePreviewGate();
-const activeScene=()=>showRepaired&&v101?.workingScene?
- v101.workingScene:imported?.scene;
+const activeScene=()=>v105AlignedScene??(showRepaired&&v101?.workingScene?
+ v101.workingScene:imported?.scene);
+
+document.addEventListener('aig-real3d-v105-register-scene',event=>{
+ const d=event.detail;
+ if(!ready||!renderer||!imported||!d||
+  d.sourceGLBSha256!==imported.actualSourceModelSha256||
+  d.originalScene!==activeScene()||
+  d.registeredScene?.schema!=='AIG_REAL3D_SCENE_V1'||
+  !d.registration?.workingCopyAvailable||
+  !d.registration?.explicitlyAuthorized||
+  d.registration?.sourceVisibility!=='OBSERVED'){
+  status('BLOCK：V105 校正來源或觀測授權不一致，不允許替換 GPU 工作副本');
+  return;
+ }
+ try{
+  v105AlignedScene=d.registeredScene;
+  focusCamera();
+  const frame=renderer.render(activeScene());
+  if(frame.status!=='WEBGL_XYZ_TRIANGLES_RENDERED')
+   throw Error('V105_ACTUAL_GPU_CORRECTED_XYZ_NOT_RENDERED');
+  inspect();
+  document.dispatchEvent(new CustomEvent('aig-real3d-v104-source-ready',{
+   detail:{imported,scene:activeScene(),sourceRevision:v102SourceEpoch,
+    reason:'V105_REGISTRATION'}
+  }));
+  status('V105 實測 CAD XY 定位工作副本已在真 GPU 顯示；原始 GLB 頂點、面、UV 不變。');
+ }catch(e){v105AlignedScene=null;status('BLOCK：'+String(e?.message??e));}
+});
 const views={front:[0,.08],side:[Math.PI/2,.08],
  back:[Math.PI,.08],oblique:[.58,.23]};
 function status(x){$('status').textContent=x;}
@@ -158,7 +185,7 @@ $('import').addEventListener('click',async()=>{
   const [imageSha,modelSha]=await Promise.all([
    sha256AIGReal3DBytes(image),sha256AIGReal3DBytes(glb)
   ]);
-  v101=null;showRepaired=false;
+  v101=null;showRepaired=false;v105AlignedScene=null;
   v102SourceEpoch++;
   if(v102Worker){v102Worker.terminate();v102Worker=null;}
   v102PreviewGate.setAIRebuilderBusy(false);
@@ -313,7 +340,7 @@ $('repair101').addEventListener('click',()=>{
     status('BLOCK：來源結構不安全，修整 Worker 未產生偽造補洞模型。');
     done();return;
    }
-   showRepaired=true;
+   showRepaired=true;v105AlignedScene=null;
    document.dispatchEvent(new CustomEvent('aig-real3d-v104-source-ready',{
     detail:{imported,scene:activeScene(),sourceRevision:v102SourceEpoch}
    }));
@@ -380,7 +407,7 @@ for(const [id,repaired] of [['original101',false],['remodel101',true]]){
  $(id).addEventListener('click',()=>{
   if(!ready||busy||!v101?.workingScene)return;
   try{
-   showRepaired=repaired;
+   showRepaired=repaired;v105AlignedScene=null;
    document.dispatchEvent(new CustomEvent('aig-real3d-v104-source-ready',{
     detail:{imported,scene:activeScene(),sourceRevision:v102SourceEpoch}
    }));
