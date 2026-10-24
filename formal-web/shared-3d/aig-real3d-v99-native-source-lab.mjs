@@ -266,6 +266,7 @@ $('repair101').addEventListener('click',()=>{
      workingDisconnectedComponents:r.after?.disconnectedFaceIslands
     })),
     trainedAI3DGeneratorActuallyCalled:false,
+    trainedNeuralRepairModelActuallyCalled:false,
     originalGLBPreserved:true,releasePASS:false
    };
    $('v101-report').textContent=JSON.stringify(details,null,2);
