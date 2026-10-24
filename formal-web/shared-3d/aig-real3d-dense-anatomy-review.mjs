@@ -176,7 +176,7 @@ export function auditAIGReal3DDenseAnatomy({
    fingerEvidence={
     fiveNamedTipsProvided:points.length===5,
     distinctNativeSurfaceVertexReferences:new Set(points.map(p=>p.index)).size,
-    minimumWorldTipSeparationMm,
+    minimumWorldTipSeparationMm:minimumTipSeparationMm,
     distinctFiveTipAnnotationCheck:pairwiseDistinct,
     fiveRealFingerBranchesGeometricallyProven:false,
     naturalFiveFingersCertified:false
