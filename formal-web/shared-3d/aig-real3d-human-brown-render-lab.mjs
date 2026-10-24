@@ -505,3 +505,126 @@ $('report-download').addEventListener('click',()=>{
  document.body.append(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(u),15000);
 });
+
+
+$('compare-source').addEventListener('click',async()=>{
+ const original=currentNativeReview,previousReport=report;
+ const afterFile=$('after-source-file').files?.[0];
+ if(running||!original?.localSurface||!previousReport)return;
+ if(!afterFile||!/\.obj$/i.test(afterFile.name)){
+  $('repair-compare-stats').textContent='BLOCK：請選擇修復後真正 OBJ 原始檔。';return;
+ }
+ running=true;
+ $('inspect').disabled=true;$('compare-source').disabled=true;
+ $('repair-compare-stats').textContent='比較原始 SHA 與真實三角面資料中…';
+ $('repair-compare-table').replaceChildren();
+ $('repair-compare-gallery').replaceChildren();
+ let afterRenderer;
+ try{
+  const bytes=await afterFile.arrayBuffer();
+  if(bytes.byteLength>50_000_000||bytes.byteLength<64)
+   throw Error('修復後 OBJ 超出來源大小限制');
+  const sha256=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))]
+   .map(x=>x.toString(16).padStart(2,'0')).join('');
+  if(sha256===original.sourceSha256)
+   throw Error('修復前後 SHA 完全相同：不是兩份不同的原始 OBJ');
+  const objText=new TextDecoder('utf-8',{fatal:true}).decode(bytes);
+  const after=auditAIGNativeOBJLocalSurface({
+   objText,landmarks:original.landmarks,heightMm:original.heightMm,
+   upAxis:original.upAxis,sourceSha256:sha256
+  });
+  const diff=compareAIGNativeSourceDefects({
+   before:original.localSurface,after
+  });
+  const built=buildAIGReal3DScanNative({
+   objText,landmarks:original.landmarks,heightMm:original.heightMm,
+   upAxis:original.upAxis,sourceSha256:sha256,
+   sourceName:afterFile.name
+  });
+  const beforeSource=original.localSurface,afterSource=after;
+  if(JSON.stringify(built.evidence.geometryPASS)!==
+   JSON.stringify(afterSource.sourceGeometryGatePASS))
+   throw Error('修復後 GPU 幾何與原生拓樸 Gate 不一致');
+  afterRenderer=createAIG3DRenderer($('native-webgl'),{
+   quality:'balanced',pixelRatio:1,background:[.769,.745,.702,1]
+  });
+  if(afterRenderer.status!=='READY')
+   throw Error('修復後真 GPU 來源不可用');
+  const pairs=[];
+  for(const angle of ['front','side','back','threeQuarter']){
+   const camera=validateAIGInspectionCapturePlan({
+    heightMeters:original.heightMm/1000,angle,mode:'ALBEDO'
+   });
+   afterRenderer.setCamera(camera.camera);
+   afterRenderer.setInspectionMode(angle==='front'?'BROWN_FLAT':'BROWN_VOLUME');
+   const png=await afterRenderer.captureNativePNG(built.scene,{
+    width:1080,height:1920
+   });
+   const rawProj=projectAIGSourceDefectEdges({
+    localSurface:afterSource,angle,width:1080,height:1920
+   });
+   const overlay=await createAIGSourceDefectOverlay({
+    sourcePNG:png.blob,projection:rawProj
+   });
+   const beforeBlob=original.sourceFrames.get(angle);
+   if(!(beforeBlob instanceof Blob))
+    throw Error('缺少修復前 '+angle+' 真 GPU 影像');
+   const oldHref=URL.createObjectURL(beforeBlob),
+    newHref=URL.createObjectURL(overlay.blob);
+   urlPool.add(oldHref);urlPool.add(newHref);
+   const block=document.createElement('div');
+   const h=document.createElement('h4');h.textContent=angle+' ｜ 相同正交鏡頭';
+   block.append(h);
+   const row=document.createElement('div');row.className='compare-pair';
+   for(const item of [
+    {src:oldHref,label:'修復前原始咖啡色 GPU'},
+    {src:newHref,label:'候選後原始咖啡色 GPU + 缺陷線'}
+   ]){
+    const fig=document.createElement('figure'),img=document.createElement('img');
+    img.src=item.src;img.alt=angle+' '+item.label;
+    const cap=document.createElement('figcaption');
+    cap.textContent=item.label;fig.append(img,cap);row.append(fig);
+   }
+   block.append(row);
+   const link=document.createElement('a');
+   link.textContent='下載候選後 '+angle+' 原始異常邊 PNG';
+   link.href=newHref;link.download='AIG-Real3D-CANDIDATE-AFTER-'+angle+'.png';
+   block.append(link);$('repair-compare-gallery').append(block);
+   pairs.push({
+    angle,afterBrownGPUsha256:png.sha256,
+    afterBrownGPUOverlaySHA256:overlay.sha256,
+    sourceBeforeSha256:original.sourceSha256,
+    sourceAfterSha256:sha256,
+    afterDefectEdgeCount:rawProj.uniqueEvidenceEdges,
+    original3DMeshesUnmodified:true
+   });
+  }
+  const record={
+   ...diff,afterSourceName:afterFile.name,
+   fourPairedRealGPUViews:pairs,
+   bothSourceModelsRemainUnmodified:true,
+   visualHumanAppearanceApproved:false,
+   verifiedAnatomicalRepair:false,releasePASS:false
+  };
+  report={...previousReport,beforeAfterComparison:record};
+  $('evidence').textContent=JSON.stringify(report,null,2);
+  makeComparisonTable(diff);
+  $('repair-compare-stats').textContent=
+   '兩份來源 OBJ 已對照。舊 SHA '+original.sourceSha256.slice(0,16)+
+   '… → 新 SHA '+sha256.slice(0,16)+'…。開放邊全域：'+
+   diff.globalBefore.openEdges+' → '+diff.globalAfter.openEdges+
+   '；消失的局部已知異常邊 '+diff.previousDefectEdgesAbsentInAfter+
+   '，新增 '+diff.newDefectEdgesNotPresentInBefore+
+   '。僅代表原始拓樸差異，真人／修復成品 Gate 一律 BLOCK。';
+ }catch(err){
+  $('repair-compare-stats').textContent='BLOCK：'+(err?.message||String(err));
+  $('repair-compare-table').replaceChildren();
+  $('repair-compare-gallery').replaceChildren();
+  report=previousReport;
+  $('evidence').textContent=JSON.stringify(previousReport,null,2);
+ }finally{
+  afterRenderer?.destroy?.();running=false;
+  $('inspect').disabled=false;
+  $('compare-source').disabled=!currentNativeReview;
+ }
+});
