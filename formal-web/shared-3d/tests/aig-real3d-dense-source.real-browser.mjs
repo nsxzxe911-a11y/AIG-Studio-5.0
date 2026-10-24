@@ -1128,6 +1128,10 @@ try{
   mimeType:'application/json',buffer:jsonBytes
  });
  await page.locator('#recipe-catalog-import').click();
+ await page.waitForFunction(()=>{
+  const value=document.querySelector('#recipe-status')?.textContent||'';
+  return value.includes('材質庫驗證成功')||value.startsWith('BLOCK');
+ },null,{timeout:15000});
  assert.match(await page.locator('#recipe-status').textContent(),
   /材質庫驗證成功：2 組配方/);
  await page.locator('#recipe-material-select').selectOption('novel_space_fabric');
