@@ -177,7 +177,11 @@ export async function inspectAIGReal3DPersistentGPUPosePool({
  finally{
   // Even if the run fails mid-frame, ensure a complete resource release.
   try{
-   if(prewarmed){
+   // Warmup can allocate original VBO/EBO before a source-budget failure.
+   // Releasing only after a "successful prewarm" would mask the real failure
+   // with a teardown error and leave the expensive buffers until destroy.
+   const created=renderer.getGPUResourceAccounting();
+   if(prewarmed||created?.activeTrackedOwnedGPUBufferCount>0){
     const released=renderer.releaseMesh(liveScene.nodes[0].mesh);
     if(!released&&!error)error=Error('REAL3D_PERSISTENT_POOL_SOURCE_RELEASE_FAILED');
    }
