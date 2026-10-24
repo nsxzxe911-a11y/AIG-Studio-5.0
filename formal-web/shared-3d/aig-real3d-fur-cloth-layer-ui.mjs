@@ -93,6 +93,7 @@ export function mountAIGReal3DFurClothLayerControls({
     {kind:'COAT_AND_INDEPENDENT_GARMENTS',scene:material.scene}
    ];
    const gpuCaptures=[];
+   let bareBodyGPUResources=null;
    for(const plan of plans){
     const png=await renderer.captureNativePNG(plan.scene,{
      width:640,height:640
@@ -110,6 +111,8 @@ export function mountAIGReal3DFurClothLayerControls({
     a.textContent='原生 GPU PNG';
     cap.textContent=plan.kind;
     cap.append(a);figure.append(img,cap);gallery.append(figure);
+    if(plan.kind==='ORIGINAL_SKIN_MATERIAL')
+     bareBodyGPUResources=renderer.getGPUResourceAccounting();
     gpuCaptures.push({
      kind:plan.kind,sha256:png.sha256,
      width:png.width,height:png.height,
@@ -118,6 +121,13 @@ export function mountAIGReal3DFurClothLayerControls({
     });
    }
    const native=renderer.getGPUResourceAccounting();
+   const additionalGarmentGPUResources=
+    native.activeTrackedOwnedGPUBufferCount-
+    bareBodyGPUResources.activeTrackedOwnedGPUBufferCount;
+   if(additionalGarmentGPUResources!==garments.length*3||
+    native.fullBufferDataUploads-bareBodyGPUResources.fullBufferDataUploads!==
+     garments.length*3)
+    throw Error('毛皮材質切換不得重新上傳原始身體網格，衣物須使用自己的 GPU mesh');
    if(native.activeTrackedOwnedGPUBufferCount<3||
     material.originalBodyGeometryReallocations!==0||
     !material.bodyOriginalGeometryUnmodified||
@@ -127,6 +137,11 @@ export function mountAIGReal3DFurClothLayerControls({
     ...material,scene:undefined,
     previousOriginalSkinGPU:gpuCaptures[0],
     currentMaterialAndSeparateGarmentsGPU:gpuCaptures[1],
+    originalBodyGPUBufferCountBeforeCoat:bareBodyGPUResources.activeTrackedOwnedGPUBufferCount,
+    originalBodyGPUBufferCountAfterCoat:
+     native.activeTrackedOwnedGPUBufferCount-additionalGarmentGPUResources,
+    additionalIndependentGarmentGPUBufferCount:additionalGarmentGPUResources,
+    noOriginalBodyGPUBufferReallocationOnMaterialSwitch:true,
     actualOriginalBodyGPUBufferCount:native.activeTrackedOwnedGPUBufferCount,
     independentlyUploadedGarmentSourceFiles:files.map(x=>x.name),
     individualStrandsActuallyGenerated:0,
