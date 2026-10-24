@@ -1,3 +1,6 @@
+import {planAIGReal3DV117PhotoReconstruction,
+ verifyAIGReal3DV117RealGPUInspection}
+ from './aig-real3d-v117-evidence-orchestrator.mjs';
 import {segmentAIGReal3DV111FromUserSeeds}
  from './aig-real3d-v111-seeded-segmentation.mjs';
 import {extractAIGReal3DV110Foreground}
@@ -160,6 +163,96 @@ $('v110-preview').addEventListener('click',async()=>{
   $('v110-mask-report').textContent='BLOCK：'+String(e?.message??e);
  }finally{busy=false;$('v110-preview').disabled=false;}
 });
+function omitV117RawPixels(plan){
+ if(!plan)return null;
+ const {workingRGBA,...record}=plan;
+ return record;
+}
+async function prepareV117SourcePlan(){
+ const photo=await pngFromFile($('photo').files?.[0]),
+  sourcePhotoSha256=await sha256AIGReal3DBytes(photo.bytes),
+  externalFile=$('v110-mask-file').files?.[0]??null,
+  depthFile=$('depth').files?.[0]??null,
+  external=externalFile?await pngFromFile(externalFile):null,
+  externalMaskSha256=external?
+   await sha256AIGReal3DBytes(external.bytes):null,
+  depthSourceSha256=depthFile?
+   await sha256AIGReal3DBytes(new Uint8Array(await depthFile.arrayBuffer())):null;
+ const plan=planAIGReal3DV117PhotoReconstruction({
+  rgba:photo.rgba,width:photo.width,height:photo.height,
+  sourcePhotoSha256,
+  externalMaskRGBA:external?.rgba??null,externalMaskSha256,
+  externalMaskConfirmed:$('v110-mask-confirm').checked,
+  externalMaskMode:$('v110-mask-mode').value,
+  foregroundSeeds:$('v111-enable').checked?v111Seeds.foreground:[],
+  backgroundSeeds:$('v111-enable').checked?v111Seeds.background:[],
+  depthSourceSha256,depthMeasurementDeclared:$('depth-confirm').checked,
+  sourceWidthMM:Number($('width-mm').value),
+  widthPhysicallyMeasured:$('width-verified').checked,
+  desiredOutput:$('v117-desired').value
+ });
+ return plan;
+}
+let v117Running=false;
+$('v117-plan').addEventListener('click',async()=>{
+ if(v117Running||busy)return;
+ v117Running=true;$('v117-plan').disabled=true;
+ try{
+  const plan=await prepareV117SourcePlan();
+  $('v117-plan-report').textContent=JSON.stringify(omitV117RawPixels(plan),null,2);
+  status(plan.status==='READY_FOR_TRUE_GLB_GPU'?
+   'V117 已找到可執行來源路線：'+plan.selectedForegroundModule+
+   '；原照片材質不變，真人背面未重建。':
+   'V117 '+plan.status+'：'+(plan.nextAction??plan.code));
+ }catch(e){
+  status('BLOCK：'+String(e?.message??e));
+  $('v117-plan-report').textContent=JSON.stringify({
+   status:'BLOCK',error:String(e?.message??e),releasePASS:false},null,2);
+ }finally{v117Running=false;$('v117-plan').disabled=false;}
+});
+$('v117-auto').addEventListener('click',async()=>{
+ if(v117Running||busy)return;
+ v117Running=true;$('v117-auto').disabled=true;$('v117-plan').disabled=true;
+ $('v117-inspection-report').textContent='來源 GLB 與五姿態 GPU 尚未驗證。';
+ try{
+  const plan=await prepareV117SourcePlan();
+  $('v117-plan-report').textContent=JSON.stringify(omitV117RawPixels(plan),null,2);
+  if(plan.status!=='READY_FOR_TRUE_GLB_GPU'){
+   status('V117 '+plan.status+'：'+(plan.nextAction??plan.code));
+   return;
+  }
+  const built=await runReal3DPhotoBuild({v117Plan:plan});
+  if(!built||!source||!renderer)
+   throw Error('V117_SOURCE_GLTF_REAL_GPU_BUILD_NOT_COMPLETED');
+  const frames=[];
+  for(const target of plan.proposedGPUPoseSweep){
+   $('a').value=String(target.a);
+   $('b').value=String(target.b);
+   $('progress').value=String(target.progress*100);
+   draw(); // Real renderer.render, not a fake GPU frame receipt.
+   const receipt=JSON.parse($('receipt').textContent);
+   frames.push({...receipt.lastActualGPUFrame});
+  }
+  const checked=verifyAIGReal3DV117RealGPUInspection({
+   plan,modelSha256:built.modelSha,
+   sourceTriangles:built.sourceTriangles,actualFrames:frames
+  });
+  $('a').value='0';$('b').value='0';$('progress').value='100';
+  draw();
+  const finalReceipt=JSON.parse($('receipt').textContent);
+  finalReceipt.v117ActualFivePoseGPUGate=checked;
+  report(finalReceipt);
+  $('v117-inspection-report').textContent=JSON.stringify(checked,null,2);
+  status('V117 五軸真 GPU 五姿態來源一致性 PASS；人體 1:1、深度缺口與未知背面仍 BLOCK。');
+ }catch(e){
+  status('BLOCK：'+String(e?.message??e));
+  $('v117-inspection-report').textContent=JSON.stringify({
+   status:'BLOCK',error:String(e?.message??e),
+   actualNeuralInferencePerformed:false,productionReleasePASS:false},null,2);
+ }finally{
+  v117Running=false;$('v117-auto').disabled=false;$('v117-plan').disabled=false;
+ }
+});
 function draw(){
  if(!source||!renderer)return;
  const a=Number($('a').value),b=Number($('b').value),
@@ -184,14 +277,28 @@ function draw(){
  report(latest);
  status('真 GLB 表面已進行五軸 GPU 繪圖：A='+a+'° B='+b+'°，由底向上 '+Math.round(p*100)+'%。未知背面仍 BLOCK。');
 }
-$('build').addEventListener('click',async()=>{
+async function runReal3DPhotoBuild({v117Plan=null}={}){
  if(busy)return;busy=true;$('build').disabled=true;$('save').disabled=true;
  $('v110-preview').disabled=true;
  try{
   const f=$('photo').files?.[0],g=$('depth').files?.[0];
   const photo=await pngFromFile(f);
   const originalImageSha=await sha256AIGReal3DBytes(photo.bytes);
+  if(v117Plan&&(v117Plan.status!=='READY_FOR_TRUE_GLB_GPU'||
+   v117Plan.sourcePhotoSha256!==originalImageSha||
+   v117Plan.dimensions[0]!==photo.width||
+   v117Plan.dimensions[1]!==photo.height))
+   throw Error('V117_PLANNED_SOURCE_CHANGED_BEFORE_GPU_EXECUTION');
   const v110=await createV110AlphaWorkingCopy(photo,originalImageSha);
+  if(v117Plan){
+   const expectedMode=v117Plan.selectedForegroundModule==='V111_USER_SEEDED_COMPLEX_BACKGROUND'?
+    'INTERACTIVE_COLOR_CONNECTED_NOT_NEURAL_AI':v117Plan.selectedForegroundModule;
+   if(v110.evidence.sourceMode!==expectedMode||
+    v117Plan.sourceCoverage.foregroundPixels!==v110.evidence.foregroundPixels||
+    (v117Plan.sourceCoverage.externalMaskSha256??null)!==
+      (v110.evidence.independentExternalMaskSha256??null))
+    throw Error('V117_SOURCE_MASK_CHANGED_AFTER_PLANNING');
+  }
   const imageSha=v110.maskedImageSha256;
   let depthValuesMM=null,depthSourceSha256=null;
   if(g){
@@ -210,6 +317,9 @@ $('build').addEventListener('click',async()=>{
     depthValuesMM[i]=near+(depth.rgba[i*4]/255)*(far-near);
   }else if($('depth-confirm').checked)
    throw Error('NO_SEPARATE_DEPTH_PNG_IS_PRESENT');
+  if(v117Plan&&
+   (v117Plan.declaredIndependentDepthSha256??null)!==(depthSourceSha256??null))
+   throw Error('V117_DEPTH_SOURCE_CHANGED_AFTER_PLANNING');
   const generated=buildAIGReal3DV109PhotoSurfaceGLB({
    rgba:v110.rgba,width:photo.width,height:photo.height,
    originalPNGBytes:v110.maskedPNGBytes,imageSha256:imageSha,
@@ -244,6 +354,7 @@ $('build').addEventListener('click',async()=>{
   blobURL=URL.createObjectURL(new Blob([photo.bytes],{type:'image/png'}));
   $('photo-preview').src=blobURL;
   report({...generated.receipt,v110SourceMask:v110.evidence,
+   v117ActiveControllerPlan:v117Plan?omitV117RawPixels(v117Plan):null,
    originalOpaqueOrAlphaPhotoSha256:originalImageSha,
    modelSha256:modelSha,
    actualImportedTriangleCount:ingested.sourceTriangles,
@@ -253,13 +364,16 @@ $('build').addEventListener('click',async()=>{
   for(const id of ['a','b'])$(id).value='0';
   $('progress').value='100';
   draw();$('save').disabled=false;$('reset').disabled=false;
+  return {modelSha,sourceTriangles:ingested.sourceTriangles,actualGLB:true};
  }catch(e){
   source=null;original=null;$('save').disabled=true;$('reset').disabled=true;
   status('BLOCK：'+String(e?.message??e));
   report({status:'BLOCK',error:String(e?.message??e),
    generatedReal3DSourceCertified:false});
+  return null;
  }finally{busy=false;$('build').disabled=false;$('v110-preview').disabled=false;}
-});
+}
+$('build').addEventListener('click',()=>{void runReal3DPhotoBuild();});
 for(const id of ['a','b','progress'])$(id).addEventListener('input',()=>{
  try{draw();}catch(e){status('BLOCK：'+String(e?.message??e));}
 });

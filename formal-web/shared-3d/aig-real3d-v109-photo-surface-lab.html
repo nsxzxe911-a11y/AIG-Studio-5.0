@@ -1,6 +1,6 @@
 <!doctype html><html lang="zh-Hant"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FastModel Real3D V111｜複雜背景互動辨識 → 真 GLB → 五軸 GPU</title>
+<title>FastModel Real3D V117｜AI 來源決策、真 GLB 與五軸自動巡檢</title>
 <style>
 :root{color-scheme:dark;font:15px/1.55 system-ui,"Microsoft JhengHei",sans-serif;
 background:#020407;color:#d8efff}
@@ -21,7 +21,7 @@ pre{overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-m
 #status{color:#ffdfa4}
 img{max-width:100%;max-height:320px;object-fit:contain}
 </style></head><body><main>
-<h1>FastModel Real3D V111｜複雜背景來源標記 → 原圖 GLB → 真五軸 GPU</h1>
+<h1>FastModel Real3D V117｜主動建模控制與真五軸 GPU 檢查</h1>
 <p>透明 PNG 保留原流程；普通不透明 PNG 僅在背景顏色簡單、輪廓可可靠分離時自動產生透明工作副本。複雜背景可上傳另一份已人工確認的遮罩，無法安全分離就 BLOCK。另提供獨立量測的深度圖才能得到可觀測的曲面深度。<strong>沒有深度資料時只有平面 2.5D，不會捏造人體背面、臉型或衣服內部。</strong></p>
 <section>
 <div class="row">
@@ -53,6 +53,20 @@ img{max-width:100%;max-height:320px;object-fit:contain}
 <button id="save" disabled>下載真 GLB 工作副本</button>
 <a href="./aig-real3d-v99-native-source-lab.html" style="color:#8ddaff">原始 GLB 品質與六面工作頁</a>
 </div>
+<section id="v117-active-controller">
+<h2>V117｜AI 主動建模控制（來源證據優先）</h2>
+<p>按「自主分析」會實際執行 V110/V111 的前景像素辨識並判斷下一個重建方式；「自主執行」將在可信的前景來源上接續真 GLB 與五個真 WebGL A/B 檢查姿態。複雜背景無法可靠分離就要求標記或遮罩。<strong>本輪沒有載入神經網路權重，不會假稱已執行 AI 模型推論；未知人體背面和 1:1 仍 BLOCK。</strong></p>
+<label>要生成的目標
+<select id="v117-desired"><option value="FRONT_SOURCE_GLB">依據可觀測來源生成 2.5D／可見深度 GLB</option><option value="REQUIRE_COMPLETE_3D">要求完整真人 3D（無多視角來源則 BLOCK）</option></select>
+</label>
+<div class="row">
+<button type="button" id="v117-plan">自主分析照片與重建方案</button>
+<button type="button" id="v117-auto">自主執行來源 GLB → 五姿態 GPU 巡檢</button>
+<a href="./aig-real3d-v112-calibrated-multiview-lab.html" style="color:#8ddaff">多視角真深度／V112～V116 驗收</a>
+</div>
+<h2>來源分析與可執行路線</h2><pre id="v117-plan-report">尚未分析。這個控制器不代替已確認的照片、遮罩或深度量測。</pre>
+<h2>實際 GPU 五姿態證據</h2><pre id="v117-inspection-report">尚未完成五個真 GPU 畫面。請先建立有來源證據的 GLB。</pre>
+</section>
 <div id="status" role="status">待上傳 PNG。簡單純色背景由 V110 自動處理；複雜背景可用 V111 主體／背景點標記或可靠人工遮罩。沒有神經網路分割權重。</div>
 </section>
 <div class="grid"><section><h2>真 WebGL 五軸預覽</h2>
