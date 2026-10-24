@@ -89,6 +89,16 @@ try{
  const manifest=JSON.parse(await page.locator('#proof').textContent());
  assert.equal(manifest.sourceFaceCount,12);
  assert.equal(manifest.realMeshes,1);
+ // Source material shader mode is a real GPU callback, not a model rebuild.
+ await page.locator('#v102-colors').selectOption('LEGACY');
+ const legacyReceipt=JSON.parse(await page.locator('#proof').textContent());
+ assert.equal(legacyReceipt.sourceColorShaderMode,'LEGACY');
+ assert.equal(legacyReceipt.originalSourceMaterialFactorsNotRewritten,true);
+ assert.equal(legacyReceipt.materialTexturesAndTruePBRNotYetCertified,true);
+ await page.locator('#v102-colors').selectOption('FILM_SDR');
+ const filmReceipt=JSON.parse(await page.locator('#proof').textContent());
+ assert.equal(filmReceipt.sourceColorShaderMode,'FILM_SDR');
+
  // This is a portrait AI image (384x640), never a landscape 960x640 canvas.
  const artFrame=JSON.parse(await page.locator('#v102-report').textContent());
  assert.equal(artFrame.frame.artworkWidth,384);
