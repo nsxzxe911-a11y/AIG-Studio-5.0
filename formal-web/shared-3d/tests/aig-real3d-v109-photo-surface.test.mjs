@@ -44,7 +44,7 @@ test('V109 transparent PNG creates real indexed XYZ GLB with original PNG embedd
  assert.deepEqual([...out.glbBytes.slice(binStart+textureView.byteOffset,
   binStart+textureView.byteOffset+textureView.byteLength)],
   [...input.originalPNGBytes]);
- assert.deepEqual(input.rgba,before);
+ assert.deepEqual([...input.rgba],[...before]);
 });
 test('V109 independently provided depth generates nonzero relief but never a fake backside',()=>{
  const input=source(),depth=new Float32Array(64*64);
