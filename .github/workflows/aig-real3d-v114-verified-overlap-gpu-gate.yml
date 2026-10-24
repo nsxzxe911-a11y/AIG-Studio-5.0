@@ -1,0 +1,63 @@
+name: Real3D V114 Verified Overlap Triangle Dedup Source GLB and Five-Axis GPU
+on:
+  pull_request:
+    paths:
+      - 'formal-web/shared-3d/aig-real3d-v114-*'
+      - 'formal-web/shared-3d/tests/aig-real3d-v114-*'
+      - 'formal-web/shared-3d/aig-real3d-v112-calibrated-multiview-ui.mjs'
+      - 'formal-web/shared-3d/aig-real3d-v112-calibrated-multiview-lab.html'
+      - 'docs/REAL3D-V114-*'
+      - '.github/workflows/aig-real3d-v114-verified-overlap-gpu-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: real3d-v114-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  measured-source-and-lossless-dedup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Preserve original GLB source bytes and color/materials, remove only verified redundant triangles
+        run: |
+          node --check formal-web/shared-3d/aig-real3d-v114-verified-overlap-dedup.mjs
+          node --check formal-web/shared-3d/aig-real3d-v112-calibrated-multiview-ui.mjs
+          node --check formal-web/shared-3d/tests/aig-real3d-v114-verified-overlap-dedup.real-browser.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v114-verified-overlap-dedup.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v113-overlap-seam.test.mjs
+          node --test formal-web/shared-3d/tests/aig-real3d-v112-calibrated-multiview.test.mjs
+  native-glb-chromium-fiveaxis:
+    needs: measured-source-and-lossless-dedup
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Install genuine Chromium WebGL with ANGLE SwiftShader
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Real two-view measured source -> verified duplicate exclusion -> new GLB GPU plus V113 regression
+        run: |
+          python3 -m http.server 8772 --bind 127.0.0.1 --directory formal-web >/tmp/v114-http.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in $(seq 1 25); do
+            curl -fsS http://127.0.0.1:8772/shared-3d/aig-real3d-v112-calibrated-multiview-lab.html >/dev/null && break
+            sleep 1
+          done
+          node formal-web/shared-3d/tests/aig-real3d-v114-verified-overlap-dedup.real-browser.mjs
+          node formal-web/shared-3d/tests/aig-real3d-v112-calibrated-multiview.real-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Real3D-V114-True-Observed-Overlap-Integrated-GLB-FiveAxis-GPU
+          path: |
+            artifacts/aig-real3d-v114/
+            artifacts/aig-real3d-v112/
+          if-no-files-found: warn
