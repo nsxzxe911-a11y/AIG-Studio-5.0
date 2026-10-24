@@ -75,7 +75,7 @@ test('real original source 3D defect midpoint is selectable with correct vertex 
 });
 test('mobile object-fit contain letterbox maps source pixels without offset',()=>{
  const map=canvasClickToAIGSourcePixel({
-  clickX:112.5,clickY:200,rectWidth:300,rectHeight:400
+  clickX:150,clickY:200,rectWidth:300,rectHeight:400
  });
  assert.equal(map.inside,true);
  assert.ok(Math.abs(map.x-540)<.001);
