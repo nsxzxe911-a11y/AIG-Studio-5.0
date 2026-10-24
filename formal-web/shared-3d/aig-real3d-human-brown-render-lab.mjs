@@ -13,6 +13,10 @@ import {projectAIGSourceDefectEdges}
  from './aig-real3d-source-defect-projection.mjs';
 import {createAIGSourceDefectOverlay}
  from './aig-real3d-source-defect-overlay.mjs';
+import {pickAIGReal3DDefectEdge,canvasClickToAIGSourcePixel}
+ from './aig-real3d-defect-edge-picker.mjs';
+import {compareAIGNativeSourceDefects}
+ from './aig-real3d-immutable-defect-diff.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {
  auditAIG3DSourceSilhouette,validateAIGInspectionCapturePlan,
@@ -20,7 +24,42 @@ import {
 }from './aig-real3d-render-inspection.mjs';
 const $=id=>document.getElementById(id),gallery=$('gallery'),status=$('status');
 const urlPool=new Set();
-let running=false,report=null,profiles=[];
+let running=false,report=null,profiles=[],currentNativeReview=null;
+function showDefectSelection(hit){
+ if(!hit?.selected){
+  $('defect-selected').textContent='未選到異常邊。請點圖上的異常線段或下面的來源邊編號。';return;
+ }
+ const e=hit.edge;
+ const xyz=p=>p.map(v=>Number(v).toFixed(5)).join(' / ');
+ $('defect-selected').textContent=
+  '視角：'+hit.angle+' ｜ 異常種類：'+e.type+
+  '\n原始 OBJ 頂點：'+e.startVertexIndex+' → '+e.endVertexIndex+
+  '\n原始 XYZ 起點（m）：'+xyz(e.startWorldMeters)+
+  '\n原始 XYZ 終點（m）：'+xyz(e.endWorldMeters)+
+  '\n來源 SHA-256：'+hit.sourceSha256+
+  '\n像素選取距離：'+hit.nearestDistancePx+' px'+
+  '\n此位置僅供人工檢查，不會修改 OBJ 或判定真人合格。';
+}
+function makeComparisonTable(diff){
+ const root=$('repair-compare-table');root.replaceChildren();
+ const table=document.createElement('table');
+ const head=document.createElement('thead'),headRow=document.createElement('tr');
+ for(const label of ['原始標記區域','修復前開放邊','候選後開放邊',
+   '新舊差值','修復前面片方向衝突','候選後方向衝突']){
+  const th=document.createElement('th');th.textContent=label;headRow.append(th);
+ }
+ head.append(headRow);table.append(head);
+ const body=document.createElement('tbody');
+ for(const region of diff.regionChanges){
+  const tr=document.createElement('tr');
+  for(const value of [region.label,region.before.openEdges,region.after.openEdges,
+   region.openEdgeDelta,region.before.windingConflicts,region.after.windingConflicts]){
+   const td=document.createElement('td');td.textContent=String(value);tr.append(td);
+  }
+  body.append(tr);
+ }
+ table.append(body);root.append(table);
+}
 const SETUPS=[
  ['正面黑線輪廓','front','BLACK_CONTOUR'],
  ['正面咖啡色平塗','front','BROWN_FLAT'],
@@ -89,6 +128,12 @@ $('inspect').addEventListener('click',async()=>{
   setStatus('BLOCK：需輸入 900–2200 mm 的來源實測身高。');return;
  }
  running=true;$('inspect').disabled=true;$('report-download').disabled=true;report=null;
+ currentNativeReview=null;$('compare-source').disabled=true;
+ $('defect-edge-list').replaceChildren();
+ $('defect-selected').textContent='尚未選取；匯入來源 OBJ 後可點選真異常邊。';
+ $('repair-compare-table').replaceChildren();
+ $('repair-compare-gallery').replaceChildren();
+ $('repair-compare-stats').textContent='需先完成修復前 OBJ 的來源網格審核。';
  release();gallery.replaceChildren();$('reference-gallery').replaceChildren();
  $('anatomy-gallery').replaceChildren();$('anatomy-region-table').replaceChildren();
  $('surface-table').replaceChildren();
@@ -259,11 +304,12 @@ $('inspect').addEventListener('click',async()=>{
     body.append(tr);
    }
    table.append(body);$('surface-table').append(table);
-   const defectViews=[];
+   const defectViews=[],defectProjections=new Map();
    for(const angle of ['front','side','back','threeQuarter']){
     const projected=projectAIGSourceDefectEdges({
      localSurface,angle,width:1080,height:1920
     });
+    defectProjections.set(angle,projected);
     const frame=sourceFrames.get(angle);
     if(!(frame instanceof Blob))
      throw Error('DEFECT_GPU_ANGLE_SOURCE_MISSING_'+angle);
@@ -274,6 +320,21 @@ $('inspect').addEventListener('click',async()=>{
     const fig=document.createElement('figure'),img=document.createElement('img');
     img.src=href;
     img.alt=angle+' 真 GPU 咖啡色模型與原始異常三角面邊定位';
+    img.dataset.pickable='true';
+    img.addEventListener('click',event=>{
+     const rect=img.getBoundingClientRect();
+     const mapped=canvasClickToAIGSourcePixel({
+      clickX:event.clientX-rect.left,clickY:event.clientY-rect.top,
+      rectWidth:rect.width,rectHeight:rect.height,
+      imageWidth:projected.width,imageHeight:projected.height
+     });
+     if(!mapped.inside){
+      $('defect-selected').textContent='點擊位於圖片留白區，請點選異常線段。';return;
+     }
+     showDefectSelection(pickAIGReal3DDefectEdge({
+      projection:projected,x:mapped.x,y:mapped.y,tolerancePx:32
+     }));
+    });
     const caption=document.createElement('figcaption');
     const label=document.createElement('span');
     label.textContent=angle+' · 異常來源邊 '+projected.uniqueEvidenceEdges+
@@ -288,6 +349,28 @@ $('inspect').addEventListener('click',async()=>{
      projectedSourceEdges:projected.projectedEdges,
      projectedEvidenceTruncated:projected.evidenceTruncated
     });
+   }
+   const edgeList=$('defect-edge-list');edgeList.replaceChildren();
+   const front=defectProjections.get('front');
+   if(front.projectedEdges.length){
+    for(const edge of front.projectedEdges.slice(0,32)){
+     const button=document.createElement('button');
+     button.type='button';
+     button.textContent=edge.type+' · '+edge.startVertexIndex+'→'+
+      edge.endVertexIndex;
+     button.addEventListener('click',()=>{
+      const x=(edge.start.x+edge.end.x)/2,
+       y=(edge.start.y+edge.end.y)/2;
+      showDefectSelection(pickAIGReal3DDefectEdge({
+       projection:front,x,y,tolerancePx:5
+      }));
+     });
+     edgeList.append(button);
+    }
+   }else{
+    const no=document.createElement('span');
+    no.textContent='所檢五區未找到已分類的異常來源邊。';
+    edgeList.append(no);
    }
    sourceDefectOverlay={sourceSha256:hash,
     schema:'AIG_REAL3D_4_VIEW_TRUE_GPU_NATIVE_EDGE_DEFECT_OVERLAY_V1',
@@ -379,6 +462,15 @@ $('inspect').addEventListener('click',async()=>{
    '已比對 '+summary.count+'/4 視角；平均重合率：'+
    (summary.averageIoU===null?'無法計算':(summary.averageIoU*100).toFixed(2)+'%')+
    '；失敗：'+silhouetteProblems.length+'；這不是人體自然度自動驗收。';
+  currentNativeReview=localSurface?{
+   localSurface,sourceSha256:hash,heightMm,upAxis:axis,landmarks,
+   sourceFrames,sourceName:file.name
+  }:null;
+  $('compare-source').disabled=!currentNativeReview;
+  $('repair-compare-stats').textContent=currentNativeReview?
+   '修復前來源已鎖定 SHA '+hash.slice(0,16)+
+   '…；請選擇第二份 OBJ 並開始差異比較。':
+   '缺少經原始 OBJ 網格審核的標記，修復前／後比較 BLOCK。';
   report={...result,sourceReview,anatomicalProjection,localSurfaceTopology:localSurface,
    sourceDefectOverlay,silhouetteComparison:{
    ...summary,images:silhouetteResults,errors:silhouetteProblems,
