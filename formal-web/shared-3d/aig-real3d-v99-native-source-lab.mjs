@@ -70,7 +70,7 @@ document.addEventListener('aig-real3d-v107-pose-request',event=>{
   renderer.setVirtualStageV107({
    matrix:pose.modelStageMatrix,sourceScene:activeScene(),
    sourceMaxY:pose.clipSourceYMax,
-   clipEnabled:true,sourceGLBSha256:imported.actualSourceModelSha256
+   clipEnabled:pose.progress<1,sourceGLBSha256:imported.actualSourceModelSha256
   });
   renderer.setCamera({...base,
    focus:base.focus.map((x,i)=>x+pose.viewShiftWorld[i])});
