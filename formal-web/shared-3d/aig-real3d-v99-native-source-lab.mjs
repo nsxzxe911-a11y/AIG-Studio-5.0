@@ -53,6 +53,49 @@ document.addEventListener('aig-real3d-v105-register-scene',event=>{
   status('V105 實測 CAD XY 定位工作副本已在真 GPU 顯示；原始 GLB 頂點、面、UV 不變。');
  }catch(e){v105AlignedScene=null;status('BLOCK：'+String(e?.message??e));}
 });
+document.addEventListener('aig-real3d-v107-pose-request',event=>{
+ const d=event.detail,pose=d?.pose;
+ if(!ready||!renderer||!imported||
+  d?.sourceGLBSha256!==imported.actualSourceModelSha256||
+  d.scene!==activeScene()||pose?.schema!=='AIG_REAL3D_V107_FASTMODEL_VIRTUAL_XYZ_AB_SOURCE_SLICING_V1'||
+  d.sourceOriginalSceneRevision!==activeScene().revision||
+  pose.sceneRevision!==activeScene().revision){
+  document.dispatchEvent(new CustomEvent('aig-real3d-v107-pose-result',{
+   detail:{ready:false,error:'V107_SOURCE_SHA_OR_SCENE_REVISION_MISMATCH'}
+  }));return;
+ }
+ const oldCamera=renderer.getCamera(),oldStage=renderer.getVirtualStageV107();
+ try{
+  const base=v102Frame?.camera??oldCamera;
+  renderer.setVirtualStageV107({
+   matrix:pose.modelStageMatrix,sourceScene:activeScene(),
+   sourceMaxY:pose.clipSourceYMax,
+   clipEnabled:true,sourceGLBSha256:imported.actualSourceModelSha256
+  });
+  renderer.setCamera({...base,
+   focus:base.focus.map((x,i)=>x+pose.viewShiftWorld[i])});
+  const frame=renderer.render(activeScene());
+  if(frame.status!=='WEBGL_XYZ_TRIANGLES_RENDERED'||
+   !frame.V107FiveAxisSourcePoseActive||
+   !frame.V107OriginalFootHeadGPUSliceEnabled)
+   throw Error('V107_TRUE_GPU_XYZ_AB_FOOT_HEAD_RENDER_BLOCK');
+  document.dispatchEvent(new CustomEvent('aig-real3d-v107-pose-result',{
+   detail:{ready:true,schema:pose.schema,
+    sourceGLBSha256:imported.actualSourceModelSha256,
+    status:frame.status,clipEnabled:frame.V107OriginalFootHeadGPUSliceEnabled,
+    localBAxis:pose.childBActualAxis,
+    topXYZCNCmm:pose.topXYZCNCmm,
+    aTiltDeg:pose.aTiltDeg,bTurnDeg:pose.bTurnDeg,
+    progress:pose.progress,triangles:frame.triangles}
+  }));
+ }catch(e){
+  renderer.setVirtualStageV107(oldStage);
+  renderer.setCamera(oldCamera);
+  document.dispatchEvent(new CustomEvent('aig-real3d-v107-pose-result',{
+   detail:{ready:false,error:String(e?.message??e)}
+  }));
+ }
+});
 const views={front:[0,.08],side:[Math.PI/2,.08],
  back:[Math.PI,.08],oblique:[.58,.23]};
 function status(x){$('status').textContent=x;}
@@ -254,6 +297,12 @@ $('png4k').addEventListener('click',async()=>{
   const metric4K=createAIGReal3DMetric4KWorkingScene(activeScene()),
    metricCamera=createAIGReal3DMetric4KCamera(nativeArtworkFrame.camera,{
     sceneUnits:activeScene().units});
+  const V107PreviewStage=renderer.getVirtualStageV107();
+  if(V107PreviewStage&&activeScene().units==='MM'){
+   const m=[...V107PreviewStage.matrix];
+   for(const i of [12,13,14])m[i]*=.001;
+   renderer.setVirtualStageV107({...V107PreviewStage,matrix:m});
+  }
   renderer.setCamera(metricCamera);
   const out=await captureAIGReal3DNative4K({
    renderer,scene:metric4K.scene,
