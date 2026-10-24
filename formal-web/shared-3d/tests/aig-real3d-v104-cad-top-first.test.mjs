@@ -47,7 +47,7 @@ test('V104 TOP eager, remaining FIVE truly lazy with exactly one indexed XYZ sce
  assert.deepEqual(inspector.originalXYZBoundsInCNCmm,{min:[-1,-3,-2],max:[1,3,2]});
  assert.deepEqual(inspector.top.sourceXYZPlaneBounds.min,[-1,-3,-2]);
  assert.deepEqual(inspector.top.sourceXYZPlaneBounds.max,[1,3,2]);
- assert.equal(inspector.top.frontMostSourceDepth.max,undefined);
+ assert.equal(inspector.top.frontMostSourceDepth,undefined);
  assert.ok(inspector.top.visibleDepthRange.max===2);
  const right=inspector.requestFace('RIGHT');
  assert.equal(right.cncBdeg,90);
