@@ -365,6 +365,7 @@ try{
  assert.equal(triple.gpuNativeSourceBufferDeltaReusedOnLaterFrames,true);
  assert.equal(triple.incrementalNativeSourceNormalsVerified,true);
  assert.equal(triple.nonDisplayFullXYZScratchBuffersAllocated,2);
+ assert.equal(await page.locator('#three-joint-stress-run').isDisabled(),false);
  assert.equal(triple.adaptiveRealSourceGPUFrameBudget.schema,
   'AIG_REAL3D_SOURCE_POSE_ADAPTIVE_RAF_BUDGET_V1');
  assert.equal(triple.adaptiveRealSourceGPUFrameBudget.requestedMode,'AUTO');
@@ -560,7 +561,23 @@ try{
    const heapAfter=typeof performance.memory?.usedJSHeapSize==='number'?
     performance.memory.usedJSHeapSize:null;
 
+   const stressLib=await import('./aig-real3d-gpu-stress-cycles.mjs');
+   const multiCycleStress=await stressLib.stressAIGReal3DGPUResourceCycles({
+    cycles:3,rafCallbacksPerCycle:36,mode:'AUTO',
+    createCycle:()=>{
+     const c=document.createElement('canvas');
+     c.width=640;c.height=480;
+     const renderer=lib.createAIG3DRenderer(c,{
+      quality:'balanced',pixelRatio:1,maxTriangles:200000,
+      background:[0,0,0,1]
+     });
+     if(renderer.status!=='READY')throw Error('REAL_STRESS_GPU_CONTEXT_REQUIRED');
+     renderer.setInspectionMode('LIT');
+     return {renderer,poseScenes:[build(original),build(moved),build(original)]};
+    }
+   });
    return {
+    multiCycleStress,
     baselineSha:baseline.sha256,deltaSha:changed.sha256,
     fullRebuildSha:reference.sha256,stats:update,
     exactGPUFrameMatch:changed.sha256===reference.sha256,
@@ -575,6 +592,21 @@ try{
    };
   }finally{one.destroy();two.destroy();}
  });
+ assert.equal(deltaProof.multiCycleStress.cyclesCompleted,3);
+ assert.equal(deltaProof.multiCycleStress.callbacksRequested,108);
+ assert.ok(deltaProof.multiCycleStress.actualSourceIndexedDraws>5);
+ assert.ok(deltaProof.multiCycleStress.realGPUBufferSubDataUpdates>0);
+ assert.equal(deltaProof.multiCycleStress.everyRendererOwnedGPUBufferFullyReleased,true);
+ assert.ok(deltaProof.multiCycleStress.records.every(x=>
+  x.gpuBufferOwnershipAtPeak.activeTrackedOwnedGPUBufferCount===3&&
+  x.gpuBufferOwnershipAfterRelease.activeTrackedOwnedGPUBufferCount===0&&
+  x.gpuBufferOwnershipAfterDestroy.ownedGPUBufferAllocationBalance===0&&
+  x.gpuBufferOwnershipAfterDestroy.rendererDestroyed===true));
+ assert.equal(deltaProof.multiCycleStress.realGPUVRAMUsageBytes,null);
+ assert.equal(deltaProof.multiCycleStress.deviceTemperatureCelsius,null);
+ assert.equal(deltaProof.multiCycleStress.realDeviceStableFPS60_90_120PASS,false);
+ await writeFile(dir+'/NONHUMAN-3-CYCLES-REAL-GPU-BUFFER-LIFECYCLE-STRESS.json',
+  JSON.stringify(deltaProof.multiCycleStress,null,2));
  assert.equal(deltaProof.exactGPUFrameMatch,true);
  assert.equal(deltaProof.frameActuallyChanged,true);
  assert.equal(deltaProof.stats.reusedOriginalIndexGPUBuffers,true);
@@ -624,7 +656,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_RAF_SOURCE_GPU_ADAPTIVE_30_60_90_120_MEMORY_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_GPU_THREE_CYCLE_BUFFER_LIFECYCLE_STRESS_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;
