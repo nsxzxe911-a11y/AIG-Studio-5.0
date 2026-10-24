@@ -94,7 +94,14 @@ try{
 
  assert.equal(await page.locator('#v106-extract').isEnabled(),true);
  await page.locator('#v106-extract').click();
- let alpha=JSON.parse(await page.locator('#v106-report').textContent());
+ await page.waitForFunction(()=>{
+  const s=document.querySelector('#v106-report')?.textContent??'';
+  return s.startsWith('{')||s.startsWith('BLOCK');
+ },null,{timeout:30000});
+ const firstAlphaReceipt=await page.locator('#v106-report').textContent();
+ if(firstAlphaReceipt.startsWith('BLOCK'))
+  throw Error('V106_SOURCE_ALPHA_BROWSER_BLOCK_'+firstAlphaReceipt);
+ let alpha=JSON.parse(firstAlphaReceipt);
  assert.equal(alpha.sourceWidth,256);
  assert.equal(alpha.sourceHeight,256);
  assert.equal(alpha.realSourceAlphaForegroundPixels,48*144);
