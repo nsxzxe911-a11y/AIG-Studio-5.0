@@ -3,7 +3,10 @@ import {auditAIGReal3DDenseAnatomy} from './aig-real3d-dense-anatomy-review.mjs'
 import {auditAIGReal3DDenseFiveDigitBranches} from './aig-real3d-dense-digit-branch-gate.mjs';
 import {auditAIGReal3DFingerJointSurface} from './aig-real3d-native-finger-junction-gate.mjs';
 import {createAIGReal3DThreeJointTimeline} from './aig-real3d-three-joint-swept-motion.mjs';
-import {runAIGReal3DQuadStrain} from './aig-real3d-quad-strain-pool.mjs';
+import {runAIGReal3DQuadStrain,benchmarkAIGReal3DWorkerModes}
+ from './aig-real3d-quad-strain-pool.mjs';
+import {applyAIGReal3DSourceMeshDelta}
+ from './aig-real3d-gpu-delta-source.mjs';
 import {buildAIGReal3DWeightedFingerGPUPreview} from './aig-real3d-weighted-motion-working-copy.mjs';
 import {createAIG3DRenderer} from './aig-real3d-webgl.mjs';
 import {validateAIGInspectionCapturePlan} from './aig-real3d-render-inspection.mjs';
@@ -96,7 +99,7 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     heightMeters:source.heightMm/1000,angle:'front',mode:'ALBEDO'
    });
    renderer.setCamera(camera.camera);renderer.setInspectionMode('BROWN_VOLUME');
-   const frames=[];
+   const frames=[];let livePose=null;
    for(const index of timeline.displayFrameIndexes){
     const sample=timeline.frames[index];
     const gpuPose=buildAIGReal3DWeightedFingerGPUPreview({
@@ -106,7 +109,12 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
        sourceTriangleCount:source.dense.evidence.originalTriangleCount}
      }
     });
-    const png=await renderer.captureNativePNG(gpuPose.scene,{
+    const gpuDelta=livePose?
+     applyAIGReal3DSourceMeshDelta({
+      renderer,liveScene:livePose.scene,nextScene:gpuPose.scene
+     }):null;
+    if(!livePose)livePose=gpuPose;
+    const png=await renderer.captureNativePNG(livePose.scene,{
      width:1080,height:1920
     });
     if(!png.genuineGpuReadback||png.resampledFromSmallerImage!==false||
@@ -121,7 +129,9 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     a.textContent='下載真 GPU PNG';cap.append(a);fig.append(img,cap);
     gallery.append(fig);
     frames.push({sampleIndex:index,sha256:png.sha256,width:png.width,
-     height:png.height,sourceTriangles:gpuPose.evidence.posedGPUOriginalTriangles});
+     height:png.height,sourceTriangles:gpuPose.evidence.posedGPUOriginalTriangles,
+     gpuUploadMethod:gpuDelta?'GPU_BUFFER_SUBDATA_REUSE':'INITIAL_GPU_BUFFER_UPLOAD',
+     gpuDelta});
    }
    report={
     schema:'AIG_REAL3D_THREE_JOINT_GPU_SWEEP_EVIDENCE_V1',
@@ -131,6 +141,7 @@ export function mountAIGReal3DThreeJointControls({$,isBusy,setBusy,registerURL}=
     sourceMarkerSnaps:timeline.sourceMarkerSnaps,
     sparseSourceTopology:timeline.sparseSourceTopology,
     quadCPUOriginalSourceStrain:quad,
+    gpuNativeSourceBufferDeltaReusedOnLaterFrames:true,
     jointNames:timeline.jointNames,checkedFrameCount:timeline.frameCount,
     maxAngularStepDeg:timeline.maxActualAngularSampleStepDeg,
     frames:timeline.frames.map(x=>({

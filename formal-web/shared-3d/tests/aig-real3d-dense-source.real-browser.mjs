@@ -357,6 +357,12 @@ try{
  assert.equal(triple.diagnostics.continuousCollisionFreePASS,false);
  assert.equal(triple.diagnostics.naturalSkinDeformationPASS,false);
  assert.equal(triple.releasePASS,false);
+ assert.equal(triple.gpuFrames[0].gpuUploadMethod,'INITIAL_GPU_BUFFER_UPLOAD');
+ assert.ok(triple.gpuFrames.slice(1).every(f=>
+  f.gpuUploadMethod==='GPU_BUFFER_SUBDATA_REUSE'));
+ assert.ok(triple.gpuFrames.slice(1).every(f=>
+  f.gpuDelta?.reusedOriginalIndexGPUBuffers===true));
+ assert.equal(triple.gpuNativeSourceBufferDeltaReusedOnLaterFrames,true);
  assert.equal(triple.sparseSourceTopology.schema,
   'AIG_REAL3D_SPARSE_FK_SOURCE_TOPOLOGY_CACHE_V1');
  assert.equal(triple.sparseSourceTopology.inputSourceVertexCount,vertices);
@@ -419,6 +425,107 @@ try{
  assert.ok(quad.measuredFourWorkerMs>=0);
  await writeFile(dir+'/NONHUMAN-FOUR-REAL-WEB-WORKER-TIMING.json',
   JSON.stringify(quad,null,2));
+ // True 1/2/4 repeatable workload timings: all 3 modes use actual computation.
+ const adaptive=await page.evaluate(async()=>{
+  const pool=await import('./aig-real3d-quad-strain-pool.mjs');
+  const count=4096,original=new Float32Array(count*9),
+   posed=new Float32Array(count*9),indices=new Uint32Array(count*3),
+   offsets=new Uint32Array(count);
+  for(let i=0;i<count;i++){
+   const at=i*9,depth=i*.002;
+   original.set([0,0,depth,1,0,depth,0,1,depth],at);
+   posed.set([0,0,depth,1.035,0,depth,0,1,depth],at);
+   indices[i*3]=i*3;indices[i*3+1]=i*3+1;indices[i*3+2]=i*3+2;
+   offsets[i]=i*3;
+  }
+  return await pool.benchmarkAIGReal3DWorkerModes({
+   original,posed,indices,triangleOffsets:offsets,repeats:2
+  });
+ });
+ assert.deepEqual(Object.keys(adaptive.medianTotalMs).sort(),['four','serial','two']);
+ assert.equal(adaptive.rawTrialEvidence.length,6);
+ assert.ok(adaptive.rawTrialEvidence.some(x=>x.mode==='two'&&x.actualWorkerLanes===2));
+ assert.ok(adaptive.rawTrialEvidence.some(x=>x.mode==='four'&&x.actualWorkerLanes===4));
+ assert.ok(['serial','two','four'].includes(adaptive.recommendedMode));
+ assert.equal(adaptive.includesPackingAndWorkerStartup,true);
+ assert.equal(adaptive.globalPerformanceDoubledPASS,false);
+ assert.equal(adaptive.releasePASS,false);
+ await writeFile(dir+'/NONHUMAN-ADAPTIVE-1-2-4-WORKER-FAIR-BENCHMARK.json',
+  JSON.stringify(adaptive,null,2));
+ // Actually check WebGL bufferSubData against a clean full GPU buffer upload.
+ const deltaProof=await page.evaluate(async()=>{
+  const core=await import('./aig-real3d-core.mjs');
+  const lib=await import('./aig-real3d-webgl.mjs');
+  const delta=await import('./aig-real3d-gpu-delta-source.mjs');
+  const canvas=document.createElement('canvas'),freshCanvas=document.createElement('canvas');
+  canvas.width=freshCanvas.width=640;canvas.height=freshCanvas.height=480;
+  // Real renderer requires >=2000 genuine original indexed triangles.
+  // A nonhuman tubular source mesh keeps the unchanged QA acceptance threshold.
+  const original=[],moved=[],normals=[],indices=[];
+  const rings=50,segments=32;
+  for(let row=0;row<rings;row++)for(let col=0;col<segments;col++){
+   const angle=col*2*Math.PI/segments,rx=Math.cos(angle),
+    rz=Math.sin(angle),y=-1+2*row/(rings-1),x=.65*rx,z=.65*rz;
+   original.push(x,y,z);
+   moved.push(x+(row>18&&row<27 ? 0.09 : 0),y,z);
+   normals.push(rx,0,rz);
+  }
+  for(let row=0;row<rings-1;row++)for(let col=0;col<segments;col++){
+   const a=row*segments+col,b=row*segments+(col+1)%segments,
+    c=(row+1)*segments+col,d=(row+1)*segments+(col+1)%segments;
+   indices.push(a,b,d,a,d,c);
+  }
+  const build=(positions)=>{
+   const scene=core.createAIG3DScene({
+    id:'originalQAPose',consumer:'FastModel',units:'METERS',
+    source:'NONHUMAN_SOURCE_TRIANGLE_GPU_QA'
+   });
+   core.addAIG3DNode(scene,{
+    id:'stable_source_node',
+    mesh:core.createAIG3DMesh({positions,normals,indices,
+     provenance:'NONHUMAN_ORIGINAL_GLOBAL_INDEXED_SOURCE'}),
+    kind:'character',source:'NONHUMAN_ORIGINAL_GLOBAL_INDEXED_SOURCE',
+    material:{baseColor:[.7,.6,.5,1],roughness:.85,metallic:0,
+     doubleSided:true}
+   });
+   return scene;
+  };
+  const live=build(original),next=build(moved);
+  const one=lib.createAIG3DRenderer(canvas,{
+   quality:'balanced',pixelRatio:1,maxTriangles:200000,
+   background:[0,0,0,1]
+  });
+  const two=lib.createAIG3DRenderer(freshCanvas,{
+   quality:'balanced',pixelRatio:1,maxTriangles:200000,
+   background:[0,0,0,1]
+  });
+  try{
+   if(one.status!=='READY'||two.status!=='READY')
+    throw Error('REAL_GPU_CONTEXT_REQUIRED');
+   const camera={yaw:0,pitch:.15,distance:4,focus:[0,0,0]};
+   one.setCamera(camera);two.setCamera(camera);
+   one.setInspectionMode('LIT');two.setInspectionMode('LIT');
+   const baseline=await one.captureNativePNG(live,{width:640,height:480});
+   const update=delta.applyAIGReal3DSourceMeshDelta({
+    renderer:one,liveScene:live,nextScene:next
+   });
+   const changed=await one.captureNativePNG(live,{width:640,height:480});
+   const reference=await two.captureNativePNG(next,{width:640,height:480});
+   return {
+    baselineSha:baseline.sha256,deltaSha:changed.sha256,
+    fullRebuildSha:reference.sha256,stats:update,
+    exactGPUFrameMatch:changed.sha256===reference.sha256,
+    frameActuallyChanged:baseline.sha256!==changed.sha256
+   };
+  }finally{one.destroy();two.destroy();}
+ });
+ assert.equal(deltaProof.exactGPUFrameMatch,true);
+ assert.equal(deltaProof.frameActuallyChanged,true);
+ assert.equal(deltaProof.stats.reusedOriginalIndexGPUBuffers,true);
+ assert.equal(deltaProof.stats.fullGPUVertexBuffersReallocated,false);
+ assert.ok(deltaProof.stats.gpuBufferSubDataCalls>=2);
+ await writeFile(dir+'/NONHUMAN-WEBGL-DELTA-VS-FULL-REBUILD-SHA.json',
+  JSON.stringify(deltaProof,null,2));
  // Real working UI: WGS84 -> double ECEF -> floating local mm -> 6DoF.
  await page.locator('#geo-lat').fill('23.7');
  await page.locator('#geo-lon').fill('120.5');
@@ -449,7 +556,7 @@ try{
   sourceIsExplicitlyNONHUMAN:true,humanPASS:false,
   denseNativeGPU:true
  },null,2));
- console.log('REAL3D_FOUR_WORKER_SIXDOF_GLOBE_COORDS_TECHNICAL_PASS_NONHUMAN');
+ console.log('REAL3D_ADAPTIVE_TWO_FOUR_WORKERS_GPU_DELTA_SHA_TECHNICAL_PASS_NONHUMAN');
 }catch(e){
  console.error('REAL3D_DENSE_NATIVE_GPU_BLOCK',e.stack||String(e));
  process.exitCode=1;
