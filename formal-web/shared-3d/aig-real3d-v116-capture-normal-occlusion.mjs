@@ -186,9 +186,16 @@ export function auditAIGReal3DV116CaptureNormalAndOcclusion({
   p95Distance=pct(allPointErrors,.95),
   maxDistance=allPointErrors.length?Math.max(...allPointErrors):null;
  const enough=directions.every(d=>d.independentlyMeasuredNormalPairs>=minBidirectionalNormalPairs);
- const consistent=enough&&p95Angle<=maxNormalAngleDeg&&maxAngle<=maxNormalAngleDeg&&
+ // A large physical depth jump makes normal neighborhoods unavailable.
+ // It must be identified as unresolved, not hidden by comparing only the
+ // remaining smooth pixels. True occlusion classification needs more views.
+ const unreviewedOcclusionCandidates=directions.reduce(
+  (sum,d)=>sum+d.candidateDiscontinuityOrOcclusionCount,0);
+ const consistent=enough&&unreviewedOcclusionCandidates===0&&
+  p95Angle<=maxNormalAngleDeg&&maxAngle<=maxNormalAngleDeg&&
   p95Distance<=maxPointToPointMM&&maxDistance<=maxPointToPointMM;
  const gate=!enough?'BLOCK_INSUFFICIENT_BIDIRECTIONAL_OBSERVED_NORMALS':
+  unreviewedOcclusionCandidates>0?'BLOCK_UNREVIEWED_DEPTH_OCCLUSION_CANDIDATES':
   consistent?'PASS_SOURCE_MEASURED_NORMAL_CONTINUITY_ONLY':
   'BLOCK_SOURCE_NORMAL_OR_SPATIAL_DISCONTINUITY';
  const classes=captures.map(c=>c.sourceClass);
@@ -201,6 +208,7 @@ export function auditAIGReal3DV116CaptureNormalAndOcclusion({
   normalAngleToleranceDeg:maxNormalAngleDeg,positionToleranceMM:maxPointToPointMM,
   minimumPairsPerDirection:minBidirectionalNormalPairs,
   bidirectionalNormalPairsTotal:allAngles.length,
+  unreviewedDepthDiscontinuityCandidates:unreviewedOcclusionCandidates,
   normalAngleP95Deg:p95Angle,normalAngleMaxDeg:maxAngle,
   matchedWorldPositionP95MM:p95Distance,matchedWorldPositionMaxMM:maxDistance,
   directions,normalAndSurfaceGate:gate,researchGate:consistent?'PASS_COMPUTED_NORMAL_CONTINUITY':'BLOCK',
